@@ -1,0 +1,4 @@
+[submodule "pigfx"]
+	path = pigfx
+	url = https://github.com/fbergama/pigfx.git
+	branch = RC2014
