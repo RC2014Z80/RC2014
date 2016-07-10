@@ -2,3 +2,7 @@
 	path = pigfx
 	url = https://github.com/fbergama/pigfx.git
 	branch = RC2014
+[submodule "Emulators/Rocket2014"]
+	path = Emulators/Rocket2014
+	url = https://github.com/trcwm/rocket2014.git
+	branch = master
