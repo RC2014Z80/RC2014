@@ -6,3 +6,7 @@
 	path = Emulators/Rocket2014
 	url = https://github.com/trcwm/rocket2014.git
 	branch = master
+[submodule "Emulators/z80-machine"]
+	path = Emulators/z80-machine
+	url = https://github.com/BleuLlama/z80-machine.git
+	branch = master
