@@ -13,6 +13,7 @@ $(APP_NAME).rom: $(APP_NAME)_CODE.bin
 	cat $(APP_NAME)_INIT.bin > $(APP_NAME).rom
 	cat $(APP_NAME)_CODE.bin >> $(APP_NAME).rom
 	cat $(APP_NAME)_DATA.bin >> $(APP_NAME).rom
+	cp $(APP_NAME).rom $(APP_NAME).bin
 
 %.hex : %.rom 
 	appmake +hex -b $< -o $@

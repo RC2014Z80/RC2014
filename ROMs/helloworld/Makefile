@@ -1,4 +1,4 @@
-APP_NAME := TinyBasicPlus
+APP_NAME := helloworld
 include ../config.mk
 
 
