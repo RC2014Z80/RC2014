@@ -17,6 +17,3 @@ $(APP_NAME).bin: $(APP_NAME).c pigfx
 
 .PHONY clean:
 	rm -f *.bin *.lst *.ihx *.hex *.obj *.rom zcc_opt.def $(APP_NAME) *.reloc *.sym *.map disasm.txt
-
-
-

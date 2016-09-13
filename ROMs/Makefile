@@ -1,5 +1,5 @@
 
-all: 
+all:
 	$(MAKE) -C hexload/
 	$(MAKE) -C helloworld/
 	$(MAKE) -C TinyBasicPlus/
@@ -12,5 +12,3 @@ all:
 	$(MAKE) -C helloworld/ clean
 	$(MAKE) -C TinyBasicPlus/ clean
 	$(MAKE) -C snake/ clean
-
-

@@ -14,5 +14,3 @@ for line in sys.stdin:
     sys.stdout.write('\n');
     sys.stdout.flush();
     sleep(0.05);
-
-
