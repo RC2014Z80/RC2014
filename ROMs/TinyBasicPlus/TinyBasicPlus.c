@@ -68,7 +68,7 @@
 //	Integrated Jurg Wullschleger whitespace,unary fix
 //	Now available through github
 //	Project renamed from "Tiny Basic in C" to "TinyBasic Plus"
-//	   
+//
 // v0.02b: 2012-09-17  Scott Lawrence <yorgle@gmail.com>
 // 	Better FILES listings
 //
@@ -87,7 +87,7 @@
 #include "pigfx.h"
 
 #pragma output REGISTER_SP  = -1
-#pragma output CLIB_MALLOC_HEAP_SIZE = 0 
+#pragma output CLIB_MALLOC_HEAP_SIZE = 0
 
 
 int entry_point_();
@@ -186,7 +186,7 @@ static unsigned char keywords[] PROGMEM = {
   0
 };
 
-// by moving the command list to an enum, we can easily remove sections 
+// by moving the command list to an enum, we can easily remove sections
 // above and below simultaneously to selectively obliterate functionality.
 enum {
   KW_NEW = 0,
@@ -591,7 +591,7 @@ static short int expr4(void)
     do 	{
       a = a*10 + *txtpos - '0';
       txtpos++;
-    } 
+    }
     while(*txtpos >= '0' && *txtpos <= '9');
     return a;
   }
@@ -630,9 +630,9 @@ static short int expr4(void)
     {
     case FUNC_PEEK:
       return program[a];
-      
+
     case FUNC_ABS:
-      if(a < 0) 
+      if(a < 0)
         return -a;
       return a;
 
@@ -866,7 +866,7 @@ prompt:
       from++;
       dest++;
       tomove--;
-    }	
+    }
     program_end = dest;
   }
 
@@ -876,7 +876,7 @@ prompt:
 
   // Make room for the new line, either all in one hit or lots of little shuffles
   while(linelen > 0)
-  {	
+  {
     unsigned int tomove;
     unsigned char *from,*dest;
     unsigned int space_to_make;
@@ -916,11 +916,11 @@ unimplemented:
   printmsg(unimplimentedmsg);
   goto prompt;
 
-qhow:	
+qhow:
   printmsg(howmsg);
   goto prompt;
 
-qwhat:	
+qwhat:
   printmsgNoNL(whatmsg);
   if(current_line != 0)
   {
@@ -934,7 +934,7 @@ qwhat:
   line_terminator();
   goto prompt;
 
-qsorry:	
+qsorry:
   printmsg(sorrymsg);
   goto warmstart;
 
@@ -946,7 +946,7 @@ run_next_statement:
     goto execnextline;
   goto interperateAtTxtpos;
 
-direct: 
+direct:
   txtpos = program_end+sizeof(unsigned short);
   if(*txtpos == NL)
     goto prompt;
@@ -1007,14 +1007,14 @@ interperateAtTxtpos:
   case KW_GOSUB:
     goto gosub;
   case KW_RETURN:
-    goto gosub_return; 
+    goto gosub_return;
   case KW_REM:
   case KW_QUOTE:
     goto execnextline;	// Ignore line completely
   case KW_FOR:
-    goto forloop; 
+    goto forloop;
   case KW_INPUT:
-    goto input; 
+    goto input;
   case KW_PRINT:
   case KW_QMARK:
     goto print;
@@ -1191,7 +1191,7 @@ gosub_return:
         // Is the the variable we are looking for?
         if(txtpos[-1] == f->for_var)
         {
-          short int *varaddr = ((short int *)variables_begin) + txtpos[-1] - 'A'; 
+          short int *varaddr = ((short int *)variables_begin) + txtpos[-1] - 'A';
           *varaddr = *varaddr + f->step;
           // Use a different test depending on the sign of the step increment
           if((f->step > 0 && *varaddr <= f->terminal) || (f->step < 0 && *varaddr >= f->terminal))
@@ -1360,7 +1360,7 @@ print:
       break;
     }
     else
-      goto qwhat;	
+      goto qwhat;
   }
   goto run_next_statement;
 
@@ -1431,4 +1431,3 @@ int entry_point_()
     while(1)
         loop();
 }
-

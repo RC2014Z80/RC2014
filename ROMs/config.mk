@@ -13,7 +13,3 @@ mem_org_decimal := 32896
 #memory_model := rom
 #mem_org := 0x0
 #mem_org_decimal := 0
-
-
-
-
