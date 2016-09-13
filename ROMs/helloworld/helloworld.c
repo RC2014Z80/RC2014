@@ -8,8 +8,8 @@ void main()
 {
     int a;
 
-    for(a = 0; a < 10; ++a)
+    for (a = 0; a < 10; ++a)
         pigfx_print("Hello World!");
 
-    while(1);
+    while (1);
 }

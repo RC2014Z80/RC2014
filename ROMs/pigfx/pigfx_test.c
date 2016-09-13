@@ -11,7 +11,7 @@ void entry_point_()
 
     pigfx_cls();
     pigfx_hide_cursor();
-    for(i = 0; i < 5; ++i)
+    for (i = 0; i < 5; ++i)
     {
         pigfx_movecursor(i, i);
         pigfx_print("HELLO");
@@ -31,5 +31,5 @@ void main()
 #endasm
 
     entry_point_();
-    while(1);
+    while (1);
 }

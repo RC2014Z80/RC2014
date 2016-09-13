@@ -354,7 +354,7 @@ void main()
 
             case 'p':
             case 'P':
-                while(1)
+                while (1)
                   if (rc2014_pollc() && rc2014_getc() == 'p')
                       break;
                 break;
