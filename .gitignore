@@ -1,0 +1,10 @@
+*.swp
+*.bin
+*.hex
+*.map
+*.def
+*.lst
+*.obj
+*.lis
+*.lib
+disasm.txt
