@@ -2,7 +2,7 @@
 ;@  PiGFX Z80 Interface Library
 ;@      Filippo Bergamasco 2016
 ;@
-;@  Tested with z88dk. To compile: 
+;@  Tested with z88dk. To compile:
 ;@      $ z80asm -l -xpigfx.lib pigfx.asm
 ;@
 ;@---------------------------------------------------------------------
@@ -12,7 +12,7 @@ MODULE pigfx
 SECTION code_user
 
 ;@---------------------------------------------------------------------
-;@ pigfx_print 
+;@ pigfx_print
 ;@
 ;@  output the null-terminated string pointed by HL
 ;@  to the system UART
@@ -21,7 +21,7 @@ SECTION code_user
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_print
-pigfx_print: 
+pigfx_print:
             ld a, (hl)
             or a
             ret z
@@ -31,16 +31,16 @@ pigfx_print:
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_printnum 
+;@ pigfx_printnum
 ;@
 ;@  print the decimal number in HL to the system UART
 ;@  as an ascii string
 ;@
-;@      HL: number to print 
+;@      HL: number to print
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_printnum
-pigfx_printnum:     
+pigfx_printnum:
             ld  a, 0
             or h
             or l             ; if the number is 0
@@ -71,14 +71,14 @@ PNa:        add a, '0'
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_printhex 
+;@ pigfx_printhex
 ;@
 ;@  print the hex number in HL to the system UART
 ;@  as an ascii string
 ;@
 ;@  See: http://map.grauw.nl/sources/external/z80bits.html#5.1
 ;@
-;@      HL: number to print 
+;@      HL: number to print
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_printhex
@@ -105,13 +105,13 @@ Num2:    or  $F0
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_showcursor 
+;@ pigfx_showcursor
 ;@
 ;@  Set the cursor visible
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_show_cursor
-pigfx_show_cursor:  
+pigfx_show_cursor:
             call ANSI_START
             ld hl, cursor_vis_str
             call pigfx_print
@@ -119,13 +119,13 @@ pigfx_show_cursor:
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_hidecursor 
+;@ pigfx_hidecursor
 ;@
 ;@  Set the cursor invisible
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_hide_cursor
-pigfx_hide_cursor:  
+pigfx_hide_cursor:
             call ANSI_START
             ld hl, cursor_inv_str
             call pigfx_print
@@ -133,13 +133,13 @@ pigfx_hide_cursor:
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_cls 
+;@ pigfx_cls
 ;@
 ;@  Clear the screen and move cursor to 0-0
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_cls
-pigfx_cls:  
+pigfx_cls:
             call ANSI_START
             ld hl, cursor_cls_str
             call pigfx_print
@@ -147,12 +147,12 @@ pigfx_cls:
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_fgcol 
+;@ pigfx_fgcol
 ;@
 ;@  Set the foreground color
 ;@
-;@      HL: color index 
-;@  (see https://en.wikipedia.org/wiki/File:Xterm_256color_chart.svg) 
+;@      HL: color index
+;@  (see https://en.wikipedia.org/wiki/File:Xterm_256color_chart.svg)
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_fgcol
@@ -165,16 +165,16 @@ pigfx_fgcol:
             call pigfx_printnum ; print color value as ascii string
             ld a, 'm'           ; terminate code with 'm'
             rst $08             ;
-            ret                 ; end 
+            ret                 ; end
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_bgcol 
+;@ pigfx_bgcol
 ;@
 ;@  Set the background color
 ;@
-;@      HL: color index 
-;@  (see https://en.wikipedia.org/wiki/File:Xterm_256color_chart.svg) 
+;@      HL: color index
+;@  (see https://en.wikipedia.org/wiki/File:Xterm_256color_chart.svg)
 ;@
 ;@---------------------------------------------------------------------
 public pigfx_bgcol
@@ -187,12 +187,12 @@ pigfx_bgcol:
             call pigfx_printnum ; print color value as ascii string
             ld a, 'm'           ; terminate code with 'm'
             rst $08             ;
-            ret                 ; end 
+            ret                 ; end
 
 
 
 ;@---------------------------------------------------------------------
-;@ pigfx_movecursor 
+;@ pigfx_movecursor
 ;@
 ;@  Move the cursor to -row- -col- (read from stack)
 ;@
@@ -205,25 +205,25 @@ pigfx_movecursor:
 
             pop  de             ; return addr
             pop  bc             ; col
-            pop  hl             ; row 
-            
+            pop  hl             ; row
+
             push de             ; push ret addr
             push bc             ; push col to swap row/col
-            
+
             call pigfx_printnum ; print row
             ld a, ';'
-            rst $08 
+            rst $08
             pop hl              ; pop col
             call pigfx_printnum ; print col
             ld a, 'H'
-            rst $08 
+            rst $08
 
             pop hl              ; pop return address
-            push hl             ; 
+            push hl             ;
             push hl
             push hl
 
-            ret                 ; end 
+            ret                 ; end
 
 
 

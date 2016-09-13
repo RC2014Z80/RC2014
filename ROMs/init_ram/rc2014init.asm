@@ -25,10 +25,10 @@ bootstrap:  di
 
             jp __Start  ;; this label is exported by the crt
                         ;; if you expect main() to return here use call instead
-                        ;; if you know the c compiled portion will append here 
+                        ;; if you know the c compiled portion will append here
                         ;; you can just fall through
 
-TX:         push af             
+TX:         push af
 txbusy:     in a,($80)          ; read serial status
             bit 1,a             ; check status bit 1
             jr z, txbusy        ; loop if zero (serial is busy)
@@ -37,13 +37,13 @@ txbusy:     in a,($80)          ; read serial status
             ret
 
 ;@---------------------------------------------------------------------
-;@ rc2014_getc 
+;@ rc2014_getc
 ;@
 ;@  wait for system UART and return the received character in HL
 ;@
 ;@---------------------------------------------------------------------
 public rc2014_getc
-rc2014_getc:         
+rc2014_getc:
             push af
 waitch:     in a, ($80)
             bit 0, a
@@ -53,10 +53,10 @@ waitch:     in a, ($80)
             ld l, a
             pop af
             ret
-            
+
 
 ;@---------------------------------------------------------------------
-;@ rc2014_putc 
+;@ rc2014_putc
 ;@
 ;@ output the byte in register L to system UART
 ;@
@@ -69,9 +69,9 @@ rc2014_putc:
 
 
 ;@---------------------------------------------------------------------
-;@ rc2014_pollc 
+;@ rc2014_pollc
 ;@
-;@ polls the uart receive buffer status and 
+;@ polls the uart receive buffer status and
 ;@ returns the result in the register L:
 ;@   L=0 : no data available
 ;@   L=1 : data available
@@ -88,7 +88,7 @@ rc2014_pollc:
 
 
 ;@---------------------------------------------------------------------
-;@ rc2014_inp 
+;@ rc2014_inp
 ;@
 ;@ reads a byte from port l and returns the results in l
 ;@
@@ -104,7 +104,7 @@ rc2014_inp:
 
 
 ;@---------------------------------------------------------------------
-;@ rc2014_inp 
+;@ rc2014_inp
 ;@
 ;@ writes register l to port h
 ;@
@@ -117,5 +117,3 @@ rc2014_outp:
             out (c), b
             pop bc
             ret
-
-

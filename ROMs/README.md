@@ -1,7 +1,7 @@
 # RC2014 roms
 
 This subdirectory contains all the "native" (ie. asm or c based)
-software written for the  [RC2014 homebrew computer](http://rc2014.co.uk). 
+software written for the  [RC2014 homebrew computer](http://rc2014.co.uk).
 
 At the moment is composed by the following components:
 
@@ -9,7 +9,7 @@ At the moment is composed by the following components:
 - PiGFX interface library (```pigfx/``` directory)
 - A 2-stage BASIC+assembly hex file loader (in the ```hexload/``` directory)
 - The typical "hello world" test
-- [TinyBasicPlus](https://github.com/BleuLlama/TinyBasicPlus) port, originally written by Scott Lawrence and adapted for the Z80/RC2014 
+- [TinyBasicPlus](https://github.com/BleuLlama/TinyBasicPlus) port, originally written by Scott Lawrence and adapted for the Z80/RC2014
 - A simple snake game (in the ```snake/``` directory)
 
 ## How to build
@@ -23,7 +23,7 @@ At the moment is composed by the following components:
 
 ## Memory models
 
-The provided software can be compiled to be located either in the lower 8k of the ROM memory area (rom model) or in the 
+The provided software can be compiled to be located either in the lower 8k of the ROM memory area (rom model) or in the
 upper 32k RAM (starting at address 0x8080 since the first 0x80 bytes are reserved by the system).
 Edit the file ```config.mk``` to select the desired mode.
 
@@ -62,4 +62,3 @@ $ cat ../helloworld/helloworld.hex | python slowprint.py > /dev/ttyUSB0
 ## Running on an Emulator
 
 The generated rom files can be executed on an emulator by selecting the rom memory model.
-

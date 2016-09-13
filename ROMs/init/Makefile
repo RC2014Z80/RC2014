@@ -10,4 +10,3 @@ INIT_SIZE.txt: boot_INIT.bin
 
 .PHONY clean:
 	rm -f boot INIT_SIZE.txt *.bin *.obj *.reloc *.err zcc_opt.def *.sym
-

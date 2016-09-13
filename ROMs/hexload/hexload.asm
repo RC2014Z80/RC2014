@@ -22,10 +22,10 @@ waitcol:    call RX         ; wait for ':'
             ld ix, 0        ; reset ix to compute checksum
             call readbyte   ; read byte count
             ld b, h         ; store it in bc
-            ld c, l         ; 
-            call readbyte   ; read upper byte of address 
+            ld c, l         ;
+            call readbyte   ; read upper byte of address
             ld d, l         ; store in d
-            call readbyte   ; read lower byte of address 
+            call readbyte   ; read lower byte of address
             ld e, l         ; store in e
             call readbyte   ; read record type
             ld a, l         ; store in a
@@ -51,10 +51,10 @@ readdata:   call readbyte
             ld a, ixl       ; lower byte of ix should be 0
             cp 0
             jr nz, badck
-            
+
             ld a, '*'
             call TX
-            jp waitcol      
+            jp waitcol
 
 endload:    call readbyte   ; read last checksum (not used)
             ld hl, loadokstr
@@ -62,7 +62,7 @@ endload:    call readbyte   ; read last checksum (not used)
             ld hl, $8080
             jp (hl)
             ;jp hang
-            
+
 invtype:    ld hl, invalidtypestr
             call print
             jp hang
@@ -70,12 +70,12 @@ invtype:    ld hl, invalidtypestr
 badck:      ld hl, badchecksumstr
             call print
             jp hang
-            
+
 hang:
             nop
             jp hang
 
-TX:         push af             
+TX:         push af
 txbusy:     in a,($80)          ; read serial status
             bit 1,a             ; check status bit 1
             jr z, txbusy        ; loop if zero (serial is busy)
@@ -83,7 +83,7 @@ txbusy:     in a,($80)          ; read serial status
             out ($81), a        ; transmit the character
             ret
 
-RX:         
+RX:
             push af
 waitch:     ;in a, ($80)
             ;bit 0, a
@@ -96,7 +96,7 @@ waitch:     ;in a, ($80)
             pop af
             ret
 
-print: 
+print:
             ld a, (hl)
             or a
             ret z
@@ -104,7 +104,7 @@ print:
             inc hl
             jp print
 
-readbyte:   
+readbyte:
             push af
             push de
             call RX

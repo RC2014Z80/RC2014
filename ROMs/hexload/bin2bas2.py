@@ -1,4 +1,3 @@
-
 mem = 0xF800
 
 with open("hexload.bin", "rb") as f:

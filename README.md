@@ -14,5 +14,3 @@ $ git submodule update --init
 Feel free to contribute by forking this repository and issuing a pull request. If you already have a consolidated project already versioned in a git repo you can request to be included as a git submodule.
 
 Have fun and happy hacking :)
-
-

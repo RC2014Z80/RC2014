@@ -18,4 +18,3 @@ else ifeq ($(memory_model),rom)
     include ../buildrules.mk
 else
 endif
-
