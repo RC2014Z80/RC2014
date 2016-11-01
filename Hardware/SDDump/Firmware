@@ -1,0 +1,177 @@
+#include <SPI.h>
+#include <SD.h>
+
+File myFile;
+
+#define COUNT 19
+#define CRESET 18
+#define BUSACK 0
+#define DONE 16
+#define WRTOGGLE 15
+#define WRREQ 14
+#define SELECT 17
+
+#define DATA0 9
+#define DATA1 2
+#define DATA2 3
+#define DATA3 4
+#define DATA4 5
+#define DATA5 6
+#define DATA6 7
+#define DATA7 8
+
+int DATABYTE = 0;
+int z = 0;  //null value for delay
+
+void setup() {
+  pinMode(COUNT, OUTPUT);
+  pinMode(CRESET, OUTPUT);
+  pinMode(DONE, OUTPUT);
+  digitalWrite(CRESET, HIGH);
+  digitalWrite(DONE, LOW);
+  pinMode(DATA0, INPUT);
+  pinMode(DATA1, INPUT);
+  pinMode(DATA2, INPUT);
+  pinMode(DATA3, INPUT);
+  pinMode(DATA4, INPUT);
+  pinMode(DATA5, INPUT);
+  pinMode(DATA6, INPUT);
+  pinMode(DATA7, INPUT);
+  pinMode(WRTOGGLE, OUTPUT);
+  digitalWrite(WRTOGGLE, HIGH);
+  pinMode(WRREQ, INPUT);
+
+  Serial.begin(115200);
+  //Serial.print("Initializing SD card...");
+
+  if (!SD.begin(10)) {
+    //Serial.println("initialization failed!");
+    return;
+  }
+  //Serial.println("initialization done.");
+}
+
+void loop() {
+  digitalWrite(CRESET, LOW);
+  digitalWrite(DONE, LOW);
+  if (digitalRead (BUSACK) == 0) {
+    if (digitalRead (WRREQ) != 0) {
+      Read2SD();
+    }
+    else {
+      SD2Bus();
+    }
+  }
+}
+
+void SD2Bus() {
+  Serial.print ("writing from SD card to the bus");
+  myFile = SD.open("LOADFILE.hex");
+  if (myFile) {
+    pinMode(WRTOGGLE, OUTPUT);
+    digitalWrite(WRTOGGLE, LOW);
+    pinMode(DATA0, OUTPUT);
+    pinMode(DATA1, OUTPUT);
+    pinMode(DATA2, OUTPUT);
+    pinMode(DATA3, OUTPUT);
+    pinMode(DATA4, OUTPUT);
+    pinMode(DATA5, OUTPUT);
+    pinMode(DATA6, OUTPUT);
+    pinMode(DATA7, OUTPUT);
+    digitalWrite(CRESET, HIGH);
+    int z = digitalRead(WRREQ);
+    //delay(1);
+    digitalWrite(CRESET, LOW);
+    for (long i = 0; i < 65535; i++) {
+      DATABYTE = myFile.read();
+      //Serial.print (char(DATABYTE));
+      digitalWrite(DATA0, DATABYTE & 0x01);
+      digitalWrite(DATA1, DATABYTE & 0x02);
+      digitalWrite(DATA2, DATABYTE & 0x04);
+      digitalWrite(DATA3, DATABYTE & 0x08);
+      digitalWrite(DATA4, DATABYTE & 0x10);
+      digitalWrite(DATA5, DATABYTE & 0x20);
+      digitalWrite(DATA6, DATABYTE & 0x40);
+      digitalWrite(DATA7, DATABYTE & 0x80);
+      int z = digitalRead(WRREQ);
+      //delay(1);
+      digitalWrite(WRTOGGLE, LOW);
+      //delay(1);
+      digitalWrite(WRTOGGLE, HIGH);
+
+
+      //      Buswrite();
+      //delay(5);
+      digitalWrite(COUNT, HIGH);
+     // delay(1);
+      digitalWrite(COUNT, LOW);
+      //delay(1);
+    }
+  }
+  //Serial.println();
+  //Serial.print ("Memory writen");
+  digitalWrite(DONE, HIGH);
+  int z = digitalRead(WRREQ);
+  delay(1);
+  digitalWrite(DONE, LOW);
+
+  pinMode(DATA0, INPUT);
+  pinMode(DATA1, INPUT);
+  pinMode(DATA2, INPUT);
+  pinMode(DATA3, INPUT);
+  pinMode(DATA4, INPUT);
+  pinMode(DATA5, INPUT);
+  pinMode(DATA6, INPUT);
+  pinMode(DATA7, INPUT);
+  digitalWrite(WRTOGGLE, HIGH);
+  //Serial.println("done.");
+
+}
+
+void Read2SD() {
+  Serial.println("memory to SD");
+  myFile = SD.open("SaveFile.hex", FILE_WRITE);
+  if (myFile) {
+    digitalWrite(CRESET, HIGH);
+    delay(1);
+    digitalWrite(CRESET, LOW);
+    for (long i = 0; i < 65535; i++) {
+      DATABYTE = ((digitalRead(DATA0)) + (digitalRead(DATA1) * 2) + (digitalRead(DATA2) * 4) + (digitalRead(DATA3) * 8) + (digitalRead(DATA4) * 16) + (digitalRead(DATA5) * 32) + (digitalRead(DATA6) * 64) + (digitalRead(DATA7) * 128));
+      //Busread();
+      myFile.print(char(DATABYTE));
+      //Serial.print(char(DATABYTE));
+      DATABYTE = 0;
+      digitalWrite(COUNT, HIGH);
+      delay(1);
+      digitalWrite(COUNT, LOW);
+      //delay(1);
+    }
+    digitalWrite(CRESET, HIGH);
+    myFile.close();
+  }
+  digitalWrite(DONE, HIGH);
+  delay(1);
+  digitalWrite(DONE, LOW);
+  //Serial.println("done.");
+}
+
+void Busread() {
+  delay(1);
+  DATABYTE = ((digitalRead(DATA0)) + (digitalRead(DATA1) * 2) + (digitalRead(DATA2) * 4) + (digitalRead(DATA3) * 8) + (digitalRead(DATA4) * 16) + (digitalRead(DATA5) * 32) + (digitalRead(DATA6) * 64) + (digitalRead(DATA7) * 128));
+}
+
+void Buswrite() {
+  //digitalWrite(WRTOGGLE, LOW);
+  digitalWrite(DATA0, DATABYTE & 0x01);
+  digitalWrite(DATA1, DATABYTE & 0x02);
+  digitalWrite(DATA2, DATABYTE & 0x04);
+  digitalWrite(DATA3, DATABYTE & 0x08);
+  digitalWrite(DATA4, DATABYTE & 0x10);
+  digitalWrite(DATA5, DATABYTE & 0x20);
+  digitalWrite(DATA6, DATABYTE & 0x40);
+  digitalWrite(DATA7, DATABYTE & 0x80);
+  delay(1);
+  digitalWrite(WRTOGGLE, LOW);
+  delay(1);
+  digitalWrite(WRTOGGLE, HIGH);
+}
