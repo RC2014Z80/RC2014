@@ -1,23 +1,37 @@
-/* SD Memory Dump
+/* SD Memory Dump Plus
  *  Firmware for the RC2014 module
  *  Module by Spencer Owen
- *  Original version of the source by Spencer Owen
  *  
+ *  Original version of the source by Spencer Owen
  *  This version - yorgle@gmail.com Scott Lawrence
- */
-
-/*
- * Revision History
- * 1.01 - 11/05/2016 - Refactoring, adding in potentiometer selector
- * 1.00 - 11/04/2016 - Provided from Spencer Owen, initial functionality
  */
 
 #include <SPI.h>
 #include <SD.h>
 
-File myFile;
+/*
+ * Revision History
+ * 1.02 - 11/05/2016 - Pot selects file to load/save, red LED indicates which of 7 files
+ * 1.01 - 11/05/2016 - Refactoring, adding in potentiometer selector
+ * 1.00 - 11/04/2016 - Provided from Spencer Owen, initial functionality
+ */
+const char * versionString = "v1.02 - 11/05/2016";
 
 
+/* NOTE: in the v1 hardware, it is impossible to program the AVR in-circuit
+ *       without modifying the circuit.  The modification is to disconnect
+ *       pin 2 of the AVR from the circuit, and connect it directly to 
+ *       JP3 pin 4 (TX) of the FTDI connector.
+ *       
+ *       The nicer way to do this is to pull pin 2 of the AVR from the socket,
+ *       and connect it to the center pole of a 3 pin header.  One side of the 
+ *       header should go to the BUSACK bus ("usage mode") and the other side
+ *       of the header should go to pin 4 of the FTDI connector, which has been
+ *       isolated from the circuit board. ("programming mode")
+ */
+
+
+/* pin usage of the arduino */
 #define kPin_WRREQ      14  /* A0 */
 #define kPin_WRTOGGLE   15  /* A1 */
 #define kPin_DONE       16  /* A2 */
@@ -26,6 +40,7 @@ File myFile;
 #define kPin_COUNT      19  /* A5 */
 #define kPin_LED        19  /* same as COUNT */
 #define kPin_BUSACK     0
+
 #define kPin_DATA0      9
 #define kPin_DATA1      2
 #define kPin_DATA2      3
@@ -35,34 +50,35 @@ File myFile;
 #define kPin_DATA6      7
 #define kPin_DATA7      8
 
-int dataByte = 0;
+
 int z = 0;  //null value for delay
 
 
 void setup() {
-  pinMode(kPin_COUNT, OUTPUT);
-  pinMode(kPin_CRESET, OUTPUT);
-  pinMode(kPin_DONE, OUTPUT);
-  digitalWrite(kPin_CRESET, HIGH);
-  digitalWrite(kPin_DONE, LOW);
-  pinMode(kPin_DATA0, INPUT);
-  pinMode(kPin_DATA1, INPUT);
-  pinMode(kPin_DATA2, INPUT);
-  pinMode(kPin_DATA3, INPUT);
-  pinMode(kPin_DATA4, INPUT);
-  pinMode(kPin_DATA5, INPUT);
-  pinMode(kPin_DATA6, INPUT);
-  pinMode(kPin_DATA7, INPUT);
-  pinMode(kPin_WRTOGGLE, OUTPUT);
-  digitalWrite(kPin_WRTOGGLE, HIGH);
-  pinMode(kPin_WRREQ, INPUT);
+  pinMode( kPin_COUNT, OUTPUT );
+  pinMode( kPin_CRESET, OUTPUT );
+  pinMode( kPin_DONE, OUTPUT );
+  digitalWrite( kPin_CRESET, HIGH );
+  digitalWrite( kPin_DONE, LOW );
+  pinMode( kPin_DATA0, INPUT );
+  pinMode( kPin_DATA1, INPUT );
+  pinMode( kPin_DATA2, INPUT );
+  pinMode( kPin_DATA3, INPUT );
+  pinMode( kPin_DATA4, INPUT );
+  pinMode( kPin_DATA5, INPUT );
+  pinMode( kPin_DATA6, INPUT );
+  pinMode( kPin_DATA7, INPUT );
+  pinMode( kPin_WRTOGGLE, OUTPUT );
+  digitalWrite( kPin_WRTOGGLE, HIGH );
+  
+  pinMode( kPin_WRREQ, INPUT );
 
   pinMode( kPin_SELECT, INPUT );
 
-  Serial.begin(115200);
+  Serial.begin( 115200 );
   //Serial.print("Initializing SD card...");
 
-  if (!SD.begin(10)) {
+  if( !SD.begin(10) ) {
     //Serial.println("initialization failed!");
     return;
   }
@@ -82,13 +98,13 @@ void setup() {
  *  
  */
 
-#define kPos_SW (1)
-#define kPos_W  (2)
-#define kPos_NW (3)
-#define kPos_N  (4)
-#define kPos_NE (5)
-#define kPos_E  (6)
-#define kPos_SE (7)
+#define kPos_SW (0)
+#define kPos_W  (1)
+#define kPos_NW (2)
+#define kPos_N  (3)
+#define kPos_NE (4)
+#define kPos_E  (5)
+#define kPos_SE (6)
 
 int convertPotValue()
 {
@@ -102,21 +118,84 @@ int convertPotValue()
   return kPos_SE;
 }
 
+/* We've configured this such that for SW,W,NW, and N, you
+ * cannot overwrite the ROM files, but you can still dump 
+ * to the card.  for NE, E, and SE, you can re-load the 
+ * dumps you've created previously.
+ */
+const char * filenamesLoad[7] = {
+  "ROM_SW.bin",
+  "ROM_W.bin",
+  "ROM_NW.bin",
+  "ROM_N.bin",
+  
+  "Dump_NE.bin",
+  "Dump_E.bin",
+  "Dump_SE.bin"
+};
+
+const char * filenamesSave[7] = {
+  "Dump_SW.bin",
+  "Dump_W.bin",
+  "Dump_NW.bin",
+  "Dump_N.bin",
+  "Dump_NE.bin",
+  "Dump_E.bin",
+  "Dump_SE.bin"
+};
+
+/* these are used by the pollLed() function to display a 
+ *  selection pattern on the RED LED.
+ *  The strings consist of 'l' and 's' and ','
+ *  'l' is a long flash
+ *  's' is a short flash
+ *  'D' is a long delay
+ *  'd' is a short delay
+ */
+const  char * ledPatterns[7] = {
+  "sD", "sdsD", "sdsdsD", "lD", "ldsD", "ldsdsD", "ldsdsdsD"
+};
+
+
 void pollLed() {
-  static long lastChangeTime = 0;
+  static long stepTimeout = 0;
+  static int patternStep = 0;
   static int ledState = LOW;
   static int lastValue = -1;
   
   int value = convertPotValue();
 
   if( value != lastValue ) {
+    /* new value, reset the animation */
     lastValue = value;
-    Serial.println( value, DEC );
+    patternStep = -1;
+    stepTimeout = 0; /* force an update next */
   }
 
-  if( millis() > lastChangeTime + value ) {
-    lastChangeTime = millis();
-    ledState = (ledState==HIGH)?LOW:HIGH;
+  if( millis() > stepTimeout ) {
+    patternStep++;
+    if( ledPatterns[value][patternStep] == '\0' ) {
+      /* past the end of the pattern */
+      patternStep = 0; /* reset */
+    }
+    switch( ledPatterns[value][patternStep] ) {
+      case( 's' ):
+        ledState = HIGH;
+        stepTimeout = millis() + 100;
+        break;
+      case( 'l' ):
+        ledState = HIGH;
+        stepTimeout = millis() + 400;
+        break;
+      case( 'd' ):
+        stepTimeout = millis() + 100;
+        ledState = LOW;
+        break;
+      case( 'D' ):
+        stepTimeout = millis() + 1000;
+        ledState = LOW;
+        break;
+    }
   }
 
   digitalWrite( kPin_LED, ledState );
@@ -138,9 +217,13 @@ void loop() {
   }
 }
 
+/* Load From SD card */
 void SD2Bus() {
+  File myFile;
+  int dataByte = 0;
+  
   //Serial.print ("writing from SD card to the bus");
-  myFile = SD.open("LOADFILE.hex");
+  myFile = SD.open( filenamesLoad[ convertPotValue() ] );
   
   if (myFile) {
     pinMode(kPin_WRTOGGLE, OUTPUT);
@@ -160,14 +243,15 @@ void SD2Bus() {
     for (long i = 0; i < 65535; i++) {
       dataByte = myFile.read();
       //Serial.print (char(dataByte));
-      digitalWrite(kPin_DATA0, dataByte & 0x01);
-      digitalWrite(kPin_DATA1, dataByte & 0x02);
-      digitalWrite(kPin_DATA2, dataByte & 0x04);
-      digitalWrite(kPin_DATA3, dataByte & 0x08);
-      digitalWrite(kPin_DATA4, dataByte & 0x10);
-      digitalWrite(kPin_DATA5, dataByte & 0x20);
-      digitalWrite(kPin_DATA6, dataByte & 0x40);
-      digitalWrite(kPin_DATA7, dataByte & 0x80);
+      digitalWrite(kPin_DATA0, (dataByte & 0x01) == 0x01 ? HIGH : LOW );
+      digitalWrite(kPin_DATA1, (dataByte & 0x02) == 0x02 ? HIGH : LOW );
+      digitalWrite(kPin_DATA2, (dataByte & 0x04) == 0x04 ? HIGH : LOW );
+      digitalWrite(kPin_DATA3, (dataByte & 0x08) == 0x08 ? HIGH : LOW );
+      digitalWrite(kPin_DATA4, (dataByte & 0x10) == 0x10 ? HIGH : LOW );
+      digitalWrite(kPin_DATA5, (dataByte & 0x20) == 0x20 ? HIGH : LOW );
+      digitalWrite(kPin_DATA6, (dataByte & 0x40) == 0x40 ? HIGH : LOW );
+      digitalWrite(kPin_DATA7, (dataByte & 0x80) == 0x80 ? HIGH : LOW );
+      
       int z = digitalRead(kPin_WRREQ);
       //delay(1);
       digitalWrite(kPin_WRTOGGLE, LOW);
@@ -175,18 +259,20 @@ void SD2Bus() {
       digitalWrite(kPin_WRTOGGLE, HIGH);
 
 
-      //      Buswrite();
+      //      Buswrite( dataByte );
       //delay(5);
       digitalWrite(kPin_COUNT, HIGH);
      // delay(1);
       digitalWrite(kPin_COUNT, LOW);
       //delay(1);
     }
+
+    myFile.close();
   }
   //Serial.println();
   //Serial.print ("Memory writen");
   digitalWrite(kPin_DONE, HIGH);
-  int z = digitalRead(kPin_WRREQ);
+  int z = digitalRead(kPin_WRREQ); /* shouldn't this be checked? */
   delay(1);
   digitalWrite(kPin_DONE, LOW);
 
@@ -203,16 +289,27 @@ void SD2Bus() {
 
 }
 
+/* save ram to SD file. */
 void Read2SD() {
+  File myFile;
+  int dataByte = 0;
+  
   Serial.println("memory to SD");
-  myFile = SD.open("SaveFile.hex", FILE_WRITE);
+  myFile = SD.open(filenamesSave[ convertPotValue() ] , FILE_WRITE);
   if (myFile) {
     digitalWrite(kPin_CRESET, HIGH);
     delay(1);
     digitalWrite(kPin_CRESET, LOW);
     for (long i = 0; i < 65535; i++) {
-      dataByte = ((digitalRead(kPin_DATA0)) + (digitalRead(kPin_DATA1) * 2) + (digitalRead(kPin_DATA2) * 4) + (digitalRead(kPin_DATA3) * 8) + (digitalRead(kPin_DATA4) * 16) + (digitalRead(kPin_DATA5) * 32) + (digitalRead(kPin_DATA6) * 64) + (digitalRead(kPin_DATA7) * 128));
-      //Busread();
+      dataByte = ( (digitalRead(kPin_DATA0)==HIGH ? 0x01 : 0 ) 
+                 + (digitalRead(kPin_DATA1)==HIGH ? 0x02 : 0 )
+                 + (digitalRead(kPin_DATA2)==HIGH ? 0x04 : 0 )
+                 + (digitalRead(kPin_DATA3)==HIGH ? 0x08 : 0 )
+                 + (digitalRead(kPin_DATA4)==HIGH ? 0x10 : 0 )
+                 + (digitalRead(kPin_DATA5)==HIGH ? 0x20 : 0 )
+                 + (digitalRead(kPin_DATA6)==HIGH ? 0x40 : 0 ) 
+                 + (digitalRead(kPin_DATA7)==HIGH ? 0x80 : 0 )
+                 );
       myFile.print(char(dataByte));
       //Serial.print(char(dataByte));
       dataByte = 0;
@@ -228,27 +325,6 @@ void Read2SD() {
   delay(1);
   digitalWrite(kPin_DONE, LOW);
   //Serial.println("kPin_DONE.");
-}
-
-void Busread() {
-  delay(1);
-  dataByte = ((digitalRead(kPin_DATA0)) + (digitalRead(kPin_DATA1) * 2) + (digitalRead(kPin_DATA2) * 4) + (digitalRead(kPin_DATA3) * 8) + (digitalRead(kPin_DATA4) * 16) + (digitalRead(kPin_DATA5) * 32) + (digitalRead(kPin_DATA6) * 64) + (digitalRead(kPin_DATA7) * 128));
-}
-
-void Buswrite() {
-  //digitalWrite(kPin_WRTOGGLE, LOW);
-  digitalWrite(kPin_DATA0, dataByte & 0x01);
-  digitalWrite(kPin_DATA1, dataByte & 0x02);
-  digitalWrite(kPin_DATA2, dataByte & 0x04);
-  digitalWrite(kPin_DATA3, dataByte & 0x08);
-  digitalWrite(kPin_DATA4, dataByte & 0x10);
-  digitalWrite(kPin_DATA5, dataByte & 0x20);
-  digitalWrite(kPin_DATA6, dataByte & 0x40);
-  digitalWrite(kPin_DATA7, dataByte & 0x80);
-  delay(1);
-  digitalWrite(kPin_WRTOGGLE, LOW);
-  delay(1);
-  digitalWrite(kPin_WRTOGGLE, HIGH);
 }
 
 
