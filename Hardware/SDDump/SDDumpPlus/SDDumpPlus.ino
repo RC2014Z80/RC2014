@@ -30,6 +30,16 @@ const char * versionString = "v1.02 - 11/05/2016";
  *       isolated from the circuit board. ("programming mode")
  */
 
+/* Known issues:
+ *  - The arduino SD library cannot deal with cards changing and will fail
+ *    on reads after the card has been changed. The only way around this is to
+ *    do a hard reset after the card is removed.
+ *    
+ *    A possible solution:
+ *      - do a "is card available" check, occasionally.
+ *      - if the call fails, error code on the LED, then hard reset resetFunc()
+ *      - I did a version of this for another project and it worked well
+ */
 
 /* pin usage of the arduino */
 #define kPin_WRREQ      14  /* A0 */
@@ -52,6 +62,11 @@ const char * versionString = "v1.02 - 11/05/2016";
 
 
 int z = 0;  //null value for delay
+
+void resetFunc()
+{
+  asm volatile ("jmp 0");
+}
 
 
 void setup() {
@@ -240,7 +255,7 @@ void SD2Bus() {
     int z = digitalRead(kPin_WRREQ);
     //delay(1);
     digitalWrite(kPin_CRESET, LOW);
-    for (long i = 0; i < 65535; i++) {
+    for (long i = 0; i < 65535 && myFile.available() ; i++) { // change to stop at EOF!
       dataByte = myFile.read();
       //Serial.print (char(dataByte));
       digitalWrite(kPin_DATA0, (dataByte & 0x01) == 0x01 ? HIGH : LOW );
