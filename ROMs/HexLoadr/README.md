@@ -13,7 +13,7 @@ There are are several stages to this process.
     
 # Important Addresses
 
-There are a number of important Z80 addresses or origins that need to be modified (managed) within your assembly program.
+There are a number of important Z80 addresses or origins that need to be managed within your assembly program.
 
 ## Arbitrary Program Origin
 
