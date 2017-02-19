@@ -19,17 +19,17 @@ There are a number of important Z80 addresses or origins that need to be managed
 
 Your program (the one that you're doing all this for) needs to start in RAM located somewhere.
 
-For the RC2014 with 32kB of RAM, when the RC2014 does a cold start it requests the "Memory Top?" figure. Setting this to 57343 (`0xDFFF`), or lower, will give you space from `0xE000` to `0xFFFF` for your program and for the hexloader program.
+For the RC2014 with 32kB of RAM, when the RC2014 does a cold start it requests the "Memory Top?" figure. Setting this to 57343 (`0xDFFF`), or lower, will give you space from `0xE000` to `0xFFFF` for your program.
 
 If you're using the RC2014 with 56kB of RAM, then all of the RAM between `0x3000` and `0x7FFF` is available for your assembly programs, without limitation.
 
 ## RST locations
 
-For convenience, because we can't easily change ROM code interrupt routines already present in the RC2014, the serial Tx and Rx routines are reachable by calling `RST` instructions from your assembly program.
+For convenience, because we can't easily change ROM code interrupt routines already present in the RC2014, the ACIA serial Tx and Rx routines are reachable by calling `RST` instructions from your assembly program.
 
-* Tx: `RST 08H` expects a byte in the `a` register.
-* Rx: `RST 10H` returns a byte in the `a` register, and will loop until it has a byte to return.
-* Rx Check: `RST 18H` will return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
+* Tx: `RST 08H` expects a byte to transmit in the `a` register.
+* Rx: `RST 10H` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
+* Rx Check: `RST 18H` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
 
 # Program Usage
 
@@ -43,7 +43,7 @@ For convenience, because we can't easily change ROM code interrupt routines alre
 
 5. When HexLoadr has finished, and you are back at the Basic `ok` prompt, use the `DOKE` command relocate the address for the Basic `USR(x)` command to point to `.ORG` of your arbitrary program. For the RC2014 the `USR(x)` jump address is located at `&h8124`. If your arbitrary program is located at `&hE000` then the Basic command is `DOKE &h8124, &hE000`, for example.
 
-6. Start your arbitrary program using `PRINT USR(x)`, or other variant if you have parameters to pass to your program.
+6. Start your arbitrary program using `PRINT USR(0)`, or other variant if you have parameters to pass to your program.
 
 7. Profit.
 
