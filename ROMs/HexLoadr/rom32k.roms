@@ -1,0 +1,5 @@
+    # test memory layout:
+    # program space
+    begin program_space
+    0x0000  0x8000  nascom32k.rom nascom32k
+    end
