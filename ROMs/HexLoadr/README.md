@@ -1,10 +1,10 @@
 # HexLoadr
 
-The goal of this extension to the standard RC2014 boot sequence is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start the program from Nascom Basic.
+The goal of this extension to the standard RC2014 boot ROM sequence is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from Nascom Basic.
 
 There are are several stages to this process.
 
-1. Reserve space for your assembly program if required.
+1. Reserve space for your assembly program, if required, during the cold start.
 2. Reset the RC2014, and select the HexLoadr from the `(C|W|H)` options.
 3. Then the HexLoadr program will initiate and look for your program's Intel HEX formatted information on the serial interface.
 4. Once the final line of the HEX code is read, the HexLoadr will return to Nascom Basic.
@@ -21,15 +21,35 @@ Your program (the one that you're doing all this for) needs to start in RAM loca
 
 For the RC2014 with 32kB of RAM, when the RC2014 does a cold start it requests the "Memory Top?" figure. Setting this to 57343 (`0xDFFF`), or lower, will give you space from `0xE000` to `0xFFFF` for your program.
 
-If you're using the RC2014 with 56kB of RAM, then all of the RAM between `0x3000` and `0x7FFF` is available for your assembly programs, without limitation.
+If you're using the RC2014 with 56kB of RAM, then all of the RAM between `0x3000` and `0x7FFF` is available for your assembly programs, without limitation. So, there's no need to change anything during the cold start.
 
 ## RST locations
 
-For convenience, because we can't easily change ROM code interrupt routines already present in the RC2014, the ACIA serial Tx and Rx routines are reachable by calling `RST` instructions from your assembly program.
+For convenience, because your assembly program can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx routines are reachable from your assembly program by calling the `RST` instructions.
 
 * Tx: `RST 08H` expects a byte to transmit in the `a` register.
 * Rx: `RST 10H` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
 * Rx Check: `RST 18H` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
+
+## USR Jump Address & Parameter Access
+
+For the RC2014 the `USR(x)` jump address is located at `&h8124`.
+If your arbitrary program is located at `&hE000` then the Basic command to set the `USR(x)` jump address is `DOKE &h8124, &hE000`.
+
+Your assembly program can receive a passed in from the function by calling `DEINT` at `&h0B57`.
+The parameter is stored in register pair `DE`.
+
+When your assembly program is finished it can return a parameter stored in `A` (MSB) and `B` (LSB) by jumping to `ABPASS` which is located at `&h12CC`.
+
+``` asm
+                               ; from Nascom Basic Symbol Tables
+DEINT           .EQU     $0B57 ; Function DEINT to get USR(x) into DE registers
+ABPASS          .EQU     $12CC ; Function ABPASS to put output into AB register for return
+
+                call DEINT      ; get the USR(x) argument in DE. 
+                                ; your code here
+                jp ABPASS       ; return the 16 bit value to USR(x). Note jp not ret.
+```
 
 # Program Usage
 
@@ -49,11 +69,11 @@ For convenience, because we can't easily change ROM code interrupt routines alre
 
 ## Notes
 
-Note that your arbitrary program and the `USR(x)` jump will remain in place through a RC2014 reset, provided you prevent Basic from initialising the RAM you have loaded. Also, you can reload your program to the same location through multiple Warm and HexLoadr restarts, without reprogramming the `USR(x)` jump.
+Note that your arbitrary program and the `USR(x)` jump address setting will remain in place through a RC2014 Cold or Warm RESET, provided you prevent Basic from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm and HexLoadr RESETs, without reprogramming the `USR(x)` jump.
 
 Any Basic programs loaded will also remain in place during a Warm RESET or HexLoadr RESET.
 
-This makes loading a new version of your program as easy as 1. `RESET`, 2. `H`, 3. then `cat`.
+This makes loading a new version of your assembly program as easy as 1. `RESET`, 2. `H`, the 3. `cat`.
 
 # Credits
 
