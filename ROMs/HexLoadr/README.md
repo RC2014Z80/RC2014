@@ -74,7 +74,7 @@ ABPASS          .EQU    $12CC   ; Function ABPASS to put output into AB register
 
 Note that your arbitrary program and the `USR(x)` jump address setting will remain in place through a RC2014 Cold or Warm RESET, provided you prevent Basic from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm and HexLoadr RESETs, without reprogramming the `USR(x)` jump.
 
-Any Basic programs loaded will also remain in place during a Warm RESET or HexLoadr RESET.
+Any Basic programs loaded will also remain in place during a Warm or HexLoadr RESET.
 
 This makes loading a new version of your assembly program as easy as 1. `RESET`, 2. `H`, then 3. `cat`.
 
