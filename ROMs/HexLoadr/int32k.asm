@@ -115,7 +115,7 @@ RST00:           DI            ;Disable interrupts
 RST08:           JP      TXA
 
 ;------------------------------------------------------------------------------
-; RST 10 - Rx a character over RS232 Channel A [Console], hold until char ready.
+; RST 10 - Rx a character over RS232 Channel A [Console], hold until char ready
 
                 .ORG 0010H
 RST10:           JP      RXA
@@ -124,13 +124,13 @@ RST10:           JP      RXA
 ; RST 18 - Check serial Rx status
 
                 .ORG 0018H
-RST18:           JP      CKINCHAR
+RST18:           JP      RXA_CHK
 
 ;------------------------------------------------------------------------------
-; RST 20
+; RST 20 - Start the HexLoadr function
 
                 .ORG     0020H
-RST20:          RET            ; just return
+RST20:          JP       HEX_START
 
 ;------------------------------------------------------------------------------
 ; RST 28
@@ -333,12 +333,14 @@ txa_end:
         ret
 
 ;------------------------------------------------------------------------------
-CKINCHAR:      LD        A,(serRxBufUsed)
+RXA_CHK:
+            LD        A,(serRxBufUsed)
                CP        $0
                RET
 
 ;------------------------------------------------------------------------------
-PRINT:         LD        A,(HL)          ; Get character
+PRINT:
+            LD        A,(HL)          ; Get character
                OR        A               ; Is it $00 ?
                RET       Z               ; Then RETurn on terminator
                RST       08H             ; Print it
@@ -350,7 +352,7 @@ HEX_START:
             ld hl, initString
             call PRINT
 HEX_WAIT_COLON:
-            rst 10H         ; Rx byte
+            call RXA        ; Rx byte
             cp ':'          ; wait for ':'
             jr nz, HEX_WAIT_COLON
             ld hl, 0        ; reset hl to compute checksum
@@ -367,7 +369,7 @@ HEX_WAIT_COLON:
             jr nz, HEX_INVAL_TYPE ; if not, error
 HEX_READ_DATA:
             ld a, '*'       ; "*" per byte loaded  # DEBUG
-            rst 08H         ; Print it             # DEBUG
+            call TXA        ; Print it             # DEBUG
             call HEX_READ_BYTE
             ld (de), a      ; write the byte at the RAM address
             inc de
@@ -378,11 +380,11 @@ HEX_READ_CHKSUM:
             or a
             jr nz, HEX_BAD_CHK  ; non zero, we have an issue
             ld a, '#'       ; "#" per line loaded
-            rst 08H         ; Print it
+            call TXA        ; Print it
             ld a, CR        ; CR                   # DEBUG
-            rst 08H         ; Print it             # DEBUG
+            call TXA        ; Print it             # DEBUG
             ld a, LF        ; LF                   # DEBUG
-            rst 08H         ; Print it             # DEBUG
+            call TXA        ; Print it             # DEBUG
             jr HEX_WAIT_COLON
 
 HEX_END_LOAD:
@@ -406,7 +408,7 @@ HEX_BAD_CHK:
 
 HEX_READ_BYTE:              ; Returns byte in a, checksum in hl
             push bc
-            rst 10H         ; Rx byte
+            call RXA        ; Rx byte
             sub '0'
             cp 10
             jr c, HEX_READ_NBL2 ; if a<10 read the second nibble
@@ -417,7 +419,7 @@ HEX_READ_NBL2:
             rlca
             rlca
             ld c, a         ; temporarily store the first nibble in c
-            rst 10H         ; Rx byte
+            call RXA        ; Rx byte
             sub '0'
             cp 10
             jr c, HEX_READ_END  ; if a<10 finalize

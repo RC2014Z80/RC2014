@@ -1,6 +1,6 @@
 # HexLoadr
 
-The goal of this extension to the standard RC2014 boot ROM sequence is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from Nascom Basic.
+The goal of this extension to the standard RC2014 boot ROM sequence is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from Nascom Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
 
 There are are several stages to this process.
 
@@ -9,7 +9,7 @@ There are are several stages to this process.
 3. Then the HexLoadr program will initiate and look for your program's Intel HEX formatted information on the serial interface.
 4. Once the final line of the HEX code is read, the HexLoadr will return to Nascom Basic.
 5. The newly loaded program starting address must be loaded into the `USR(x)` jump location.
-6. Start the new arbitrary program by entering `USR(x)`.
+6. Start the new arbitrary program from Basic by entering the`USR(x)` command.
     
 # Important Addresses
 
@@ -25,16 +25,17 @@ If you're using the RC2014 with 56kB of RAM, then all of the RAM between `0x2000
 
 ## RST locations
 
-For convenience, because your assembly program can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx routines are reachable from your assembly program by calling the `RST` instructions.
+For convenience, because your program can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx, and HexLoadr, routines are reachable from your assembly program by calling the `RST` instructions.
 
 * Tx: `RST 08H` expects a byte to transmit in the `a` register.
 * Rx: `RST 10H` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
 * Rx Check: `RST 18H` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
+* HexLoadr: `RST 20H` will launch the HexLoadr function, if called from your program, and `RET` on completion.
 
 ## USR Jump Address & Parameter Access
 
 For the RC2014 the `USR(x)` jump address is located at `&h8124`.
-For example, if your arbitrary program is located at `&hE000` then the Basic command to set the `USR(x)` jump address is `DOKE &h8124, &hE000`.
+For example, if the origin of your arbitrary program is located at `&hE000` then the Basic command to set the `USR(x)` jump address is `DOKE &h8124, &hE000`.
 
 Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `&h0B57`. The parameter is stored in register pair `DE`.
 
@@ -58,11 +59,11 @@ ABPASS          .EQU    $12CC   ; Function ABPASS to put output into AB register
 
 1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler.
 
-2. Start your RC2014 with the `Memory top?` set to 57343 (`0xDFFF`) or lower. This leaves space for your program from `0xE000` through to `0xFFFF`. Adjust this if needed to suit your individual needs. For 56kB RAM module equipped RC2014 devices, just skip this step.
+2. Start your 32k RAM RC2014 with the `Memory top?` set to 57343 (`0xDFFF`) or lower. This leaves space for your program from `0xE000` through to `0xFFFF`. Adjust this if needed to suit your individual needs. For 56kB RAM module equipped RC2014 devices, just skip this step.
 
 3. Reset the RC2014 and type `H` when offered the `(C|W|H)` option when booting. `HexLoadr:` will wait for Intel HEX formatted data on the ACIA serial interface.
 
-4. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1. If desired the python `slowprint.py` program, or the Linux `cat` utility, can also be used for this purpose. `python slowprint.py < myprogram.hex > /dev/ttyUSB0` or `cat myprogram.hex > /dev/ttyUSB0`.
+4. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1. If desired the python `slowprint.py` program, or the Linux `cat` utility, can also be used for this purpose. `python slowprint.py < myprogram.hex > /dev/ttyUSB0` or `cat myprogram.hex > /dev/ttyUSB0`. The HexLoadr function does not need `slowprint.py`, as it can store the Intel HEX code as fast as `cat` can transmit it.
 
 5. When HexLoadr has finished, and you are back at the Basic `ok` prompt, use the `DOKE` command relocate the address for the Basic `USR(x)` command to point to `.ORG` of your arbitrary program. For the RC2014 the `USR(x)` jump address is located at `&h8124`. If your arbitrary program is located at `&hE000` then the Basic command is `DOKE &h8124, &hE000`, for example.
 
@@ -76,7 +77,7 @@ Note that your arbitrary program and the `USR(x)` jump address setting will rema
 
 Any Basic programs loaded will also remain in place during a Warm or HexLoadr RESET.
 
-This makes loading a new version of your assembly program as easy as 1. `RESET`, 2. `H`, then 3. `cat`.
+This makes loading a new version of your assembly program as easy as 1. hit `RESET` button, 2. type `H`, then 3. `cat` the new Intel HEX version of your program.
 
 # Credits
 
