@@ -127,8 +127,8 @@ VECTOR_PROTO_SIZE .EQU  $1F
 ;   Z80 RAM VECTOR ADDRESS TABLE
 
 NULL_RET_ADDR   .EQU    VECTOR_PROTO    ; Write the NULL return location when removing an ISR
-NULL_INT_ADDR   .EQU    $0060
-NULL_NMI_ADDR   .EQU    $0063
+NULL_NMI_ADDR   .EQU    $0060
+NULL_INT_ADDR   .EQU    $0062
 
 RST_08_ADDR     .EQU    Z80_VECTOR_TABLE+$02   ; Write your ISR address to this location
 RST_10_ADDR     .EQU    Z80_VECTOR_TABLE+$06

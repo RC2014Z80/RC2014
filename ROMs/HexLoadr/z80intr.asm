@@ -105,12 +105,11 @@ INT_NMI_LBL:
 ; NULL RETURN INSTRUCTIONS
 
                 .ORG    0060H
+NULL_NMI:
+                RETN
 NULL_INT:
                 EI
                 RETI
-NULL_NMI:
-                EI
-                RETN
 
 ;------------------------------------------------------------------------------
 ; NMI - INTERRUPT VECTOR NMI
