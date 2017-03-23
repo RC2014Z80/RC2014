@@ -1,4 +1,4 @@
-;==================================================================================
+;==============================================================================
 ; Contents of parts of this file are copyright Grant Searle
 ;
 ; You have permission to use this for NON COMMERCIAL USE ONLY
@@ -11,7 +11,7 @@
 ; If the above don't work, please perform an Internet search to see if I have
 ; updated the web page hosting service.
 ;
-;==================================================================================
+;==============================================================================
 ;
 ; ACIA 6850 interrupt driven serial I/O to run modified NASCOM Basic 4.7.
 ; Full input and output buffering with incoming data hardware handshaking.
@@ -21,134 +21,46 @@
 ; https://github.com/feilipu/
 ; https://feilipu.me/
 ;
-;==================================================================================
+;==============================================================================
 ;
 ; HexLoadr option by @feilipu,
 ; derived from the work of @fbergama and @foxweb at RC2014
 ; https://github.com/RC2014Z80
 ;
-;==================================================================================
 
-SER_CTRL_ADDR   .EQU   $80    ; Address of Control Register (write only)
-SER_STATUS_ADDR .EQU   $80    ; Address of Status Register (read only)
-SER_DATA_ADDR   .EQU   $81    ; Address of Data Register
+;==============================================================================
+;
+; INCLUDES SECTION
+;
 
-SER_CLK_DIV_01  .EQU   $00    ; Divide the Clock by 1
-SER_CLK_DIV_16  .EQU   $01    ; Divide the Clock by 16
-SER_CLK_DIV_64  .EQU   $02    ; Divide the Clock by 64 (default value)
-SER_RESET       .EQU   $03    ; Master Reset (issue before any other Control word)
+#include    "d:/rc2014.h"
+#include    "d:/z80intr.asm"
 
-SER_7E2         .EQU   $00    ; 7 Bits Even Parity 2 Stop Bits
-SER_7O2         .EQU   $04    ; 7 Bits  Odd Parity 2 Stop Bits
-SER_7E1         .EQU   $08    ; 7 Bits Even Parity 1 Stop Bit
-SER_7O1         .EQU   $0C    ; 7 Bits  Odd Parity 1 Stop Bit
-SER_8N2         .EQU   $10    ; 8 Bits   No Parity 2 Stop Bits
-SER_8N1         .EQU   $14    ; 8 Bits   No Parity 1 Stop Bit
-SER_8E1         .EQU   $18    ; 8 Bits Even Parity 1 Stop Bit
-SER_8O1         .EQU   $1C    ; 8 Bits  Odd Parity 1 Stop Bit
+;==============================================================================
+;
+; DEFINES SECTION
+;
 
-SER_TDI_RTS0    .EQU   $00    ; _RTS low,  Transmitting Interrupt Disabled
-SER_TEI_RTS0    .EQU   $20    ; _RTS low,  Transmitting Interrupt Enabled
-SER_TDI_RTS1    .EQU   $40    ; _RTS high, Transmitting Interrupt Disabled
-SER_TDI_BRK     .EQU   $60    ; _RTS low,  Transmitting Interrupt Disabled, BRK on Tx
+; Top of BASIC line input buffer (CURPOS WRKSPC+0ABH)
+; so it is "free ram" when BASIC resets
+; set BASIC Work space WRKSPC $8000, in RAM
 
-SER_TEI_MASK    .EQU   $60    ; Mask for the Tx Interrupt & RTS bits   
 
-SER_REI         .EQU   $80    ; Receive Interrupt Enabled
-
-SER_RDRF        .EQU   $01    ; Receive Data Register Full
-SER_TDRE        .EQU   $02    ; Transmit Data Register Empty
-SER_DCD         .EQU   $04    ; Data Carrier Detect
-SER_CTS         .EQU   $08    ; Clear To Send
-SER_FE          .EQU   $10    ; Framing Error (Received Byte)
-SER_OVRN        .EQU   $20    ; Overrun (Received Byte
-SER_PE          .EQU   $40    ; Parity Error (Received Byte)
-SER_IRQ         .EQU   $80    ; IRQ (Either Transmitted or Received Byte)
-
-RAM_START       .EQU   $8000  ; Start of RAM
-
-SER_RX_BUFSIZE  .EQU     $FF  ; FIXED Rx buffer size, 256 Bytes, no range checking
-SER_RX_FULLSIZE .EQU     SER_RX_BUFSIZE - $08
-                              ; Fullness of the Rx Buffer, when not_RTS is signalled
-SER_RX_EMPTYSIZE .EQU    $08  ; Fullness of the Rx Buffer, when RTS is signalled
-
-SER_TX_BUFSIZE  .EQU     $0F  ; Size of the Tx Buffer, 15 Bytes
-
-serRxBuf        .EQU     $RAM_START ; must start on 0xnn00 for low byte roll-over
-serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
-serRxInPtr      .EQU     serTxBuf+SER_TX_BUFSIZE+1
-serRxOutPtr     .EQU     serRxInPtr+2
-serTxInPtr      .EQU     serRxOutPtr+2
-serTxOutPtr     .EQU     serTxInPtr+2
-serRxBufUsed    .EQU     serTxOutPtr+2
-serTxBufUsed    .EQU     serRxBufUsed+1
-serControl      .EQU     serTxBufUsed+1
-basicStarted    .EQU     serControl+1
-
-WRKSPC          .EQU     RAM_START+$0120 ; set BASIC Work space WRKSPC
+WRKSPC          .EQU     RAM_START+$0220 ; set BASIC Work space WRKSPC
                                          ; beyond the end of ACIA stuff
 
 TEMPSTACK       .EQU     WRKSPC+$0AB ; Top of BASIC line input buffer
                                      ; (CURPOS = WRKSPC+0ABH)
                                      ; so it is "free ram" when BASIC resets
 
-CR              .EQU     0DH
-LF              .EQU     0AH
-CS              .EQU     0CH   ; Clear screen
-
 ;==================================================================================
 ;
-; Z80 INTERRUPT VECTOR SECTION 
+; CODE SECTION
 ;
 
-;------------------------------------------------------------------------------
-; RST 00 - Reset
-
-                .ORG     0000H
-RST00:           DI            ;Disable interrupts
-                 JP      INIT  ;Initialize Hardware and go
+        .ORG    0100H
 
 ;------------------------------------------------------------------------------
-; RST 08 - Tx a character over RS232 
-
-                .ORG     0008H
-RST08:           JP      TXA
-
-;------------------------------------------------------------------------------
-; RST 10 - Rx a character over RS232 Channel A [Console], hold until char ready
-
-                .ORG 0010H
-RST10:           JP      RXA
-
-;------------------------------------------------------------------------------
-; RST 18 - Check serial Rx status
-
-                .ORG 0018H
-RST18:           JP      RXA_CHK
-
-;------------------------------------------------------------------------------
-; RST 20 - Start the HexLoadr function
-
-                .ORG     0020H
-RST20:          JP       HEX_START
-
-;------------------------------------------------------------------------------
-; RST 28
-
-                .ORG     0028H
-RST28:          RET            ; just return
-
-;------------------------------------------------------------------------------
-; RST 30
-;
-                .ORG     0030H
-RST30:          RET            ; just return
-
-;------------------------------------------------------------------------------
-; RST 38 - INTERRUPT VECTOR [ ACIA for IM 1 ]
-
-                .ORG     0038H
-RST38:                 
 serialInt:
         push af
         push hl
@@ -189,7 +101,7 @@ im1_tx_check:                       ; now start doing the Tx stuff
         ld hl, (serTxOutPtr)        ; get the pointer to place where we pop the Tx byte
         ld a, (hl)                  ; get the Tx byte
         out (SER_DATA_ADDR), a      ; output the Tx byte to the ACIA
-        
+
         inc hl                      ; move the Tx pointer along
         ld a, l                     ; get the low byte of the Tx pointer
         cp (serTxBuf + SER_TX_BUFSIZE) & $FF
@@ -228,7 +140,7 @@ im1_txa_end:
 
         pop hl
         pop af
-        
+
         ei
         reti
 
@@ -301,7 +213,7 @@ txa_buffer_out:
         ld a, l                     ; Retrieve Tx character
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
-        
+
         inc hl                      ; move the Tx pointer along
         ld a, l                     ; move low byte of the Tx pointer
         cp (serTxBuf + SER_TX_BUFSIZE) & $FF
@@ -335,20 +247,20 @@ txa_end:
 ;------------------------------------------------------------------------------
 RXA_CHK:
             LD        A,(serRxBufUsed)
-               CP        $0
-               RET
+            CP        $0
+            RET
 
 ;------------------------------------------------------------------------------
 PRINT:
             LD        A,(HL)          ; Get character
-               OR        A               ; Is it $00 ?
-               RET       Z               ; Then RETurn on terminator
-               RST       08H             ; Print it
-               INC       HL              ; Next Character
-               JR        PRINT           ; Continue until $00
+            OR        A               ; Is it $00 ?
+            RET       Z               ; Then RETurn on terminator
+            RST       08H             ; Print it
+            INC       HL              ; Next Character
+            JR        PRINT           ; Continue until $00
 
 ;------------------------------------------------------------------------------
-HEX_START:      
+HEX_START:
             ld hl, initString
             call PRINT
 HEX_WAIT_COLON:
@@ -435,8 +347,12 @@ HEX_READ_END:
 
 ;------------------------------------------------------------------------------
 INIT:
-               LD        HL,TEMPSTACK    ; Temp stack
-               LD        SP,HL           ; Set up a temporary stack
+               LD        SP,TEMPSTACK    ; Set up a temporary stack
+
+               LD        HL,VECTOR_PROTO ; Establish Z80 RST Vector Table
+               LD        DE,Z80_VECTOR_TABLE
+               LD        BC,VECTOR_PROTO_SIZE
+               LDIR
 
                LD        HL,serRxBuf     ; Initialise Rx Buffer
                LD        (serRxInPtr),HL
@@ -487,7 +403,7 @@ CORW:
 COLDSTART:
                LD        A,'Y'           ; Set the BASIC STARTED flag
                LD        (basicStarted),A
-               JP        $02A0           ; <<<< Start Basic COLD:
+               JP        $0390           ; <<<< Start Basic COLD:
 CHECKWARM:
                CP        'W'
                JR        NZ, CORW
@@ -497,20 +413,44 @@ CHECKWARM:
                LD        A,$0A
                RST       08H
 WARMSTART:
-               JP        $02A3           ; <<<< Start Basic WARM:
+               JP        $0393           ; <<<< Start Basic WARM:
 
-SIGNON1:       .BYTE     "SBC - Grant Searle",CR,LF
-               .BYTE     "ACIA - feilipu",CR,LF,0
-SIGNON2:       .BYTE     CR,LF
-               .BYTE     "Cold or Warm start, "
-               .BYTE     "or HexLoadr (C|W|H) ? ",0
+;==============================================================================
+;
+; STRINGS
+;
+SIGNON1:        .BYTE   "SBC - Grant Searle",CR,LF
+                .BYTE   "ACIA - feilipu",CR,LF,0
+SIGNON2:        .BYTE   CR,LF
+                .BYTE   "Cold or Warm start, "
+                .BYTE   "or HexLoadr (C|W|H) ? ",0
 
-initString:        .BYTE CR,LF
-                   .BYTE "HexLoadr: "
-                   .BYTE CR,LF,0
+initString:     .BYTE   CR,LF
+                .BYTE   "HexLoadr: "
+                .BYTE   CR,LF,0
 
-invalidTypeStr:    .BYTE "Invalid Type",CR,LF,0
-badCheckSumStr:    .BYTE "Checksum Error",CR,LF,0
-LoadOKStr:         .BYTE "Done",CR,LF,0
-                
-               .END
+invalidTypeStr: .BYTE   "Inval Type",CR,LF,0
+badCheckSumStr: .BYTE   "Chksum Error",CR,LF,0
+LoadOKStr:      .BYTE   "Done",CR,LF,0
+
+;==============================================================================
+;
+; Z80 INTERRUPT VECTOR PROTOTYPE ASSIGNMENTS
+;
+
+RST_08      .EQU    TXA             ; TX a character over ACIA
+RST_10      .EQU    RXA             ; RX a character over ACIA, loop byte available
+RST_18      .EQU    RXA_CHK         ; Check ACIA status, return # bytes available
+RST_20      .EQU    NULL_RET        ; RET
+RST_28      .EQU    NULL_RET        ; RET
+RST_30      .EQU    NULL_RET        ; RET
+INT_00      .EQU    serialInt       ; ACIA interrupt
+INT_NMI     .EQU    NULL_NMI        ; RETN
+
+;==============================================================================
+;
+            .END
+;
+;==============================================================================
+
+
