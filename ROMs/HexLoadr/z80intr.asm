@@ -22,7 +22,7 @@
 
 ;==============================================================================
 ;
-; Z80 INTERRUPT VECTOR PROTOTYPE TABLE
+; Z80 INTERRUPT ORIGINATING VECTOR TABLE
 ;
 
 ;------------------------------------------------------------------------------
@@ -75,8 +75,6 @@
 ; WILL BE DUPLICATED DURING INIT TO
 ;
 ;               .ORG    Z80_VECTOR_TABLE
-NULL_RET:
-                RET
 RST_08_LBL:
                 JP      RST_08
                 NOP
@@ -100,6 +98,7 @@ INT_00_LBL:
                 NOP
 INT_NMI_LBL:
                 JP      INT_NMI
+                NOP
 
 ;------------------------------------------------------------------------------
 ; NULL RETURN INSTRUCTIONS
@@ -110,6 +109,8 @@ NULL_NMI:
 NULL_INT:
                 EI
                 RETI
+NULL_RET:
+                RET
 
 ;------------------------------------------------------------------------------
 ; NMI - INTERRUPT VECTOR NMI

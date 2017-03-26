@@ -390,7 +390,7 @@ START:
                CALL      PRINT           ; Output string
 CORW:
                RST       10H
-               AND       %11011111       ; lower to uppercase
+               AND       11011111B       ; lower to uppercase
                CP        'H'             ; are we trying to load an Intel HEX program?
                JP        Z, HEX_START    ; then jump to HexLoadr
                CP        'C'
@@ -421,6 +421,7 @@ WARMSTART:
 ;
 SIGNON1:        .BYTE   "SBC - Grant Searle",CR,LF
                 .BYTE   "ACIA - feilipu",CR,LF,0
+
 SIGNON2:        .BYTE   CR,LF
                 .BYTE   "Cold or Warm start, "
                 .BYTE   "or HexLoadr (C|W|H) ? ",0
