@@ -36,37 +36,37 @@ SER_CTRL_ADDR   .EQU   $80    ; Address of Control Register (write only)
 SER_STATUS_ADDR .EQU   $80    ; Address of Status Register (read only)
 SER_DATA_ADDR   .EQU   $81    ; Address of Data Register
 
-SER_CLK_DIV_01  .EQU   $00    ; Divide the Clock by 1
-SER_CLK_DIV_16  .EQU   $01    ; Divide the Clock by 16
-SER_CLK_DIV_64  .EQU   $02    ; Divide the Clock by 64 (default value)
 SER_RESET       .EQU   $03    ; Master Reset (issue before any other Control word)
+SER_CLK_DIV_64  .EQU   $02    ; Divide the Clock by 64 (default value)
+SER_CLK_DIV_16  .EQU   $01    ; Divide the Clock by 16
+SER_CLK_DIV_01  .EQU   $00    ; Divide the Clock by 1
 
-SER_7E2         .EQU   $00    ; 7 Bits Even Parity 2 Stop Bits
-SER_7O2         .EQU   $04    ; 7 Bits  Odd Parity 2 Stop Bits
-SER_7E1         .EQU   $08    ; 7 Bits Even Parity 1 Stop Bit
-SER_7O1         .EQU   $0C    ; 7 Bits  Odd Parity 1 Stop Bit
-SER_8N2         .EQU   $10    ; 8 Bits   No Parity 2 Stop Bits
-SER_8N1         .EQU   $14    ; 8 Bits   No Parity 1 Stop Bit
-SER_8E1         .EQU   $18    ; 8 Bits Even Parity 1 Stop Bit
 SER_8O1         .EQU   $1C    ; 8 Bits  Odd Parity 1 Stop Bit
+SER_8E1         .EQU   $18    ; 8 Bits Even Parity 1 Stop Bit
+SER_8N1         .EQU   $14    ; 8 Bits   No Parity 1 Stop Bit
+SER_8N2         .EQU   $10    ; 8 Bits   No Parity 2 Stop Bits
+SER_7O1         .EQU   $0C    ; 7 Bits  Odd Parity 1 Stop Bit
+SER_7E1         .EQU   $08    ; 7 Bits Even Parity 1 Stop Bit
+SER_7O2         .EQU   $04    ; 7 Bits  Odd Parity 2 Stop Bits
+SER_7E2         .EQU   $00    ; 7 Bits Even Parity 2 Stop Bits
 
-SER_TDI_RTS0    .EQU   $00    ; _RTS low,  Transmitting Interrupt Disabled
-SER_TEI_RTS0    .EQU   $20    ; _RTS low,  Transmitting Interrupt Enabled
-SER_TDI_RTS1    .EQU   $40    ; _RTS high, Transmitting Interrupt Disabled
 SER_TDI_BRK     .EQU   $60    ; _RTS low,  Transmitting Interrupt Disabled, BRK on Tx
+SER_TDI_RTS1    .EQU   $40    ; _RTS high, Transmitting Interrupt Disabled
+SER_TEI_RTS0    .EQU   $20    ; _RTS low,  Transmitting Interrupt Enabled
+SER_TDI_RTS0    .EQU   $00    ; _RTS low,  Transmitting Interrupt Disabled
 
 SER_TEI_MASK    .EQU   $60    ; Mask for the Tx Interrupt & RTS bits   
 
 SER_REI         .EQU   $80    ; Receive Interrupt Enabled
 
-SER_RDRF        .EQU   $01    ; Receive Data Register Full
-SER_TDRE        .EQU   $02    ; Transmit Data Register Empty
-SER_DCD         .EQU   $04    ; Data Carrier Detect
-SER_CTS         .EQU   $08    ; Clear To Send
-SER_FE          .EQU   $10    ; Framing Error (Received Byte)
-SER_OVRN        .EQU   $20    ; Overrun (Received Byte
-SER_PE          .EQU   $40    ; Parity Error (Received Byte)
 SER_IRQ         .EQU   $80    ; IRQ (Either Transmitted or Received Byte)
+SER_PE          .EQU   $40    ; Parity Error (Received Byte)
+SER_OVRN        .EQU   $20    ; Overrun (Received Byte
+SER_FE          .EQU   $10    ; Framing Error (Received Byte)
+SER_CTS         .EQU   $08    ; Clear To Send
+SER_DCD         .EQU   $04    ; Data Carrier Detect
+SER_TDRE        .EQU   $02    ; Transmit Data Register Empty
+SER_RDRF        .EQU   $01    ; Receive Data Register Full
 
 ; General TTY
 
@@ -162,4 +162,5 @@ serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
                 .END
 ;
 ;==============================================================================
+
 

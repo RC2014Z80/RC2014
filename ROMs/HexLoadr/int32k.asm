@@ -81,7 +81,7 @@ serialInt:
         ld hl, (serRxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Rx byte to the serRxInPtr address
 
-        inc l                       ; move the Rx pointer low byte along
+        inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr), hl         ; write where the next byte should be poked
 
         ld hl, serRxBufUsed
@@ -153,11 +153,12 @@ rxa_wait_for_byte:
         or a                        ; see if there are zero bytes available
         jr z, rxa_wait_for_byte     ; wait, if there are no bytes available
         
+        di                          ; critical section begin
         push hl                     ; Store HL so we don't clobber it
 
         ld hl, (serRxOutPtr)        ; get the pointer to place where we pop the Rx byte
         ld a, (hl)                  ; get the Rx byte
-        push af                     ; save the Rx byte on stack
+        ld i, a                     ; save the Rx byte in I
 
         inc l                       ; move the Rx pointer low byte along
         ld (serRxOutPtr), hl        ; write where the next byte should be popped
@@ -168,8 +169,6 @@ rxa_wait_for_byte:
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
         jr nc, rxa_clean_up         ; if the buffer is too full, don't change the RTS
-
-        di                          ; critical section begin
         
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
@@ -177,19 +176,15 @@ rxa_wait_for_byte:
         ld (serControl), a          ; write the ACIA control echo byte back
         out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
         
-        ei                          ; critical section end
-
 rxa_clean_up:
-
-        pop af                      ; get the Rx byte from stack
+        ld a, i                     ; get the Rx byte from I
         pop hl                      ; recover HL
-
+        ei                          ; critical section end
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
 TXA:
-        push hl                     ; Store HL so we don't clobber it        
-        ld l, a                     ; Store Tx character
+        ld i, a                     ; Store Tx character in I
 
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
@@ -199,10 +194,10 @@ TXA:
         and SER_TDRE                ; check whether a byte can be transmitted
         jr z, txa_buffer_out        ; if not, so abandon immediate Tx
         
-        ld a, l                     ; Retrieve Tx character
+        ld a, i                     ; Retrieve Tx character from I
         out (SER_DATA_ADDR), a      ; immediately output the Tx byte to the ACIA
         
-        jr txa_end                  ; and just complete
+        ret                         ; and just complete
 
 txa_buffer_out:
 
@@ -210,7 +205,11 @@ txa_buffer_out:
         cp SER_TX_BUFSIZE           ; check whether there is space in the buffer
         jr nc, txa_buffer_out       ; buffer full, so wait till it has space
 
-        ld a, l                     ; Retrieve Tx character
+        ld a, i                     ; Retrieve Tx character
+
+        di                          ; critical section begin
+        push hl                     ; Store HL so we don't clobber it
+        
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
 
@@ -221,16 +220,16 @@ txa_buffer_out:
         ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
 
 txa_no_wrap:
-        
+
         ld (serTxInPtr), hl         ; write where the next byte should be poked
 
         ld hl, serTxBufUsed
         inc (hl)                    ; atomic increment of Tx count
 
+        pop hl                      ; recover HL
+
 txa_clean_up:
-        
-        di                          ; critical section begin
-        
+
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TEI_RTS0             ; set RTS low. if the TEI was not set, it will work again
@@ -238,24 +237,20 @@ txa_clean_up:
         out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
 
         ei                          ; critical section end
-
-txa_end:
-
-        pop hl                      ; recover HL
         ret
 
 ;------------------------------------------------------------------------------
 RXA_CHK:
-            LD        A,(serRxBufUsed)
-            CP        $0
-            RET
+        LD        A,(serRxBufUsed)
+        CP        $0
+        RET
 
 ;------------------------------------------------------------------------------
 PRINT:
             LD        A,(HL)          ; Get character
             OR        A               ; Is it $00 ?
             RET       Z               ; Then RETurn on terminator
-            RST       08H             ; Print it
+            CALL      TXA             ; Print it
             INC       HL              ; Next Character
             JR        PRINT           ; Continue until $00
 
@@ -307,7 +302,7 @@ HEX_END_LOAD:
             ld hl, LoadOKStr
             call PRINT
             jp WARMSTART    ; ready to run our loaded program from Basic
-            
+
 HEX_INVAL_TYPE:
             ld hl, invalidTypeStr
             call PRINT
@@ -365,7 +360,7 @@ INIT:
                XOR       A               ; 0 the accumulator
                LD        (serRxBufUsed),A
                LD        (serTxBufUsed),A
-               
+
                LD        A, SER_RESET    ; Master Reset the ACIA
                OUT       (SER_CTRL_ADDR),A
 
@@ -377,7 +372,7 @@ INIT:
                                     
                LD        (serControl),A     ; write the ACIA control byte echo
                OUT       (SER_CTRL_ADDR),A  ; output to the ACIA control byte
-               
+
                IM        1               ; interrupt mode 1
                EI
 START:
