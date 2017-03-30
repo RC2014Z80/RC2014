@@ -87,9 +87,7 @@ serialInt:
         ld hl, serRxBufUsed
         inc (hl)                    ; atomically increment Rx buffer count
 
-
 im1_tx_check:                       ; now start doing the Tx stuff
-
         ld a, (serTxBufUsed)        ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
         jr z, im1_tei_clear         ; if the count is zero, then disable the Tx Interrupt
@@ -109,15 +107,13 @@ im1_tx_check:                       ; now start doing the Tx stuff
         ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
 
 im1_tx_no_wrap:
-        
         ld (serTxOutPtr), hl        ; write where the next byte should be popped
 
         ld hl, serTxBufUsed
         dec (hl)                    ; atomically decrement current Tx count
         jr nz, im1_txa_end          ; if we've more Tx bytes to send, we're done for now
-        
-im1_tei_clear:
 
+im1_tei_clear:
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TDI_RTS0             ; mask out (disable) the Tx Interrupt, keep RTS low
@@ -125,7 +121,6 @@ im1_tei_clear:
         out (SER_CTRL_ADDR), a      ; Set the ACIA CTRL register
 
 im1_rts_check:
-
         ld a, (serRxBufUsed)        ; get the current Rx count    	
         cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
         jr c, im1_txa_end           ; leave the RTS low, and end
@@ -137,7 +132,6 @@ im1_rts_check:
         out (SER_CTRL_ADDR), a	    ; Set the ACIA CTRL register
 
 im1_txa_end:
-
         pop hl
         pop af
 
@@ -147,13 +141,11 @@ im1_txa_end:
 ;------------------------------------------------------------------------------
 RXA:
 rxa_wait_for_byte:
-
         ld a, (serRxBufUsed)        ; get the number of bytes in the Rx buffer
 
         or a                        ; see if there are zero bytes available
         jr z, rxa_wait_for_byte     ; wait, if there are no bytes available
         
-        di                          ; critical section begin
         push hl                     ; Store HL so we don't clobber it
 
         ld hl, (serRxOutPtr)        ; get the pointer to place where we pop the Rx byte
@@ -169,17 +161,18 @@ rxa_wait_for_byte:
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
         jr nc, rxa_clean_up         ; if the buffer is too full, don't change the RTS
-        
+
+        di                          ; critical section begin
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TDI_RTS0             ; set RTS low.
         ld (serControl), a          ; write the ACIA control echo byte back
         out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
-        
+        ei                          ; critical section end
+
 rxa_clean_up:
         ld a, i                     ; get the Rx byte from I
         pop hl                      ; recover HL
-        ei                          ; critical section end
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
@@ -189,25 +182,22 @@ TXA:
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
         jr nz, txa_buffer_out       ; buffer not empty, so abandon immediate Tx
-        
+
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
         jr z, txa_buffer_out        ; if not, so abandon immediate Tx
-        
+
         ld a, i                     ; Retrieve Tx character from I
         out (SER_DATA_ADDR), a      ; immediately output the Tx byte to the ACIA
-        
+
         ret                         ; and just complete
 
 txa_buffer_out:
-
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         cp SER_TX_BUFSIZE           ; check whether there is space in the buffer
         jr nc, txa_buffer_out       ; buffer full, so wait till it has space
 
         ld a, i                     ; Retrieve Tx character
-
-        di                          ; critical section begin
         push hl                     ; Store HL so we don't clobber it
         
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
@@ -220,7 +210,6 @@ txa_buffer_out:
         ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
 
 txa_no_wrap:
-
         ld (serTxInPtr), hl         ; write where the next byte should be poked
 
         ld hl, serTxBufUsed
@@ -229,13 +218,12 @@ txa_no_wrap:
         pop hl                      ; recover HL
 
 txa_clean_up:
-
+        di                          ; critical section begin
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TEI_RTS0             ; set RTS low. if the TEI was not set, it will work again
         ld (serControl), a          ; write the ACIA control echo byte back
         out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
-
         ei                          ; critical section end
         ret
 
@@ -247,12 +235,12 @@ RXA_CHK:
 
 ;------------------------------------------------------------------------------
 PRINT:
-            LD        A,(HL)          ; Get character
-            OR        A               ; Is it $00 ?
-            RET       Z               ; Then RETurn on terminator
-            CALL      TXA             ; Print it
-            INC       HL              ; Next Character
-            JR        PRINT           ; Continue until $00
+        LD        A,(HL)          ; Get character
+        OR        A               ; Is it $00 ?
+        RET       Z               ; Then RETurn on terminator
+        CALL      TXA             ; Print it
+        INC       HL              ; Next Character
+        JR        PRINT           ; Continue until $00
 
 ;------------------------------------------------------------------------------
 HEX_START:
