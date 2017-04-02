@@ -154,7 +154,10 @@ serControl      .EQU     serTxBufUsed+1
 
 basicStarted    .EQU     serControl+1
 
-serRxBuf        .EQU     RAM_START+$100 ; must start on 0xnn00 for low byte roll-over
+; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
+BUFSTART_IO     .EQU    (Z80_VECTOR_TABLE-(Z80_VECTOR_TABLE%$100) + $100
+  
+serRxBuf        .EQU     BUFSTART_IO
 serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
 
 ;==============================================================================
