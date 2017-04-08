@@ -33,11 +33,11 @@
 ; DEFINES SECTION
 ;
 
-RAM_START_56    .EQU    $2000   ; Bottom of 56k RAM
-RAM_START_48    .EQU    $4000   ; Bottom of 48k RAM
-RAM_START_32    .EQU    $8000   ; Bottom of 32k RAM
+RAM_56_START    .EQU    $2000   ; Bottom of 56k RAM
+RAM_48_START    .EQU    $4000   ; Bottom of 48k RAM
+RAM_32_START    .EQU    $8000   ; Bottom of 32k RAM
 
-RAM_START       .EQU    RAM_START_32
+RAM_START       .EQU    RAM_32_START
 
 ; Top of BASIC line input buffer (CURPOS WRKSPC+0ABH)
 ; so it is "free ram" when BASIC resets
@@ -70,7 +70,6 @@ serialInt:
         push af
         push hl
                                     ; start doing the Rx stuff
-
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_RDRF                ; check whether a byte has been received
         jr z, im1_tx_check          ; if not, go check for bytes to transmit 
@@ -93,13 +92,13 @@ serialInt:
         inc (hl)                    ; atomically increment Rx buffer count
 
 im1_tx_check:                       ; now start doing the Tx stuff
-        ld a, (serTxBufUsed)        ; get the number of bytes in the Tx buffer
-        or a                        ; check whether it is zero
-        jr z, im1_tei_clear         ; if the count is zero, then disable the Tx Interrupt
-
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
         jr z, im1_rts_check         ; if not, go check for the receive RTS selection
+
+        ld a, (serTxBufUsed)        ; get the number of bytes in the Tx buffer
+        or a                        ; check whether it is zero
+        jr z, im1_tei_clear         ; if the count is zero, then disable the Tx Interrupt
 
         ld hl, (serTxOutPtr)        ; get the pointer to place where we pop the Tx byte
         ld a, (hl)                  ; get the Tx byte
