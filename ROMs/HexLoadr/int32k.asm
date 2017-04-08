@@ -30,21 +30,18 @@
 
 ;==============================================================================
 ;
-; INCLUDES SECTION
-;
-
-#include    "d:/rc2014.h"
-#include    "d:/z80intr.asm"
-
-;==============================================================================
-;
 ; DEFINES SECTION
 ;
+
+RAM_START_56    .EQU    $2000   ; Bottom of 56k RAM
+RAM_START_48    .EQU    $4000   ; Bottom of 48k RAM
+RAM_START_32    .EQU    $8000   ; Bottom of 32k RAM
+
+RAM_START       .EQU    RAM_START_32
 
 ; Top of BASIC line input buffer (CURPOS WRKSPC+0ABH)
 ; so it is "free ram" when BASIC resets
 ; set BASIC Work space WRKSPC $8000, in RAM
-
 
 WRKSPC          .EQU     RAM_START+$0220 ; set BASIC Work space WRKSPC
                                          ; beyond the end of ACIA stuff
@@ -52,6 +49,14 @@ WRKSPC          .EQU     RAM_START+$0220 ; set BASIC Work space WRKSPC
 TEMPSTACK       .EQU     WRKSPC+$0AB ; Top of BASIC line input buffer
                                      ; (CURPOS = WRKSPC+0ABH)
                                      ; so it is "free ram" when BASIC resets
+
+;==============================================================================
+;
+; INCLUDES SECTION
+;
+
+#include    "d:/rc2014.h"
+#include    "d:/z80intr.asm"
 
 ;==================================================================================
 ;
@@ -111,6 +116,7 @@ im1_tx_no_wrap:
 
         ld hl, serTxBufUsed
         dec (hl)                    ; atomically decrement current Tx count
+
         jr nz, im1_txa_end          ; if we've more Tx bytes to send, we're done for now
 
 im1_tei_clear:
@@ -140,11 +146,9 @@ im1_txa_end:
 
 ;------------------------------------------------------------------------------
 RXA:
-rxa_wait_for_byte:
         ld a, (serRxBufUsed)        ; get the number of bytes in the Rx buffer
-
         or a                        ; see if there are zero bytes available
-        jr z, rxa_wait_for_byte     ; wait, if there are no bytes available
+        jr z, RXA                   ; wait, if there are no bytes available
         
         push hl                     ; Store HL so we don't clobber it
 
@@ -177,7 +181,8 @@ rxa_clean_up:
 
 ;------------------------------------------------------------------------------
 TXA:
-        ld i, a                     ; Store Tx character in I
+        push hl                     ; store HL so we don't clobber it        
+        ld l, a                     ; store Tx character 
 
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
@@ -187,9 +192,10 @@ TXA:
         and SER_TDRE                ; check whether a byte can be transmitted
         jr z, txa_buffer_out        ; if not, so abandon immediate Tx
 
-        ld a, i                     ; Retrieve Tx character from I
+        ld a, l                     ; Retrieve Tx character for immediate Tx
         out (SER_DATA_ADDR), a      ; immediately output the Tx byte to the ACIA
 
+        pop hl                      ; recover HL
         ret                         ; and just complete
 
 txa_buffer_out:
@@ -197,15 +203,13 @@ txa_buffer_out:
         cp SER_TX_BUFSIZE           ; check whether there is space in the buffer
         jr nc, txa_buffer_out       ; buffer full, so wait till it has space
 
-        ld a, i                     ; Retrieve Tx character
-        push hl                     ; Store HL so we don't clobber it
-        
+        ld a, l                     ; Retrieve Tx character     
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
 
         inc hl                      ; move the Tx pointer along
-        ld a, l                     ; move low byte of the Tx pointer
-        cp (serTxBuf + SER_TX_BUFSIZE) & $FF
+        ld a, l                     ; get low byte of the Tx pointer
+        cp (serTxBuf + SER_TX_BUFSIZE) & $FF    ; check whether we've wrapped
         jr nz, txa_no_wrap
         ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
 
@@ -217,9 +221,12 @@ txa_no_wrap:
 
         pop hl                      ; recover HL
 
-txa_clean_up:
-        di                          ; critical section begin
         ld a, (serControl)          ; get the ACIA control echo byte
+        and SER_TEI_RTS0            ; test whether ACIA interrupt is set
+        ret nz                      ; if so then just return
+
+        di                          ; critical section begin
+        ld a, (serControl)          ; get the ACIA control echo byte again
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TEI_RTS0             ; set RTS low. if the TEI was not set, it will work again
         ld (serControl), a          ; write the ACIA control echo byte back
@@ -379,9 +386,9 @@ CORW:
                CP        'C'
                JR        NZ, CHECKWARM
                RST       08H
-               LD        A,$0D
+               LD        A,CR
                RST       08H
-               LD        A,$0A
+               LD        A,LF
                RST       08H
 COLDSTART:
                LD        A,'Y'           ; Set the BASIC STARTED flag
@@ -391,9 +398,9 @@ CHECKWARM:
                CP        'W'
                JR        NZ, CORW
                RST       08H
-               LD        A,$0D
+               LD        A,CR
                RST       08H
-               LD        A,$0A
+               LD        A,LF
                RST       08H
 WARMSTART:
                JP        $0393           ; <<<< Start Basic WARM:

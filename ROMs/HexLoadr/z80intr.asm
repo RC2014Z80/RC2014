@@ -103,7 +103,7 @@ INT_NMI_LBL:
 ;------------------------------------------------------------------------------
 ; NULL RETURN INSTRUCTIONS
 
-                .ORG    0060H
+                .ORG    VECTOR_PROTO+0020H
 NULL_NMI:
                 RETN
 NULL_INT:

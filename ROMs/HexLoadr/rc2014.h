@@ -89,11 +89,9 @@ DEL             .EQU    7FH     ; Delete
 ; DEFINES SECTION
 ;
 
-
 ROMSTART        .EQU    $0000   ; Bottom of ROM
 ROMSTOP         .EQU    $1FFF   ; Top of ROM
 
-RAM_START       .EQU    $8000   ; Bottom of RAM
 RAMSTOP         .EQU    $FFFF   ; Top of RAM
 
 SER_RX_BUFSIZE  .EQU    $FF  ; FIXED Rx buffer size, 256 Bytes, no range checking

@@ -3,7 +3,7 @@ Label        Value      Label        Value      Label        Value
 
     FUNCTIONS
 
-RXA           0167      RXA_CHK       01D4      TXA           0193
+RXA           0167      RXA_CHK       01D8      TXA           0193
 HEXLOADR      01DD      DEINT         0C47      ABPASS        13BD
 
     Z80 VECTOR ADDRESS TABLE
