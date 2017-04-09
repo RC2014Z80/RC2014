@@ -1,0 +1,9 @@
+The file "CPM 128MB inc transient apps.zip" contains a compressed image of the compact flash card supplied as part of the RC2014 Compact Flash Module kit.
+
+Note that the original data on the compact flash card was created by CP/M, and, as such, it is not readable by modern operating systems - so don't be surprised if it shows as being corrupt if you try to open it.
+
+Also note that it is very picky about what is used to restore this back on to a CF card.  I used "Discs" under Linux to create this image, and it works for restoring it, however have been unable to find a Windows program that can restore it.
+
+And also worth noting is that it is very picky about what CF card is used.  I have got a lot of identical 128MB CF cards, and this works fine with them, but any other cards, even those claiming to be the same size fail.  If you need to restore the image to the CF that came with your kit then you'll probably be ok, but don't expect it to work with other cards.
+
+This image contains 16 drives, from A: to P:, which are all 8MB, except for P: which is about 2MB.  Drive A: contains DOWNLOAD.COM and drive C: contains various utilities such as ED.COM, STAT.COM, DUMP.COM etc.  All other drives are empty.
