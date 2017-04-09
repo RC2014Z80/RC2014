@@ -1,0 +1,32 @@
+            .ORG    0000 
+
+            NOP     
+            NOP     
+
+            LD      DE,$A000 
+            LD      HL,$0000 
+            LD      BC,$0600 
+            LDIR    
+            JP      $A012 
+
+            NOP     
+            NOP     
+            NOP     
+            NOP     
+
+                    ; This runs from $A013
+
+
+            NOP     
+            LD      A,0 
+            OUT     ($38),A 
+            LD      de,$0000 
+            LD      HL,$A100 
+            LD      bc,$0500 
+            LDIR    
+
+            JP      0 
+
+
+
+
