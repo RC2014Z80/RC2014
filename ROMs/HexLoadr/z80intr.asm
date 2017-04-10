@@ -13,11 +13,11 @@
 ;
 ; REQUIRES
 ;
-; Z80_VECTOR_TABLE  .EQU   RAM vector address for Z80 RST eg.
+; Z80_VECTOR_BASE   .EQU    RAM vector address for Z80 RST eg.
 ;
-; Z80_VECTOR_TABLE  .EQU   RAMSTART_CA0    ; RAM vector address for Z80 RST
+; Z80_VECTOR_BASE   .EQU    RAMSTART_CA0    ; RAM vector address for Z80 RST
 ;
-; #include          "d:/yaz180.h"   ; OR
+; #include          "d:/yaz180.h"           ; OR
 ; #include          "d:/rc2014.h"
 
 ;==============================================================================
@@ -34,47 +34,47 @@
 ;------------------------------------------------------------------------------
 ; RST08
                 .ORG    0008H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_08_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_08_LBL
 
 ;------------------------------------------------------------------------------
 ; RST10
                 .ORG    0010H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_10_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_10_LBL
 
 ;------------------------------------------------------------------------------
 ; RST18
                 .ORG    0018H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_18_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_18_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 20
                 .ORG    0020H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_20_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_20_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 28
                 .ORG    0028H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_28_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_28_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 30
                 .ORG    0030H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+RST_30_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_30_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 38 - INTERRUPT VECTOR INT0 [ with IM 1 ]
 
                 .ORG    0038H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+INT_00_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+INT_00_LBL
 
 ;------------------------------------------------------------------------------
-; Z80 INTERRUPT VECTOR TABLE PROTOTYPE [ Originating at $40 ]
+; Z80 INTERRUPT VECTOR TABLE PROTOTYPE [ Originating at $0040 ]
 
-                .ORG    VECTOR_PROTO
+                .ORG    Z80_VECTOR_PROTO
 
 ; WILL BE DUPLICATED DURING INIT TO
 ;
-;               .ORG    Z80_VECTOR_TABLE
+;               .ORG    Z80_VECTOR_BASE
 RST_08_LBL:
                 JP      RST_08
                 NOP
@@ -103,7 +103,7 @@ INT_NMI_LBL:
 ;------------------------------------------------------------------------------
 ; NULL RETURN INSTRUCTIONS
 
-                .ORG    VECTOR_PROTO+0020H
+                .ORG    Z80_VECTOR_PROTO+0020H
 NULL_NMI:
                 RETN
 NULL_INT:
@@ -116,7 +116,7 @@ NULL_RET:
 ; NMI - INTERRUPT VECTOR NMI
 
                 .ORG    0066H
-                JP      Z80_VECTOR_TABLE-VECTOR_PROTO+INT_NMI_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+INT_NMI_LBL
 
 ;==============================================================================
 ;

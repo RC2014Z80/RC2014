@@ -37,18 +37,18 @@ RAM_56_START    .EQU    $2000   ; Bottom of 56k RAM
 RAM_48_START    .EQU    $4000   ; Bottom of 48k RAM
 RAM_32_START    .EQU    $8000   ; Bottom of 32k RAM
 
-RAM_START       .EQU    RAM_32_START
+RAMSTART        .EQU    RAM_32_START
 
 ; Top of BASIC line input buffer (CURPOS WRKSPC+0ABH)
 ; so it is "free ram" when BASIC resets
 ; set BASIC Work space WRKSPC $8000, in RAM
 
-WRKSPC          .EQU     RAM_START+$0220 ; set BASIC Work space WRKSPC
-                                         ; beyond the end of ACIA stuff
+WRKSPC          .EQU     RAMSTART+$0220 ; set BASIC Work space WRKSPC
+                                        ; beyond the end of ACIA stuff
 
-TEMPSTACK       .EQU     WRKSPC+$0AB ; Top of BASIC line input buffer
-                                     ; (CURPOS = WRKSPC+0ABH)
-                                     ; so it is "free ram" when BASIC resets
+TEMPSTACK       .EQU     WRKSPC+$0AB    ; Top of BASIC line input buffer
+                                        ; (CURPOS = WRKSPC+0ABH)
+                                        ; so it is "free ram" when BASIC resets
 
 ;==============================================================================
 ;
@@ -338,9 +338,9 @@ HEX_READ_END:
 INIT:
                LD        SP,TEMPSTACK    ; Set up a temporary stack
 
-               LD        HL,VECTOR_PROTO ; Establish Z80 RST Vector Table
-               LD        DE,Z80_VECTOR_TABLE
-               LD        BC,VECTOR_PROTO_SIZE
+               LD        HL,Z80_VECTOR_PROTO ; Establish Z80 RST Vector Table
+               LD        DE,Z80_VECTOR_BASE
+               LD        BC,Z80_VECTOR_SIZE
                LDIR
 
                LD        HL,serRxBuf     ; Initialise Rx Buffer

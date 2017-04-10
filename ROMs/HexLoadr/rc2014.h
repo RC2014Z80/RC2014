@@ -27,6 +27,60 @@
 
 ;==============================================================================
 ;
+; DEFINES SECTION
+;
+
+ROMSTART        .EQU    $0000   ; Bottom of ROM
+ROMSTOP         .EQU    $1FFF   ; Top of ROM
+
+RAMSTOP         .EQU    $FFFF   ; Top of RAM
+
+SER_RX_BUFSIZE  .EQU    $FF  ; FIXED Rx buffer size, 256 Bytes, no range checking
+SER_RX_FULLSIZE .EQU    SER_RX_BUFSIZE - $08
+                              ; Fullness of the Rx Buffer, when not_RTS is signalled
+SER_RX_EMPTYSIZE .EQU   $08  ; Fullness of the Rx Buffer, when RTS is signalled
+
+SER_TX_BUFSIZE  .EQU    $0F  ; Size of the Tx Buffer, 15 Bytes
+
+;==============================================================================
+;
+; Interrupt vectors (offsets) for Z80 RST, INT0, and NMI interrupts
+;
+
+Z80_VECTOR_BASE .EQU    RAMSTART    ; RAM vector address for Z80 RST Table
+                                    ; <<< SET THIS AS DESIRED >>>
+
+; Squeezed between INT0 0x0038 and NMI 0x0066
+Z80_VECTOR_PROTO    .EQU    $0040
+Z80_VECTOR_SIZE     .EQU    $20
+
+;   Prototype Vector Defaults to be defined in initialisation code.
+;   RST_08      .EQU    TX0         TX a character over ASCI0
+;   RST_10      .EQU    RX0         RX a character over ASCI0, block no bytes available
+;   RST_18      .EQU    RX0_CHK     Check ASCI0 status, return # bytes available
+;   RST_20      .EQU    NULL_INT
+;   RST_28      .EQU    NULL_INT
+;   RST_30      .EQU    NULL_INT
+;   INT_00      .EQU    NULL_INT
+;   INT_NMI     .EQU    NULL_NMI
+
+;   Z80 RAM VECTOR ADDRESS TABLE
+
+NULL_NMI_ADDR   .EQU    Z80_VECTOR_PROTO+$20    ; Write the NULL return location
+NULL_INT_ADDR   .EQU    Z80_VECTOR_PROTO+$22    ;  when removing an ISR
+NULL_RET_ADDR   .EQU    Z80_VECTOR_PROTO+$25
+
+RST_08_ADDR     .EQU    Z80_VECTOR_BASE+$01    ; Write your ISR address
+RST_10_ADDR     .EQU    Z80_VECTOR_BASE+$05    ;  to these locations
+RST_18_ADDR     .EQU    Z80_VECTOR_BASE+$09
+RST_20_ADDR     .EQU    Z80_VECTOR_BASE+$0D
+RST_28_ADDR     .EQU    Z80_VECTOR_BASE+$11
+RST_30_ADDR     .EQU    Z80_VECTOR_BASE+$15
+INT_00_ADDR     .EQU    Z80_VECTOR_BASE+$19
+INT_NMI_ADDR    .EQU    Z80_VECTOR_BASE+$1D
+
+;==============================================================================
+;
 ; Some definitions used with the RC2014 on-board peripherals:
 ;
 
@@ -86,63 +140,10 @@ DEL             .EQU    7FH     ; Delete
 
 ;==============================================================================
 ;
-; DEFINES SECTION
-;
-
-ROMSTART        .EQU    $0000   ; Bottom of ROM
-ROMSTOP         .EQU    $1FFF   ; Top of ROM
-
-RAMSTOP         .EQU    $FFFF   ; Top of RAM
-
-SER_RX_BUFSIZE  .EQU    $FF  ; FIXED Rx buffer size, 256 Bytes, no range checking
-SER_RX_FULLSIZE .EQU    SER_RX_BUFSIZE - $08
-                              ; Fullness of the Rx Buffer, when not_RTS is signalled
-SER_RX_EMPTYSIZE .EQU   $08  ; Fullness of the Rx Buffer, when RTS is signalled
-
-SER_TX_BUFSIZE  .EQU    $0F  ; Size of the Tx Buffer, 15 Bytes
-
-;==============================================================================
-;
-; Interrupt vectors (offsets) for Z80 internal interrupts
-;
-
-Z80_VECTOR_TABLE .EQU   RAM_START   ; RAM vector address for Z80 RST 
-                                    ; <<< SET THIS AS DESIRED >>>
-
-VECTOR_PROTO     .EQU   $0040
-VECTOR_PROTO_SIZE .EQU  $20
-
-;   Prototype Vector Defaults to be defined in initialisation code.
-;   RST_08      .EQU    TX0         TX a character over ASCI0
-;   RST_10      .EQU    RX0         RX a character over ASCI0, block no bytes available
-;   RST_18      .EQU    RX0_CHK     Check ASCI0 status, return # bytes available
-;   RST_20      .EQU    NULL_INT
-;   RST_28      .EQU    NULL_INT
-;   RST_30      .EQU    NULL_INT
-;   INT_00      .EQU    NULL_INT
-;   INT_NMI     .EQU    NULL_NMI
-
-;   Z80 RAM VECTOR ADDRESS TABLE
-
-NULL_NMI_ADDR   .EQU    VECTOR_PROTO+$20    ; Write the NULL return location
-NULL_INT_ADDR   .EQU    VECTOR_PROTO+$22    ;  when removing an ISR
-NULL_RET_ADDR   .EQU    VECTOR_PROTO+$25
-
-RST_08_ADDR     .EQU    Z80_VECTOR_TABLE+$01    ; Write your ISR address
-RST_10_ADDR     .EQU    Z80_VECTOR_TABLE+$05    ;  to these locations
-RST_18_ADDR     .EQU    Z80_VECTOR_TABLE+$09
-RST_20_ADDR     .EQU    Z80_VECTOR_TABLE+$0D
-RST_28_ADDR     .EQU    Z80_VECTOR_TABLE+$11
-RST_30_ADDR     .EQU    Z80_VECTOR_TABLE+$15
-INT_00_ADDR     .EQU    Z80_VECTOR_TABLE+$19
-INT_NMI_ADDR    .EQU    Z80_VECTOR_TABLE+$1D
-
-;==============================================================================
-;
 ; GLOBAL VARIABLES SECTION
 ;
 
-serRxInPtr      .EQU     Z80_VECTOR_TABLE+VECTOR_PROTO_SIZE
+serRxInPtr      .EQU     Z80_VECTOR_BASE+Z80_VECTOR_SIZE
 serRxOutPtr     .EQU     serRxInPtr+2
 serTxInPtr      .EQU     serRxOutPtr+2
 serTxOutPtr     .EQU     serTxInPtr+2
@@ -153,7 +154,7 @@ serControl      .EQU     serTxBufUsed+1
 basicStarted    .EQU     serControl+1
 
 ; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
-BUFSTART_IO     .EQU    (Z80_VECTOR_TABLE-(Z80_VECTOR_TABLE%$100) + $100
+BUFSTART_IO     .EQU    (Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
   
 serRxBuf        .EQU     BUFSTART_IO
 serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
