@@ -54,30 +54,16 @@ Z80_VECTOR_BASE .EQU    RAMSTART    ; RAM vector address for Z80 RST Table
 Z80_VECTOR_PROTO    .EQU    $0040
 Z80_VECTOR_SIZE     .EQU    $20
 
-;   Prototype Vector Defaults to be defined in initialisation code.
-;   RST_08      .EQU    TX0         TX a character over ASCI0
-;   RST_10      .EQU    RX0         RX a character over ASCI0, block no bytes available
-;   RST_18      .EQU    RX0_CHK     Check ASCI0 status, return # bytes available
-;   RST_20      .EQU    NULL_INT
-;   RST_28      .EQU    NULL_INT
-;   RST_30      .EQU    NULL_INT
-;   INT_00      .EQU    NULL_INT
-;   INT_NMI     .EQU    NULL_NMI
-
-;   Z80 RAM VECTOR ADDRESS TABLE
-
-NULL_NMI_ADDR   .EQU    Z80_VECTOR_PROTO+$20    ; Write the NULL return location
-NULL_INT_ADDR   .EQU    Z80_VECTOR_PROTO+$22    ;  when removing an ISR
-NULL_RET_ADDR   .EQU    Z80_VECTOR_PROTO+$25
-
-RST_08_ADDR     .EQU    Z80_VECTOR_BASE+$01    ; Write your ISR address
-RST_10_ADDR     .EQU    Z80_VECTOR_BASE+$05    ;  to these locations
-RST_18_ADDR     .EQU    Z80_VECTOR_BASE+$09
-RST_20_ADDR     .EQU    Z80_VECTOR_BASE+$0D
-RST_28_ADDR     .EQU    Z80_VECTOR_BASE+$11
-RST_30_ADDR     .EQU    Z80_VECTOR_BASE+$15
-INT_00_ADDR     .EQU    Z80_VECTOR_BASE+$19
-INT_NMI_ADDR    .EQU    Z80_VECTOR_BASE+$1D
+;   Prototype Interrupt Service Routines - complete in main program
+;
+;   RST_08          .EQU    TX0         TX a character over ASCI0
+;   RST_10          .EQU    RX0         RX a character over ASCI0, block no bytes available
+;   RST_18          .EQU    RX0_CHK     Check ASCI0 status, return # bytes available
+;   RST_20          .EQU    NULL_INT
+;   RST_28          .EQU    NULL_INT
+;   RST_30          .EQU    NULL_INT
+;   INT_00          .EQU    NULL_INT
+;   INT_NMI         .EQU    NULL_NMI
 
 ;==============================================================================
 ;
