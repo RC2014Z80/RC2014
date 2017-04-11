@@ -37,7 +37,7 @@ DEL     .EQU    7FH             ; Delete
 
 ; BASIC WORK SPACE LOCATIONS
 
-WRKSPC  .EQU    8120H           ; <<<< BASIC Work space ** larger Rx buffer & Tx buffer **
+WRKSPC  .EQU    8220H           ; <<<< BASIC Work space ** Rx buffer & Tx buffer located from 8100H **
 USR     .EQU    WRKSPC+3H       ; "USR (x)" jump
 OUTSUB  .EQU    WRKSPC+6H       ; "OUT p,n"
 OTPORT  .EQU    WRKSPC+7H       ; Port (p)
@@ -126,10 +126,10 @@ MO      .EQU    24H             ; Missing operand
 HX      .EQU    26H             ; HEX error
 BN      .EQU    28H             ; BIN error
 
-        .ORG    02A0H           ; <<<< Modified to allow for Z80 Tx/Rx interrupt & HexLoadr
+        .ORG    0390H           ; <<<< Modified to allow for Z80 Tx/Rx interrupt & HexLoadr
 
-COLD:   JP      STARTB          ; Jump in for cold start ($02A0)
-WARM:   JP      WARMST          ; Jump in for warm start ($02A3)
+COLD:   JP      STARTB          ; Jump in for cold start (0390H)
+WARM:   JP      WARMST          ; Jump in for warm start (0393H)
 STARTB: 
         LD      IX,0            ; Flag cold start
         JP      CSTART          ; Jump to initialise
