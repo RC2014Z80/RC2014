@@ -65,16 +65,17 @@
 ; RST 38 - INTERRUPT VECTOR INT0 [ with IM 1 ]
 
                 .ORG    0038H
-                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+INT_00_LBL
+                JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+INT_INT0_LBL
 
-;------------------------------------------------------------------------------
-; Z80 INTERRUPT VECTOR TABLE PROTOTYPE [ Originating at $0040 ]
-
-                .ORG    Z80_VECTOR_PROTO
-
-; WILL BE DUPLICATED DURING INIT TO
+;==============================================================================
+;
+; Z80 INTERRUPT VECTOR TABLE PROTOTYPE
+;
+; WILL BE DUPLICATED DURING INIT TO:
 ;
 ;               .ORG    Z80_VECTOR_BASE
+
+                .ORG    Z80_VECTOR_PROTO
 RST_08_LBL:
                 JP      RST_08
                 NOP
@@ -93,8 +94,8 @@ RST_28_LBL:
 RST_30_LBL:
                 JP      RST_30
                 NOP
-INT_00_LBL:
-                JP      INT_00
+INT_INT0_LBL:
+                JP      INT_INT0
                 NOP
 INT_NMI_LBL:
                 JP      INT_NMI
