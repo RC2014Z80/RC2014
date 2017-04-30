@@ -150,7 +150,7 @@ serControl      .EQU     serTxBufUsed+1
 basicStarted    .EQU     serControl+1
 
 ; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
-BUFSTART_IO     .EQU    (Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+BUFSTART_IO     .EQU     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
   
 serRxBuf        .EQU     BUFSTART_IO
 serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
