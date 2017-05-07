@@ -434,7 +434,7 @@ RST_18      .EQU    RXA_CHK         ; Check ACIA status, return # bytes availabl
 RST_20      .EQU    NULL_RET        ; RET
 RST_28      .EQU    NULL_RET        ; RET
 RST_30      .EQU    NULL_RET        ; RET
-INT_00      .EQU    serialInt       ; ACIA interrupt
+INT_INT0    .EQU    serialInt       ; ACIA interrupt
 INT_NMI     .EQU    NULL_NMI        ; RETN
 
 ;==============================================================================

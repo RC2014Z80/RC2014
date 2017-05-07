@@ -62,8 +62,18 @@ Z80_VECTOR_SIZE     .EQU    $20
 ;   RST_20          .EQU    NULL_INT
 ;   RST_28          .EQU    NULL_INT
 ;   RST_30          .EQU    NULL_INT
-;   INT_00          .EQU    NULL_INT
+;   INT_INT0        .EQU    NULL_INT
 ;   INT_NMI         .EQU    NULL_NMI
+
+;   Z80 Interrupt Service Routine Addresses - rewrite as needed
+RST_08_ADDR     .EQU    Z80_VECTOR_BASE+$01
+RST_10_ADDR     .EQU    Z80_VECTOR_BASE+$05
+RST_18_ADDR     .EQU    Z80_VECTOR_BASE+$09
+RST_20_ADDR     .EQU    Z80_VECTOR_BASE+$0D
+RST_28_ADDR     .EQU    Z80_VECTOR_BASE+$11
+RST_30_ADDR     .EQU    Z80_VECTOR_BASE+$15
+INT_INT0_ADDR   .EQU    Z80_VECTOR_BASE+$19
+INT_NMI_ADDR    .EQU    Z80_VECTOR_BASE+$1D
 
 ;==============================================================================
 ;
@@ -140,7 +150,7 @@ serControl      .EQU     serTxBufUsed+1
 basicStarted    .EQU     serControl+1
 
 ; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
-BUFSTART_IO     .EQU    (Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+BUFSTART_IO     .EQU     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
   
 serRxBuf        .EQU     BUFSTART_IO
 serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
