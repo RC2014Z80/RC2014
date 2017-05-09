@@ -40,7 +40,7 @@ SER_RX_FULLSIZE .EQU    SER_RX_BUFSIZE - $08
                               ; Fullness of the Rx Buffer, when not_RTS is signalled
 SER_RX_EMPTYSIZE .EQU   $08  ; Fullness of the Rx Buffer, when RTS is signalled
 
-SER_TX_BUFSIZE  .EQU    $0F  ; Size of the Tx Buffer, 15 Bytes
+SER_TX_BUFSIZE  .EQU    $0F  ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
 
 ;==============================================================================
 ;

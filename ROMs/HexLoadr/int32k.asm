@@ -58,14 +58,13 @@ TEMPSTACK       .EQU     WRKSPC+$0AB    ; Top of BASIC line input buffer
 #include    "d:/rc2014.h"
 #include    "d:/z80intr.asm"
 
-;==================================================================================
+;==============================================================================
 ;
 ; CODE SECTION
 ;
 
-        .ORG    0100H
-
 ;------------------------------------------------------------------------------
+        .ORG $0080
 serialInt:
         push af
         push hl
@@ -104,13 +103,10 @@ im1_tx_check:                       ; now start doing the Tx stuff
         ld a, (hl)                  ; get the Tx byte
         out (SER_DATA_ADDR), a      ; output the Tx byte to the ACIA
 
-        inc hl                      ; move the Tx pointer along
-        ld a, l                     ; get the low byte of the Tx pointer
-        cp (serTxBuf + SER_TX_BUFSIZE) & $FF
-        jr nz, im1_tx_no_wrap
-        ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
-
-im1_tx_no_wrap:
+        inc l                       ; move the Tx pointer, just low byte along
+        ld a, SER_TX_BUFSIZE        ; load the buffer size, power of 2
+        and l                       ; range check
+        ld l, a                     ; return the low byte to l
         ld (serTxOutPtr), hl        ; write where the next byte should be popped
 
         ld hl, serTxBufUsed
@@ -144,6 +140,14 @@ im1_txa_end:
         reti
 
 ;------------------------------------------------------------------------------
+        .ORG $00F0
+RXA_CHK:
+        ld a, (serRxBufUsed)
+        cp $0
+        ret
+
+;------------------------------------------------------------------------------
+        .ORG $0100
 RXA:
         ld a, (serRxBufUsed)        ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
@@ -179,6 +183,7 @@ rxa_clean_up:
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
+        .ORG $0130
 TXA:
         push hl                     ; store HL so we don't clobber it        
         ld l, a                     ; store Tx character 
@@ -206,13 +211,10 @@ txa_buffer_out:
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
 
-        inc hl                      ; move the Tx pointer along
-        ld a, l                     ; get low byte of the Tx pointer
-        cp (serTxBuf + SER_TX_BUFSIZE) & $FF    ; check whether we've wrapped
-        jr nz, txa_no_wrap
-        ld hl, serTxBuf             ; we wrapped, so go back to start of buffer
-
-txa_no_wrap:
+        inc l                       ; move the Tx pointer, just low byte along
+        ld a, SER_TX_BUFSIZE        ; load the buffer size, power of 2
+        and l                       ; range check
+        ld l, a                     ; return the low byte to l
         ld (serTxInPtr), hl         ; write where the next byte should be poked
 
         ld hl, serTxBufUsed
@@ -234,12 +236,7 @@ txa_no_wrap:
         ret
 
 ;------------------------------------------------------------------------------
-RXA_CHK:
-        LD        A,(serRxBufUsed)
-        CP        $0
-        RET
-
-;------------------------------------------------------------------------------
+        .ORG      $0180
 PRINT:
         LD        A,(HL)          ; Get character
         OR        A               ; Is it $00 ?
@@ -249,6 +246,7 @@ PRINT:
         JR        PRINT           ; Continue until $00
 
 ;------------------------------------------------------------------------------
+            .ORG $0190
 HEX_START:
             ld hl, initString
             call PRINT
@@ -333,8 +331,8 @@ HEX_READ_END:
             pop bc
             ret             ; return the byte read in a
 
-
 ;------------------------------------------------------------------------------
+               .ORG      $0240
 INIT:
                LD        SP,TEMPSTACK    ; Set up a temporary stack
 
@@ -351,7 +349,7 @@ INIT:
                LD        (serTxInPtr),HL
                LD        (serTxOutPtr),HL              
 
-               XOR       A               ; 0 the accumulator
+               XOR       A               ; 0 the RXA & TXA Buffer Counts
                LD        (serRxBufUsed),A
                LD        (serTxBufUsed),A
 
@@ -408,6 +406,8 @@ WARMSTART:
 ;
 ; STRINGS
 ;
+                .ORG    $0300
+
 SIGNON1:        .BYTE   "SBC - Grant Searle",CR,LF
                 .BYTE   "ACIA - feilipu",CR,LF,0
 
