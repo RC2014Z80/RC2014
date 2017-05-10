@@ -26,23 +26,23 @@
 ;
 
 ;------------------------------------------------------------------------------
-; RESET / TRAP
+; RST 00 - RESET / TRAP
                 .ORG    0000H
                 DI                  ; Disable interrupts
                 JP      INIT        ; Initialize Hardware and go
 
 ;------------------------------------------------------------------------------
-; RST08
+; RST 08
                 .ORG    0008H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_08_LBL
 
 ;------------------------------------------------------------------------------
-; RST10
+; RST 10
                 .ORG    0010H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_10_LBL
 
 ;------------------------------------------------------------------------------
-; RST18
+; RST 18
                 .ORG    0018H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_18_LBL
 
@@ -104,7 +104,7 @@ INT_NMI_LBL:
 ;------------------------------------------------------------------------------
 ; NULL RETURN INSTRUCTIONS
 
-                .ORG    Z80_VECTOR_PROTO+0020H
+                .ORG    Z80_VECTOR_PROTO+Z80_VECTOR_SIZE
 NULL_NMI:
                 RETN
 NULL_INT:
