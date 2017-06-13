@@ -13,7 +13,7 @@ There are are several stages to this process.
 
 
 ```bash
-SBSBC - Grant Searle
+SBC - Grant Searle
 ACIA - feilipu
 
 Cold or Warm start, or HexLoadr (C|W|H) ? C
@@ -82,7 +82,7 @@ The `RC2014_LABELS.TXT` file is provided to advise of all the relevant RAM and R
 
 5. When HexLoadr has finished, and you are back at the Basic `ok` prompt, use the `DOKE` command relocate the address for the Basic `USR(x)` command to point to `.ORG` of your arbitrary program. For the RC2014 the `USR(x)` jump address is located at `0x8224`. If your arbitrary program is located at `0xE000` then the Basic command is `DOKE &h8224, &hE000`, for example.
 
-6. Start your program using `PRINT USR(0)`, or other variant if you have parameters to pass to your program.
+6. Start your program by typing `PRINT USR(0)`, or other variant if you have a parameter to pass to your program.
 
 7. Profit.
 
