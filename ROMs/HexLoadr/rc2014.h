@@ -8,7 +8,7 @@
 ;
 ; https://feilipu.me/
 ;
-;==================================================================================
+;==============================================================================
 ;
 ; ACIA 68B50 interrupt driven serial I/O to run modified NASCOM Basic 4.7.
 ; Full input and output buffering with incoming data hardware handshaking.
@@ -18,7 +18,7 @@
 ; https://github.com/feilipu/
 ; https://feilipu.me/
 ;
-;==================================================================================
+;==============================================================================
 ;
 ; HexLoadr option by @feilipu,
 ; derived from the work of @fbergama and @foxweb at RC2014
@@ -27,53 +27,61 @@
 
 ;==============================================================================
 ;
+; INCLUDES SECTION
+;
+
+INCLUDE "rc2014_config.h"
+
+;==============================================================================
+;
 ; DEFINES SECTION
 ;
 
-ROMSTART        .EQU    $0000   ; Bottom of ROM
-ROMSTOP         .EQU    $1FFF   ; Top of ROM
+DEFC    ROMSTART        =   $0000   ; Bottom of ROM
+DEFC    ROMSTOP         =   $1FFF   ; Top of ROM
 
-RAMSTOP         .EQU    $FFFF   ; Top of RAM
+DEFC    RAMSTOP         =   $FFFF   ; Top of RAM
 
-SER_RX_BUFSIZE  .EQU    $FF  ; FIXED Rx buffer size, 256 Bytes, no range checking
-SER_RX_FULLSIZE .EQU    SER_RX_BUFSIZE - $08
-                              ; Fullness of the Rx Buffer, when not_RTS is signalled
-SER_RX_EMPTYSIZE .EQU   $08  ; Fullness of the Rx Buffer, when RTS is signalled
+DEFC    SER_RX_BUFSIZE  =   $FF ; FIXED Rx buffer size, 256 Bytes, no range checking
+DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $08
+                                ; Fullness of the Rx Buffer, when not_RTS is signalled
+DEFC    SER_RX_EMPTYSIZE =  $08 ; Fullness of the Rx Buffer, when RTS is signalled
 
-SER_TX_BUFSIZE  .EQU    $0F  ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
+DEFC    SER_TX_BUFSIZE  =   $0F ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
 
 ;==============================================================================
 ;
 ; Interrupt vectors (offsets) for Z80 RST, INT0, and NMI interrupts
 ;
 
-Z80_VECTOR_BASE .EQU    RAMSTART    ; RAM vector address for Z80 RST Table
-                                    ; <<< SET THIS AS DESIRED >>>
+DEFC    Z80_VECTOR_BASE =   RAMSTART   ; RAM vector address for Z80 RST Table
+                                       ; <<< SET THIS AS DESIRED >>>
 
 ; Squeezed between INT0 0x0038 and NMI 0x0066
-Z80_VECTOR_PROTO    .EQU    $0040
-Z80_VECTOR_SIZE     .EQU    $20
+DEFC    Z80_VECTOR_PROTO    =   $0040
+DEFC    Z80_VECTOR_SIZE     =   $20
 
 ;   Prototype Interrupt Service Routines - complete in main program
 ;
-;   RST_08          .EQU    TX0         TX a character over ASCI0
-;   RST_10          .EQU    RX0         RX a character over ASCI0, block no bytes available
-;   RST_18          .EQU    RX0_CHK     Check ASCI0 status, return # bytes available
-;   RST_20          .EQU    NULL_INT
-;   RST_28          .EQU    NULL_INT
-;   RST_30          .EQU    NULL_INT
-;   INT_INT0        .EQU    NULL_INT
-;   INT_NMI         .EQU    NULL_NMI
+;DEFC       RST_08          =    TX0         TX a character over ASCI0
+;DEFC       RST_10          =    RX0         RX a character over ASCI0, block no bytes available
+;DEFC       RST_18          =    RX0_CHK     Check ASCI0 status, return # bytes available
+;DEFC       RST_20          =    NULL_INT
+;DEFC       RST_28          =    NULL_INT
+;DEFC       RST_30          =    NULL_INT
+;DEFC       INT_INT0        =    NULL_INT
+;DEFC       INT_NMI         =    NULL_NMI
 
 ;   Z80 Interrupt Service Routine Addresses - rewrite as needed
-RST_08_ADDR     .EQU    Z80_VECTOR_BASE+$01
-RST_10_ADDR     .EQU    Z80_VECTOR_BASE+$05
-RST_18_ADDR     .EQU    Z80_VECTOR_BASE+$09
-RST_20_ADDR     .EQU    Z80_VECTOR_BASE+$0D
-RST_28_ADDR     .EQU    Z80_VECTOR_BASE+$11
-RST_30_ADDR     .EQU    Z80_VECTOR_BASE+$15
-INT_INT0_ADDR   .EQU    Z80_VECTOR_BASE+$19
-INT_NMI_ADDR    .EQU    Z80_VECTOR_BASE+$1D
+
+DEFC    RST_08_ADDR     =   Z80_VECTOR_BASE+$01
+DEFC    RST_10_ADDR     =   Z80_VECTOR_BASE+$05
+DEFC    RST_18_ADDR     =   Z80_VECTOR_BASE+$09
+DEFC    RST_20_ADDR     =   Z80_VECTOR_BASE+$0D
+DEFC    RST_28_ADDR     =   Z80_VECTOR_BASE+$11
+DEFC    RST_30_ADDR     =   Z80_VECTOR_BASE+$15
+DEFC    INT_INT0_ADDR   =   Z80_VECTOR_BASE+$19
+DEFC    INT_NMI_ADDR    =   Z80_VECTOR_BASE+$1D
 
 ;==============================================================================
 ;
@@ -82,83 +90,57 @@ INT_NMI_ADDR    .EQU    Z80_VECTOR_BASE+$1D
 
 ; ACIA 68B50 Register Mnemonics
 
-SER_CTRL_ADDR   .EQU   $80    ; Address of Control Register (write only)
-SER_STATUS_ADDR .EQU   $80    ; Address of Status Register (read only)
-SER_DATA_ADDR   .EQU   $81    ; Address of Data Register
+DEFC    SER_CTRL_ADDR   =   $80    ; Address of Control Register (write only)
+DEFC    SER_STATUS_ADDR =   $80    ; Address of Status Register (read only)
+DEFC    SER_DATA_ADDR   =   $81    ; Address of Data Register
 
-SER_RESET       .EQU   $03    ; Master Reset (issue before any other Control word)
-SER_CLK_DIV_64  .EQU   $02    ; Divide the Clock by 64 (default value)
-SER_CLK_DIV_16  .EQU   $01    ; Divide the Clock by 16
-SER_CLK_DIV_01  .EQU   $00    ; Divide the Clock by 1
+DEFC    SER_RESET       =   $03    ; Master Reset (issue before any other Control word)
+DEFC    SER_CLK_DIV_64  =   $02    ; Divide the Clock by 64 (default value)
+DEFC    SER_CLK_DIV_16  =   $01    ; Divide the Clock by 16
+DEFC    SER_CLK_DIV_01  =   $00    ; Divide the Clock by 1
 
-SER_8O1         .EQU   $1C    ; 8 Bits  Odd Parity 1 Stop Bit
-SER_8E1         .EQU   $18    ; 8 Bits Even Parity 1 Stop Bit
-SER_8N1         .EQU   $14    ; 8 Bits   No Parity 1 Stop Bit
-SER_8N2         .EQU   $10    ; 8 Bits   No Parity 2 Stop Bits
-SER_7O1         .EQU   $0C    ; 7 Bits  Odd Parity 1 Stop Bit
-SER_7E1         .EQU   $08    ; 7 Bits Even Parity 1 Stop Bit
-SER_7O2         .EQU   $04    ; 7 Bits  Odd Parity 2 Stop Bits
-SER_7E2         .EQU   $00    ; 7 Bits Even Parity 2 Stop Bits
+DEFC    SER_8O1         =   $1C    ; 8 Bits  Odd Parity 1 Stop Bit
+DEFC    SER_8E1         =   $18    ; 8 Bits Even Parity 1 Stop Bit
+DEFC    SER_8N1         =   $14    ; 8 Bits   No Parity 1 Stop Bit
+DEFC    SER_8N2         =   $10    ; 8 Bits   No Parity 2 Stop Bits
+DEFC    SER_7O1         =   $0C    ; 7 Bits  Odd Parity 1 Stop Bit
+DEFC    SER_7E1         =   $08    ; 7 Bits Even Parity 1 Stop Bit
+DEFC    SER_7O2         =   $04    ; 7 Bits  Odd Parity 2 Stop Bits
+DEFC    SER_7E2         =   $00    ; 7 Bits Even Parity 2 Stop Bits
 
-SER_TDI_BRK     .EQU   $60    ; _RTS low,  Transmitting Interrupt Disabled, BRK on Tx
-SER_TDI_RTS1    .EQU   $40    ; _RTS high, Transmitting Interrupt Disabled
-SER_TEI_RTS0    .EQU   $20    ; _RTS low,  Transmitting Interrupt Enabled
-SER_TDI_RTS0    .EQU   $00    ; _RTS low,  Transmitting Interrupt Disabled
+DEFC    SER_TDI_BRK     =   $60    ; _RTS low,  Transmitting Interrupt Disabled, BRK on Tx
+DEFC    SER_TDI_RTS1    =   $40    ; _RTS high, Transmitting Interrupt Disabled
+DEFC    SER_TEI_RTS0    =   $20    ; _RTS low,  Transmitting Interrupt Enabled
+DEFC    SER_TDI_RTS0    =   $00    ; _RTS low,  Transmitting Interrupt Disabled
 
-SER_TEI_MASK    .EQU   $60    ; Mask for the Tx Interrupt & RTS bits   
+DEFC    SER_TEI_MASK    =   $60    ; Mask for the Tx Interrupt & RTS bits   
 
-SER_REI         .EQU   $80    ; Receive Interrupt Enabled
+DEFC    SER_REI         =   $80    ; Receive Interrupt Enabled
 
-SER_IRQ         .EQU   $80    ; IRQ (Either Transmitted or Received Byte)
-SER_PE          .EQU   $40    ; Parity Error (Received Byte)
-SER_OVRN        .EQU   $20    ; Overrun (Received Byte
-SER_FE          .EQU   $10    ; Framing Error (Received Byte)
-SER_CTS         .EQU   $08    ; Clear To Send
-SER_DCD         .EQU   $04    ; Data Carrier Detect
-SER_TDRE        .EQU   $02    ; Transmit Data Register Empty
-SER_RDRF        .EQU   $01    ; Receive Data Register Full
+DEFC    SER_IRQ         =   $80    ; IRQ (Either Transmitted or Received Byte)
+DEFC    SER_PE          =   $40    ; Parity Error (Received Byte)
+DEFC    SER_OVRN        =   $20    ; Overrun (Received Byte
+DEFC    SER_FE          =   $10    ; Framing Error (Received Byte)
+DEFC    SER_CTS         =   $08    ; Clear To Send
+DEFC    SER_DCD         =   $04    ; Data Carrier Detect
+DEFC    SER_TDRE        =   $02    ; Transmit Data Register Empty
+DEFC    SER_RDRF        =   $01    ; Receive Data Register Full
 
 ; General TTY
 
-CTRLC           .EQU    03H     ; Control "C"
-CTRLG           .EQU    07H     ; Control "G"
-BKSP            .EQU    08H     ; Back space
-LF              .EQU    0AH     ; Line feed
-CS              .EQU    0CH     ; Clear screen
-CR              .EQU    0DH     ; Carriage return
-CTRLO           .EQU    0FH     ; Control "O"
-CTRLQ	        .EQU	11H     ; Control "Q"
-CTRLR           .EQU    12H     ; Control "R"
-CTRLS           .EQU    13H     ; Control "S"
-CTRLU           .EQU    15H     ; Control "U"
-ESC             .EQU    1BH     ; Escape
-DEL             .EQU    7FH     ; Delete
+DEFC    CTRLC           =    03H     ; Control "C"
+DEFC    CTRLG           =    07H     ; Control "G"
+DEFC    BKSP            =    08H     ; Back space
+DEFC    LF              =    0AH     ; Line feed
+DEFC    CS              =    0CH     ; Clear screen
+DEFC    CR              =    0DH     ; Carriage return
+DEFC    CTRLO           =    0FH     ; Control "O"
+DEFC    CTRLQ	        =	 11H     ; Control "Q"
+DEFC    CTRLR           =    12H     ; Control "R"
+DEFC    CTRLS           =    13H     ; Control "S"
+DEFC    CTRLU           =    15H     ; Control "U"
+DEFC    ESC             =    1BH     ; Escape
+DEFC    DEL             =    7FH     ; Delete
 
 ;==============================================================================
-;
-; GLOBAL VARIABLES SECTION
-;
-
-serRxInPtr      .EQU     Z80_VECTOR_BASE+Z80_VECTOR_SIZE
-serRxOutPtr     .EQU     serRxInPtr+2
-serTxInPtr      .EQU     serRxOutPtr+2
-serTxOutPtr     .EQU     serTxInPtr+2
-serRxBufUsed    .EQU     serTxOutPtr+2
-serTxBufUsed    .EQU     serRxBufUsed+1
-serControl      .EQU     serTxBufUsed+1
-
-basicStarted    .EQU     serControl+1
-
-; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
-BUFSTART_IO     .EQU     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
-  
-serRxBuf        .EQU     BUFSTART_IO
-serTxBuf        .EQU     serRxBuf+SER_RX_BUFSIZE+1
-
-;==============================================================================
-;
-                .END
-;
-;==============================================================================
-
 
