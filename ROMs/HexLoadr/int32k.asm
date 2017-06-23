@@ -54,7 +54,7 @@ serialInt:
         ld l, a                     ; Move Rx byte to l
 
         ld a, (serRxBufUsed)        ; Get the number of bytes in the Rx buffer
-        cp SER_RX_BUFSIZE           ; check whether there is space in the buffer
+        cp SER_RX_BUFSIZE-1         ; check whether there is space in the buffer
         jr nc, im1_tx_check         ; buffer full, check if we can send something
 
         ld a, l                     ; get Rx byte from l
@@ -81,7 +81,7 @@ im1_tx_check:                       ; now start doing the Tx stuff
         out (SER_DATA_ADDR), a      ; output the Tx byte to the ACIA
 
         inc l                       ; move the Tx pointer, just low byte, along
-        ld a, SER_TX_BUFSIZE        ; load the buffer size, (n^2)-1
+        ld a, SER_TX_BUFSIZE-1      ; load the buffer size, (n^2)-1
         and l                       ; range check
         ld l, a                     ; return the low byte to l
         ld (serTxOutPtr), hl        ; write where the next byte should be popped
@@ -99,7 +99,7 @@ im1_tei_clear:
         out (SER_CTRL_ADDR), a      ; Set the ACIA CTRL register
 
 im1_rts_check:
-        ld a, (serRxBufUsed)        ; get the current Rx count    	
+        ld a, (serRxBufUsed)        ; get the current Rx count
         cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
         jr c, im1_txa_end           ; leave the RTS low, and end
 
@@ -162,8 +162,8 @@ rxa_clean_up:
 ;------------------------------------------------------------------------------
 SECTION z80_acia_txa                ; ORG $0130
 TXA:
-        push hl                     ; store HL so we don't clobber it        
-        ld l, a                     ; store Tx character 
+        push hl                     ; store HL so we don't clobber it
+        ld l, a                     ; store Tx character
 
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
@@ -181,15 +181,15 @@ TXA:
 
 txa_buffer_out:
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
-        cp SER_TX_BUFSIZE           ; check whether there is space in the buffer
+        cp SER_TX_BUFSIZE-1         ; check whether there is space in the buffer
         jr nc, txa_buffer_out       ; buffer full, so wait till it has space
 
-        ld a, l                     ; Retrieve Tx character     
+        ld a, l                     ; Retrieve Tx character
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
 
         inc l                       ; move the Tx pointer, just low byte along
-        ld a, SER_TX_BUFSIZE        ; load the buffer size, (n^2)-1
+        ld a, SER_TX_BUFSIZE-1      ; load the buffer size, (n^2)-1
         and l                       ; range check
         ld l, a                     ; return the low byte to l
         ld (serTxInPtr), hl         ; write where the next byte should be poked
@@ -368,9 +368,9 @@ CORW:
                LD        A,LF
                RST       08H
 COLDSTART:
-               LD        A,'Y'          ; Set the BASIC STARTED flag
+               LD        A,'Y'           ; Set the BASIC STARTED flag
                LD        (basicStarted),A
-               JP        $0390          ; <<<< Start Basic COLD:
+               JP        $0390           ; <<<< Start Basic COLD:
 CHECKWARM:
                CP        'W'
                JR        NZ, CORW
@@ -380,7 +380,7 @@ CHECKWARM:
                LD        A,LF
                RST       08H
 WARMSTART:
-               JP        $0393          ; <<<< Start Basic WARM:
+               JP        $0393           ; <<<< Start Basic WARM:
 
 ;==============================================================================
 ;
@@ -422,9 +422,9 @@ DEFC    basicStarted    =     serControl+1
 
 ; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
 DEFC    BUFSTART_IO     =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
-  
+
 DEFC    serRxBuf        =     BUFSTART_IO
-DEFC    serTxBuf        =     serRxBuf+SER_RX_BUFSIZE+1
+DEFC    serTxBuf        =     serRxBuf+SER_RX_BUFSIZE
 
 ;==============================================================================
 ;

@@ -38,16 +38,15 @@ INCLUDE "rc2014_config.h"
 ;
 
 DEFC    ROMSTART        =   $0000   ; Bottom of ROM
-DEFC    ROMSTOP         =   $1FFF   ; Top of ROM
 
 DEFC    RAMSTOP         =   $FFFF   ; Top of RAM
 
-DEFC    SER_RX_BUFSIZE  =   $FF ; FIXED Rx buffer size, 256 Bytes, no range checking
+DEFC    SER_RX_BUFSIZE  =   $100    ; FIXED Rx buffer size, 256 Bytes, no range checking
 DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $08
-                                ; Fullness of the Rx Buffer, when not_RTS is signalled
-DEFC    SER_RX_EMPTYSIZE =  $08 ; Fullness of the Rx Buffer, when RTS is signalled
+                                    ; Fullness of the Rx Buffer, when not_RTS is signalled
+DEFC    SER_RX_EMPTYSIZE =  $08     ; Fullness of the Rx Buffer, when RTS is signalled
 
-DEFC    SER_TX_BUFSIZE  =   $0F ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
+DEFC    SER_TX_BUFSIZE  =   $10     ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
 
 ;==============================================================================
 ;
@@ -55,7 +54,6 @@ DEFC    SER_TX_BUFSIZE  =   $0F ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
 ;
 
 DEFC    Z80_VECTOR_BASE =   RAMSTART   ; RAM vector address for Z80 RST Table
-                                       ; <<< SET THIS AS DESIRED >>>
 
 ; Squeezed between INT0 0x0038 and NMI 0x0066
 DEFC    Z80_VECTOR_PROTO    =   $0040

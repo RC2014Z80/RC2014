@@ -1,5 +1,2 @@
-    # test memory layout:
-    # program space
-    begin program_space
-    0x0000  0x8000  nascom32k.rom nascom32k
-    end
+zcc +z80 --no-crt -v -m --list @nascom32k.lst -o int32k
+appmake +glue -b int32k --ihex --pad --filler 0xFF --recsize 24 --clean

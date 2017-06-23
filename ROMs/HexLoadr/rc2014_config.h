@@ -14,6 +14,7 @@
 ; DEFINES SECTION
 ;
 
+DEFC    ROMSTOP         =   $1FFF       ; Top of ROM
 
 DEFC    RAM_56_START    =   $2000       ; Bottom of 56k RAM
 DEFC    RAM_48_START    =   $4000       ; Bottom of 48k RAM
