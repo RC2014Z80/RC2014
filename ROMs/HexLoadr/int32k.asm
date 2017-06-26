@@ -244,8 +244,8 @@ HEX_WAIT_COLON:
             cp 00           ; check if record type is 00 (data)
             jr nz, HEX_INVAL_TYPE ; if not, error
 HEX_READ_DATA:
-            ld a, '*'       ; "*" per byte loaded  # DEBUG
-            call TXA        ; Print it             # DEBUG
+;            ld a, '*'       ; "*" per byte loaded  # DEBUG
+;            call TXA        ; Print it             # DEBUG
             call HEX_READ_BYTE
             ld (de), a      ; write the byte at the RAM address
             inc de
@@ -257,10 +257,10 @@ HEX_READ_CHKSUM:
             jr nz, HEX_BAD_CHK  ; non zero, we have an issue
             ld a, '#'       ; "#" per line loaded
             call TXA        ; Print it
-            ld a, CR        ; CR                   # DEBUG
-            call TXA        ; Print it             # DEBUG
-            ld a, LF        ; LF                   # DEBUG
-            call TXA        ; Print it             # DEBUG
+;            ld a, CR        ; CR                   # DEBUG
+;            call TXA        ; Print it             # DEBUG
+;            ld a, LF        ; LF                   # DEBUG
+;            call TXA        ; Print it             # DEBUG
             jr HEX_WAIT_COLON
 
 HEX_END_LOAD:
@@ -388,7 +388,8 @@ WARMSTART:
 ;
 SECTION         z80_init_strings        ; ORG $0300
 
-SIGNON1:        DEFM    "SBC - Grant Searle",CR,LF
+SIGNON1:        DEFM    CR,LF
+                DEFM    "SBC - Grant Searle",CR,LF
                 DEFM    "ACIA - feilipu",CR,LF
                 DEFM    "z88dk",CR,LF,0
 
@@ -396,13 +397,12 @@ SIGNON2:        DEFM    CR,LF
                 DEFM    "Cold or Warm start, "
                 DEFM    "or HexLoadr (C|W|H) ? ",0
 
-initString:     DEFM    CR,LF
-                DEFM    "HexLoadr: "
+initString:     DEFM    CR,LF,"HexLoadr: "
                 DEFM    CR,LF,0
 
-invalidTypeStr: DEFM    "Inval Type",CR,LF,0
-badCheckSumStr: DEFM    "Chksum Error",CR,LF,0
-LoadOKStr:      DEFM    "Done",CR,LF,0
+invalidTypeStr: DEFM    CR,LF,"Inval Type",CR,LF,0
+badCheckSumStr: DEFM    CR,LF,"Chksum Error",CR,LF,0
+LoadOKStr:      DEFM    CR,LF,"Done",CR,LF,0
 
 
 ;==============================================================================
