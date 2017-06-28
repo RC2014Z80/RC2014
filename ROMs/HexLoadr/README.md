@@ -15,6 +15,7 @@ There are are several stages to this process.
 ```bash
 SBC - Grant Searle
 ACIA - feilipu
+z88dk
 
 Cold or Warm start, or HexLoadr (C|W|H) ? C
 
