@@ -141,4 +141,25 @@ DEFC    ESC             =    1BH     ; Escape
 DEFC    DEL             =    7FH     ; Delete
 
 ;==============================================================================
+;
+; VARIABLES
+;
+
+DEFC    serRxInPtr      =     Z80_VECTOR_BASE+Z80_VECTOR_SIZE
+DEFC    serRxOutPtr     =     serRxInPtr+2
+DEFC    serTxInPtr      =     serRxOutPtr+2
+DEFC    serTxOutPtr     =     serTxInPtr+2
+DEFC    serRxBufUsed    =     serTxOutPtr+2
+DEFC    serTxBufUsed    =     serRxBufUsed+1
+DEFC    serControl      =     serTxBufUsed+1
+
+DEFC    basicStarted    =     serControl+1
+
+; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
+DEFC    BUFSTART_IO     =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+
+DEFC    serRxBuf        =     BUFSTART_IO
+DEFC    serTxBuf        =     serRxBuf+SER_RX_BUFSIZE
+
+;==============================================================================
 

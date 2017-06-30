@@ -35,7 +35,7 @@ There are a number of important Z80 addresses or origins that need to be managed
 
 Your program (the one that you're doing all this for) needs to start in RAM located somewhere.
 
-For the RC2014 with 32kB of RAM, when the RC2014 does a cold start it requests the "Memory Top?" figure. Setting this to 57343 (`0xDFFF`), or lower, will give you space from `0xE000` to `0xFFFF` for your program.
+For the RC2014 with 32kB of RAM, when the RC2014 does a cold start it requests the "Memory Top?" figure. Setting this to 36863 (`0x8FFF`), or lower, will give you space from `0x9000` to `0xFFFF` for your program.
 
 If you're using the RC2014 with 56kB of RAM, then all of the RAM between `0x2000` and `0x7FFF` is available for your assembly programs, without limitation. So, there's no need to change anything during the cold start.
 
@@ -50,7 +50,7 @@ For convenience, because we can't easily change the ROM code interrupt routines 
 ## USR Jump Address & Parameter Access
 
 For the RC2014 with 32k Basic the `USR(x)` jump address is located at `0x8224`.
-For example, if the origin of your arbitrary program is located at `0xE000` then the Basic command to set the `USR(x)` jump address is `DOKE &h8224, &hE000`.
+For example, if the origin of your arbitrary program is located at `0x9000` then the Basic command to set the `USR(x)` jump address is `DOKE &h8224, &h9000`.
 
 Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0C47`. The parameter is stored in register pair `DE`.
 
@@ -62,7 +62,7 @@ DEINT           .EQU    $0C47   ; Function DEINT to get USR(x) into DE registers
 ABPASS          .EQU    $13BD   ; Function ABPASS to put output into AB register for return
 
 
-                .ORG    E000H   ; your code origin, for example
+                .ORG    9000H   ; your code origin, for example
                 CALL    DEINT   ; get the USR(x) argument in DE
                  
                                 ; your code here
@@ -75,13 +75,13 @@ The `RC2014_LABELS.TXT` file is provided to advise of all the relevant RAM and R
 
 1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler.
 
-2. Start your 32k RAM RC2014 with the `Memory top?` set to 57343 (`0xDFFF`) or lower. This leaves space for your program from `0xE000` through to `0xFFFF`. Adjust this if needed to suit your individual needs. For 56kB RAM module equipped RC2014 devices, just skip this step.
+2. Start your 32k RAM RC2014 with the `Memory top?` set to 36863 (`0x8FFF`) or lower. This leaves space for your program from `0x9000` through to `0xFFFF`. Adjust this if needed to suit your individual needs.
 
 3. Reset the RC2014 and type `H` when offered the `(C|W|H)` option when booting. `HexLoadr:` will wait for Intel HEX formatted data on the ACIA serial interface.
 
 4. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1, using the Linux `cat` utility or similar. If desired the python `slowprint.py` program can also be used for this purpose. `python slowprint.py > /dev/ttyUSB0 < myprogram.hex` or `cat > /dev/ttyUSB0 < myprogram.hex`.
 
-5. When HexLoadr has finished, and you are back at the Basic `ok` prompt, use the `DOKE` command relocate the address for the Basic `USR(x)` command to point to `.ORG` of your arbitrary program. For the RC2014 the `USR(x)` jump address is located at `0x8224`. If your arbitrary program is located at `0xE000` then the Basic command is `DOKE &h8224, &hE000`, for example.
+5. When HexLoadr has finished, and you are back at the Basic `ok` prompt, use the `DOKE` command relocate the address for the Basic `USR(x)` command to point to `.ORG` of your arbitrary program. For the RC2014 the `USR(x)` jump address is located at `0x8224`. If your arbitrary program is located at `0x9000` then the Basic command is `DOKE &h8224, &h9000`, for example.
 
 6. Start your program by typing `PRINT USR(0)`, or other variant if you have a parameter to pass to your program.
 
