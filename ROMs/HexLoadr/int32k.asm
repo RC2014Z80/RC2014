@@ -412,8 +412,11 @@ LoadOKStr:      DEFM    CR,LF,"Done",CR,LF,0
 
 EXTERN  NULL_RET, NULL_INT, NULL_NMI
 
-PUBLIC  RST_08, RST_10, RST_18, RST_20, RST_28, RST_30, INT_INT0, INT_NMI
+PUBLIC  Z180_TRAP
+PUBLIC  RST_08, RST_10, RST_18, RST_20, RST_28, RST_30
+PUBLIC  INT_INT0, INT_NMI
 
+DEFC    Z180_TRAP   =       INIT            ; Initialise, should never get here
 DEFC    RST_08      =       TXA             ; TX a character over ACIA
 DEFC    RST_10      =       RXA             ; RX a character over ACIA, loop byte available
 DEFC    RST_18      =       RXA_CHK         ; Check ACIA status, return # bytes available

@@ -16,7 +16,7 @@
 ; INCLUDE       "yaz180.h"              ; OR
 ; INCLUDE       "rc2014.h"
 
-;INCLUDE       "yaz180.h"
+; INCLUDE       "yaz180.h"
 INCLUDE       "rc2014.h"
 
 ;==============================================================================
@@ -79,9 +79,13 @@ EXTERN          INIT
 
 SECTION         z80_vector_table_prototype
 
+EXTERN          Z180_TRAP
 EXTERN          RST_08, RST_10, RST_18, RST_20, RST_28, RST_30
 EXTERN          INT_INT0, INT_NMI
 
+Z180_TRAP_LBL:
+                JP      Z180_TRAP
+                NOP
 RST_08_LBL:
                 JP      RST_08
                 NOP

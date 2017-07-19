@@ -56,11 +56,13 @@ DEFC    SER_TX_BUFSIZE  =   $10     ; Size of the Tx Buffer, 2^n Bytes, n = 4 he
 DEFC    Z80_VECTOR_BASE =   RAMSTART   ; RAM vector address for Z80 RST Table
 
 ; Squeezed between INT0 0x0038 and NMI 0x0066
-DEFC    Z80_VECTOR_PROTO    =   $0040
-DEFC    Z80_VECTOR_SIZE     =   $20
+
+DEFC    Z80_VECTOR_PROTO    =   $003C
+DEFC    Z80_VECTOR_SIZE     =   $24
 
 ;   Prototype Interrupt Service Routines - complete in main program
 ;
+;DEFC       Z180_TRAP       =    Z180_INIT   Reboot
 ;DEFC       RST_08          =    TX0         TX a character over ASCI0
 ;DEFC       RST_10          =    RX0         RX a character over ASCI0, block no bytes available
 ;DEFC       RST_18          =    RX0_CHK     Check ASCI0 status, return # bytes available
@@ -72,14 +74,15 @@ DEFC    Z80_VECTOR_SIZE     =   $20
 
 ;   Z80 Interrupt Service Routine Addresses - rewrite as needed
 
-DEFC    RST_08_ADDR     =   Z80_VECTOR_BASE+$01
-DEFC    RST_10_ADDR     =   Z80_VECTOR_BASE+$05
-DEFC    RST_18_ADDR     =   Z80_VECTOR_BASE+$09
-DEFC    RST_20_ADDR     =   Z80_VECTOR_BASE+$0D
-DEFC    RST_28_ADDR     =   Z80_VECTOR_BASE+$11
-DEFC    RST_30_ADDR     =   Z80_VECTOR_BASE+$15
-DEFC    INT_INT0_ADDR   =   Z80_VECTOR_BASE+$19
-DEFC    INT_NMI_ADDR    =   Z80_VECTOR_BASE+$1D
+DEFC    Z180_TRAP_ADDR      =   Z80_VECTOR_BASE+$01
+DEFC    RST_08_ADDR         =   Z80_VECTOR_BASE+$05
+DEFC    RST_10_ADDR         =   Z80_VECTOR_BASE+$09
+DEFC    RST_18_ADDR         =   Z80_VECTOR_BASE+$0D
+DEFC    RST_20_ADDR         =   Z80_VECTOR_BASE+$11
+DEFC    RST_28_ADDR         =   Z80_VECTOR_BASE+$15
+DEFC    RST_30_ADDR         =   Z80_VECTOR_BASE+$19
+DEFC    INT_INT0_ADDR       =   Z80_VECTOR_BASE+$1D
+DEFC    INT_NMI_ADDR        =   Z80_VECTOR_BASE+$21
 
 ;==============================================================================
 ;
