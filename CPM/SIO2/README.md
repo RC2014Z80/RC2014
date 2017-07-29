@@ -4,3 +4,5 @@ SIOA_D .EQU $81
 SIOA_C .EQU $80
 SIOB_D .EQU $83
 SIOB_C .EQU $82
+
+Note that the only 2 files you probably need is ROM.HEX, to be burnt to EPROM and CPM Inc Transient Apps SIO2.img.zip which should be unpacked and the .img file needs to be written to a 128mb CF card with DD or Win32 Image Writer or similar
