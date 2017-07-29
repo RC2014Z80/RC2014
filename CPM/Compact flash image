@@ -1,4 +1,6 @@
-The file "CPM 128MB inc transient apps.zip" contains a compressed image of the compact flash card supplied as part of the RC2014 Compact Flash Module kit.
+The file "CPM 128MB inc transient apps.zip" contains a compressed image of the compact flash card supplied as part of the RC2014 Compact Flash Module kit for the 68B50 ACIA.
+
+The file "CPM Inc Transient Apps SIO2.img.zip" is exactly the same, except that CPM22 has been set up to use SIO/2 port 0x80 - 0x83 as per the RC2014 SIO/2 implementation.
 
 Note that the original data on the compact flash card was created by CP/M, and, as such, it is not readable by modern operating systems - so don't be surprised if it shows as being corrupt if you try to open it.
 
