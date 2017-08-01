@@ -1,4 +1,4 @@
-These ROMs are the standard factory RC2014 ROMs
+These ROMs are the official factory RC2014 ROMs as supplied with RC2014 products.  Copyright of their respective owners.  Sourcecode, where available, is elsewhere in this Github repo or found with a quick Google search.
 
 Every ROM now has an 8 digit code on it.  Each digit, from left to right, refers to an 8k bank from 0x0000 to 0xD000.  This bank can be selected with the A13, A14, A15 jumpers;
 
