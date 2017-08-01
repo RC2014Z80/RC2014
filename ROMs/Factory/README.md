@@ -4,12 +4,19 @@ Every ROM now has an 8 digit code on it.  Each digit, from left to right, refers
 
 Address	A15	A14	A13	ROM Label
 0000	0	0	0	 Xooooooo
+
 2000	0	0	1	 oXoooooo
+
 4000	0	1	0	 ooXooooo
+
 6000	0	1	1	 oooXoooo
+
 8000	1	0	0	 ooooXooo
+
 A000	1	0	1	 oooooXoo
+
 C000	1	1	0	 ooooooXo
+
 E000	1	1	1	 oooooooX
  
 
