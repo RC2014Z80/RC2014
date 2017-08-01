@@ -3,6 +3,7 @@ These ROMs are the standard factory RC2014 ROMs
 Every ROM now has an 8 digit code on it.  Each digit, from left to right, refers to an 8k bank from 0x0000 to 0xD000.  This bank can be selected with the A13, A14, A15 jumpers;
 
 Address	A15	A14	A13	ROM Label
+
 0000	0	0	0	 Xooooooo
 
 2000	0	0	1	 oXoooooo
