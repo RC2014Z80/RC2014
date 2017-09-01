@@ -12,6 +12,6 @@ Ensure btc is somewhere your $PATH vairable can see
 
 Usage: btc input-file [-u user-number, default 0] [-h help]
  
- Examples: btc mbasic.com -u1 > mbasic.hex
+Examples: btc mbasic.com -u1 > mbasic.hex
           
-          btc zork1.dat
+btc zork1.dat
