@@ -4,7 +4,7 @@ The file "CPM Inc Transient Apps SIO2.img.zip" is exactly the same, except that 
 
 Note that the original data on the compact flash card was created by CP/M, and, as such, it is not readable by modern operating systems - so don't be surprised if it shows as being corrupt if you try to open it.
 
-Also note that it is very picky about what is used to restore this back on to a CF card.  I used "Discs" under Linux to create this image, and it works for restoring it, however have been unable to find a Windows program that can restore it.
+Also note that it is very picky about what is used to restore this back on to a CF card.  I used "Discs" under Linux to create this image, and it works for restoring it.  You can also use Win32DiskImager from Windows.
 
 And also worth noting is that it is very picky about what CF card is used.  I have got a lot of identical 128MB CF cards, and this works fine with them, but any other cards, even those claiming to be the same size fail.  If you need to restore the image to the CF that came with your kit then you'll probably be ok, but don't expect it to work with other cards.
 
