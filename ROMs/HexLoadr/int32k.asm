@@ -48,14 +48,14 @@ serialInt:
                                     ; start doing the Rx stuff
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_RDRF                ; check whether a byte has been received
-        jr z, im1_tx_check          ; if not, go check for bytes to transmit 
+        jr Z, im1_tx_check          ; if not, go check for bytes to transmit 
 
         in a, (SER_DATA_ADDR)       ; Get the received byte from the ACIA 
         ld l, a                     ; Move Rx byte to l
 
         ld a, (serRxBufUsed)        ; Get the number of bytes in the Rx buffer
         cp SER_RX_BUFSIZE-1         ; check whether there is space in the buffer
-        jr nc, im1_tx_check         ; buffer full, check if we can send something
+        jr NC, im1_tx_check         ; buffer full, check if we can send something
 
         ld a, l                     ; get Rx byte from l
         ld hl, (serRxInPtr)         ; get the pointer to where we poke
@@ -70,11 +70,11 @@ serialInt:
 im1_tx_check:                       ; now start doing the Tx stuff
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
-        jr z, im1_rts_check         ; if not, go check for the receive RTS selection
+        jr Z, im1_rts_check         ; if not, go check for the receive RTS selection
 
         ld a, (serTxBufUsed)        ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
-        jr z, im1_tei_clear         ; if the count is zero, then disable the Tx Interrupt
+        jr Z, im1_tei_clear         ; if the count is zero, then disable the Tx Interrupt
 
         ld hl, (serTxOutPtr)        ; get the pointer to place where we pop the Tx byte
         ld a, (hl)                  ; get the Tx byte
@@ -89,7 +89,7 @@ im1_tx_check:                       ; now start doing the Tx stuff
         ld hl, serTxBufUsed
         dec (hl)                    ; atomically decrement current Tx count
 
-        jr nz, im1_txa_end          ; if we've more Tx bytes to send, we're done for now
+        jr NZ, im1_txa_end          ; if we've more Tx bytes to send, we're done for now
 
 im1_tei_clear:
         ld a, (serControl)          ; get the ACIA control echo byte
@@ -101,7 +101,7 @@ im1_tei_clear:
 im1_rts_check:
         ld a, (serRxBufUsed)        ; get the current Rx count
         cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
-        jr c, im1_txa_end           ; leave the RTS low, and end
+        jr C, im1_txa_end           ; leave the RTS low, and end
 
         ld a, (serControl)          ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
@@ -128,7 +128,7 @@ SECTION z80_acia_rxa                ; ORG $0100
 RXA:
         ld a, (serRxBufUsed)        ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
-        jr z, RXA                   ; wait, if there are no bytes available
+        jr Z, RXA                   ; wait, if there are no bytes available
         
         push hl                     ; Store HL so we don't clobber it
 
@@ -144,7 +144,7 @@ RXA:
         ld a,(hl)                   ; get the newly decremented Rx count
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
-        jr nc, rxa_clean_up         ; if the buffer is too full, don't change the RTS
+        jr NC, rxa_clean_up         ; if the buffer is too full, don't change the RTS
 
         di                          ; critical section begin
         ld a, (serControl)          ; get the ACIA control echo byte
@@ -167,11 +167,11 @@ TXA:
 
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
-        jr nz, txa_buffer_out       ; buffer not empty, so abandon immediate Tx
+        jr NZ, txa_buffer_out       ; buffer not empty, so abandon immediate Tx
 
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
-        jr z, txa_buffer_out        ; if not, so abandon immediate Tx
+        jr Z, txa_buffer_out        ; if not, so abandon immediate Tx
 
         ld a, l                     ; Retrieve Tx character for immediate Tx
         out (SER_DATA_ADDR), a      ; immediately output the Tx byte to the ACIA
@@ -182,7 +182,7 @@ TXA:
 txa_buffer_out:
         ld a, (serTxBufUsed)        ; Get the number of bytes in the Tx buffer
         cp SER_TX_BUFSIZE-1         ; check whether there is space in the buffer
-        jr nc, txa_buffer_out       ; buffer full, so wait till it has space
+        jr NC, txa_buffer_out       ; buffer full, so wait till it has space
 
         ld a, l                     ; Retrieve Tx character
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
@@ -201,7 +201,7 @@ txa_buffer_out:
 
         ld a, (serControl)          ; get the ACIA control echo byte
         and SER_TEI_RTS0            ; test whether ACIA interrupt is set
-        ret nz                      ; if so then just return
+        ret NZ                      ; if so then just return
 
         di                          ; critical section begin
         ld a, (serControl)          ; get the ACIA control echo byte again
@@ -225,169 +225,160 @@ PRINT:
 ;------------------------------------------------------------------------------
 SECTION     z80_hexloadr            ; ORG $0190
 HEX_START:
-            ld hl, initString
-            call PRINT
+        ld hl, initString
+        call PRINT
 HEX_WAIT_COLON:
-            call RXA        ; Rx byte
-            cp ':'          ; wait for ':'
-            jr nz, HEX_WAIT_COLON
-            ld hl, 0        ; reset hl to compute checksum
-            call HEX_READ_BYTE  ; read byte count
-            ld b, a         ; store it in b
-            call HEX_READ_BYTE  ; read upper byte of address
-            ld d, a         ; store in d
-            call HEX_READ_BYTE  ; read lower byte of address
-            ld e, a         ; store in e
-            call HEX_READ_BYTE  ; read record type
-            cp 01           ; check if record type is 01 (end of file)
-            jr z, HEX_END_LOAD
-            cp 00           ; check if record type is 00 (data)
-            jr nz, HEX_INVAL_TYPE ; if not, error
+        call RXA                    ; Rx byte
+        cp ':'                      ; wait for ':'
+        jr NZ, HEX_WAIT_COLON
+        ld c, 0                     ; reset C to compute checksum
+        call HEX_READ_BYTE          ; read byte count
+        ld b, a                     ; store it in B
+        call HEX_READ_BYTE          ; read upper byte of address
+        ld d, a                     ; store in D
+        call HEX_READ_BYTE          ; read lower byte of address
+        ld e, a                     ; store in E
+        call HEX_READ_BYTE          ; read record type
+        cp 01                       ; check if record type is 01 (end of file)
+        jr Z, HEX_END_LOAD
+        cp 00                       ; check if record type is 00 (data)
+        jr NZ, HEX_INVAL_TYPE       ; if not, error
 HEX_READ_DATA:
-;            ld a, '*'       ; "*" per byte loaded  # DEBUG
-;            call TXA        ; Print it             # DEBUG
-            call HEX_READ_BYTE
-            ld (de), a      ; write the byte at the RAM address
-            inc de
-            djnz HEX_READ_DATA  ; if b non zero, loop to get more data
+        call HEX_READ_BYTE
+        ld (de), a                  ; write the byte at the RAM address
+        inc de
+        djnz HEX_READ_DATA          ; if b non zero, loop to get more data
 HEX_READ_CHKSUM:
-            call HEX_READ_BYTE  ; read checksum, but we don't need to keep it
-            ld a, l         ; lower byte of hl checksum should be 0
-            or a
-            jr nz, HEX_BAD_CHK  ; non zero, we have an issue
-            ld a, '#'       ; "#" per line loaded
-            call TXA        ; Print it
-;            ld a, CR        ; CR                   # DEBUG
-;            call TXA        ; Print it             # DEBUG
-;            ld a, LF        ; LF                   # DEBUG
-;            call TXA        ; Print it             # DEBUG
-            jr HEX_WAIT_COLON
+        call HEX_READ_BYTE          ; read checksum, but we don't need to keep it
+        ld a, c                     ; lower byte of C checksum should be 0
+        or a
+        jr NZ, HEX_BAD_CHK          ; non zero, we have an issue
+        ld a, '#'                   ; "#" per line loaded
+        call TXA                    ; Print it
+        jr HEX_WAIT_COLON
 
 HEX_END_LOAD:
-            call HEX_READ_BYTE  ; read checksum, but we don't need to keep it
-            ld a, l         ; lower byte of hl checksum should be 0
-            or a
-            jr nz, HEX_BAD_CHK  ; non zero, we have an issue
-            ld hl, LoadOKStr
-            call PRINT
-            jp WARMSTART    ; ready to run our loaded program from Basic
+        call HEX_READ_BYTE          ; read checksum, but we don't need to keep it
+        ld a, c                     ; lower byte of C checksum should be 0
+        or a
+        jr NZ, HEX_BAD_CHK          ; non zero, we have an issue
+        ld hl, LoadOKStr
+        call PRINT
+        jp WARMSTART                ; ready to run our loaded program from Basic
 
 HEX_INVAL_TYPE:
-            ld hl, invalidTypeStr
-            call PRINT
-            jp START        ; go back to start
+        ld hl, invalidTypeStr
+        call PRINT
+        jp START                    ; go back to start
 
 HEX_BAD_CHK:
-            ld hl, badCheckSumStr
-            call PRINT
-            jp START        ; go back to start
+        ld hl, badCheckSumStr
+        call PRINT
+        jp START                    ; go back to start
 
-HEX_READ_BYTE:              ; Returns byte in a, checksum in hl
-            push bc
-            call RXA        ; Rx byte
-            sub '0'
-            cp 10
-            jr c, HEX_READ_NBL2 ; if a<10 read the second nibble
-            sub 7           ; else subtract 'A'-'0' (17) and add 10
-HEX_READ_NBL2:
-            rlca            ; shift accumulator left by 4 bits
-            rlca
-            rlca
-            rlca
-            ld c, a         ; temporarily store the first nibble in c
-            call RXA        ; Rx byte
-            sub '0'
-            cp 10
-            jr c, HEX_READ_END  ; if a<10 finalize
-            sub 7           ; else subtract 'A' (17) and add 10
-HEX_READ_END:
-            or c            ; assemble two nibbles into one byte in a
-            ld b, 0         ; add the byte read to hl (for checksum)
-            ld c, a
-            add hl, bc
-            pop bc
-            ret             ; return the byte read in a
+HEX_READ_BYTE:                      ; returns byte in A, checksum in C
+        call HEX_READ_NIBBLE        ; read the first nibble
+        rlca                        ; shift it left by 4 bits
+        rlca
+        rlca
+        rlca
+        ld l, a                     ; temporarily store the first nibble in L
+        call HEX_READ_NIBBLE        ; get the second (low) nibble
+        or l                        ; assemble two nibbles into one byte in A
+        ld l, a                     ; put assembled byte back into L
+        add a, c                    ; add the byte read to C (for checksum)
+        ld c, a
+        ld a, l
+        ret                         ; return the byte read in A (L = char received too)  
+
+HEX_READ_NIBBLE:
+        call RXA                    ; Rx byte in A
+        sub '0'
+        cp 10
+        ret C                       ; if A<10 just return
+        sub 7                       ; else subtract 'A'-'0' (17) and add 10
+        ret
 
 ;------------------------------------------------------------------------------
-SECTION        z80_init                  ; ORG $0240
+SECTION        z80_init             ; ORG $0240
 
-PUBLIC         INIT
+PUBLIC  INIT
 
 INIT:
-               LD        SP,TEMPSTACK    ; Set up a temporary stack
+        LD SP, TEMPSTACK            ; Set up a temporary stack
 
-               LD        HL,Z80_VECTOR_PROTO ; Establish Z80 RST Vector Table
-               LD        DE,Z80_VECTOR_BASE
-               LD        BC,Z80_VECTOR_SIZE
-               LDIR
+        LD HL, Z80_VECTOR_PROTO     ; Establish Z80 RST Vector Table
+        LD DE, Z80_VECTOR_BASE
+        LD BC, Z80_VECTOR_SIZE
+        LDIR
 
-               LD        HL,serRxBuf     ; Initialise Rx Buffer
-               LD        (serRxInPtr),HL
-               LD        (serRxOutPtr),HL
+        LD HL, serRxBuf             ; Initialise Rx Buffer
+        LD (serRxInPtr), HL
+        LD (serRxOutPtr), HL
 
-               LD        HL,serTxBuf     ; Initialise Tx Buffer
-               LD        (serTxInPtr),HL
-               LD        (serTxOutPtr),HL              
+        LD HL, serTxBuf             ; Initialise Tx Buffer
+        LD (serTxInPtr), HL
+        LD (serTxOutPtr), HL              
 
-               XOR       A               ; 0 the RXA & TXA Buffer Counts
-               LD        (serRxBufUsed),A
-               LD        (serTxBufUsed),A
+        XOR A                       ; 0 the RXA & TXA Buffer Counts
+        LD (serRxBufUsed), A
+        LD (serTxBufUsed), A
 
-               LD        A, SER_RESET    ; Master Reset the ACIA
-               OUT       (SER_CTRL_ADDR),A
+        LD A, SER_RESET             ; Master Reset the ACIA
+        OUT (SER_CTRL_ADDR), A
 
-               LD        A, SER_REI|SER_TDI_RTS0|SER_8N1|SER_CLK_DIV_64
-                                         ; load the default ACIA configuration
-                                         ; 8n1 at 115200 baud
-                                         ; receive interrupt enabled
-                                         ; transmit interrupt disabled
-                                    
-               LD        (serControl),A     ; write the ACIA control byte echo
-               OUT       (SER_CTRL_ADDR),A  ; output to the ACIA control byte
+        LD A, SER_REI|SER_TDI_RTS0|SER_8N1|SER_CLK_DIV_64
+                                    ; load the default ACIA configuration
+                                    ; 8n1 at 115200 baud
+                                    ; receive interrupt enabled
+                                    ; transmit interrupt disabled
+                            
+        LD (serControl),A           ; write the ACIA control byte echo
+        OUT (SER_CTRL_ADDR),A       ; output to the ACIA control byte
 
-               IM        1               ; interrupt mode 1
-               EI
+        IM 1                        ; interrupt mode 1
+        EI
 
 START:
-               LD        HL, SIGNON1     ; Sign-on message
-               CALL      PRINT           ; Output string
-               LD        A,(basicStarted); Check the BASIC STARTED flag
-               CP        'Y'             ; to see if this is power-up
-               JR        NZ, COLDSTART   ; If not BASIC started then always do cold start
-               LD        HL, SIGNON2     ; Cold/warm message
-               CALL      PRINT           ; Output string
+        LD HL, SIGNON1              ; Sign-on message
+        CALL PRINT                  ; Output string
+        LD A,(basicStarted)         ; Check the BASIC STARTED flag
+        CP 'Y'                      ; to see if this is power-up
+        JR NZ, COLDSTART            ; If not BASIC started then always do cold start
+        LD HL, SIGNON2              ; Cold/warm message
+        CALL PRINT                  ; Output string
 CORW:
-               RST       10H
-               AND       11011111B       ; lower to uppercase
-               CP        'H'             ; are we trying to load an Intel HEX program?
-               JP        Z, HEX_START    ; then jump to HexLoadr
-               CP        'C'
-               JR        NZ, CHECKWARM
-               RST       08H
-               LD        A,CR
-               RST       08H
-               LD        A,LF
-               RST       08H
+        RST 10H
+        AND 11011111B               ; lower to uppercase
+        CP 'H'                      ; are we trying to load an Intel HEX program?
+        JP Z, HEX_START             ; then jump to HexLoadr
+        CP 'C'
+        JR NZ, CHECKWARM
+        RST 08H
+        LD A,CR
+        RST 08H
+        LD A,LF
+        RST 08H
 COLDSTART:
-               LD        A,'Y'           ; Set the BASIC STARTED flag
-               LD        (basicStarted),A
-               JP        $0390           ; <<<< Start Basic COLD:
+        LD A,'Y'                    ; Set the BASIC STARTED flag
+        LD (basicStarted),A
+        JP $0390                    ; <<<< Start Basic COLD:
 CHECKWARM:
-               CP        'W'
-               JR        NZ, CORW
-               RST       08H
-               LD        A,CR
-               RST       08H
-               LD        A,LF
-               RST       08H
+        CP 'W'
+        JR NZ, CORW
+        RST 08H
+        LD A,CR
+        RST 08H
+        LD A,LF
+        RST 08H
 WARMSTART:
-               JP        $0393           ; <<<< Start Basic WARM:
+        JP $0393                    ; <<<< Start Basic WARM:
 
 ;==============================================================================
 ;
 ; STRINGS
 ;
-SECTION         z80_init_strings         ; ORG $02D0
+SECTION         z80_init_strings    ; ORG $02D0
 
 SIGNON1:        DEFM    CR,LF
                 DEFM    "SBC - Grant Searle",CR,LF
@@ -417,8 +408,8 @@ PUBLIC  RST_08, RST_10, RST_18, RST_20, RST_28, RST_30
 PUBLIC  INT_INT0, INT_NMI
 
 DEFC    Z180_TRAP   =       INIT            ; Initialise, should never get here
-DEFC    RST_08      =       TXA             ; TX a character over ACIA
-DEFC    RST_10      =       RXA             ; RX a character over ACIA, loop byte available
+DEFC    RST_08      =       TXA             ; TX character over ACIA, loop until space
+DEFC    RST_10      =       RXA             ; RX character over ACIA, loop until byte
 DEFC    RST_18      =       RXA_CHK         ; Check ACIA status, return # bytes available
 DEFC    RST_20      =       NULL_RET        ; RET
 DEFC    RST_28      =       NULL_RET        ; RET
