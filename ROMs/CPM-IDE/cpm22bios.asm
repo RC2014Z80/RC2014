@@ -854,7 +854,7 @@ tx_end:
 
 tx_reset_tx_buffer:
     ld hl,aciaTxBuffer          ; move tx buffer pointer back to start of buffer
-    jp tx_buffer_adjusted
+    jr tx_buffer_adjusted
 
 _acia_init:
     di
@@ -954,7 +954,6 @@ _acia_getc:
 get_clean_up_rx:
     pop af                      ; get the Rx byte from stack
     ld l, a                     ; and put it in hl
-
     scf                         ; indicate char received
     ret
 
@@ -1031,10 +1030,11 @@ putc_clean_up_tx:
     ld (aciaControl), a         ; write the ACIA control echo byte back
     out (__IO_ACIA_CONTROL_REGISTER), a    ; set the ACIA CTRL register
     ei                          ; critical section end
+    ret
 
 putc_reset_tx_buffer:
     ld hl,aciaTxBuffer          ; move tx buffer pointer back to start of buffer
-    jp putc_tx_buffer_adjusted
+    jr putc_tx_buffer_adjusted
 
     defc _acia0_interrupt = _acia_interrupt
     defc _acia0_init = _acia_init
