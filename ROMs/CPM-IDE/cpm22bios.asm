@@ -817,16 +817,17 @@ tx_check:
     ld a, (hl)                  ; get the Tx byte
     out (__IO_ACIA_DATA_REGISTER), a   ; output the Tx byte to the ACIA
 
-    inc l                       ; move the Tx pointer low byte along, 0xnF rollover
-    ld a,l
-    and __IO_ACIA_TX_SIZE-1
-    ld l,a
-    ld (aciaTxOut), hl          ; write where the next byte should be popped
+    ld a,l                      ; check if Tx pointer is at the end of its range
+    cp +(aciaTxBuffer + __IO_ACIA_TX_SIZE - 1) & 0xff
+    jr Z, tx_reset_tx_buffer    ; if at end of range, reset Tx pointer to start of Tx buffer
+    inc hl                      ; else advance to next byte in Tx buffer
 
+tx_buffer_adjusted:
+    ld (aciaTxOut), hl          ; write where the next byte should be popped
     ld hl, aciaTxCount
     dec (hl)                    ; atomically decrement current Tx count
     jr NZ, tx_end               ; if we've more Tx bytes to send, we're done for now
-    
+
 tx_tei_clear:
     ld a, (aciaControl)         ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
@@ -837,7 +838,7 @@ tx_tei_clear:
 tx_rts_check:
     ld a, (aciaRxCount)         ; get the current Rx count    	
     cp __IO_ACIA_RX_FULLISH        ; compare the count with the preferred full size
-    jr c, tx_end                ; leave the RTS low, and end
+    jr C, tx_end                ; leave the RTS low, and end
 
     ld a, (aciaControl)         ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
@@ -850,6 +851,10 @@ tx_end:
     pop af
     ei
     reti
+
+tx_reset_tx_buffer:
+    ld hl,aciaTxBuffer          ; move tx buffer pointer back to start of buffer
+    jp tx_buffer_adjusted
 
 _acia_init:
     di
@@ -1007,12 +1012,13 @@ putc_buffer_tx:
     ld hl, (aciaTxIn)           ; get the pointer to where we poke
     ld (hl), a                  ; write the Tx byte to the aciaTxIn
 
-    inc l                       ; move the Tx pointer low byte along, 0xnF rollover
-    ld a,l
-    and __IO_ACIA_TX_SIZE-1
-    ld l,a
-    ld (aciaTxIn), hl           ; write where the next byte should be poked
+    ld a,l                      ; check if Tx pointer is at the end of its range
+    cp +(aciaTxBuffer + __IO_ACIA_TX_SIZE - 1) & 0xff
+    jr Z, putc_reset_tx_buffer  ; if at end of range, reset Tx pointer to start of Tx buffer
+    inc hl                      ; else advance to next byte in Tx buffer
 
+putc_tx_buffer_adjusted:
+    ld (aciaTxIn), hl           ; write where the next byte should be poked
     ld hl, aciaTxCount
     inc (hl)                    ; atomic increment of Tx count
     ld l, 0                     ; indicate Tx buffer was not full
@@ -1025,6 +1031,10 @@ putc_clean_up_tx:
     ld (aciaControl), a         ; write the ACIA control echo byte back
     out (__IO_ACIA_CONTROL_REGISTER), a    ; set the ACIA CTRL register
     ei                          ; critical section end
+
+putc_reset_tx_buffer:
+    ld hl,aciaTxBuffer          ; move tx buffer pointer back to start of buffer
+    jp putc_tx_buffer_adjusted
 
     defc _acia0_interrupt = _acia_interrupt
     defc _acia0_init = _acia_init
