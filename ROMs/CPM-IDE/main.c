@@ -1,0 +1,506 @@
+/***************************************************************************//**
+
+  @file         main.c
+  @author       Phillip Stevens, inspired by Stephen Brennan
+  @brief        YASH (Yet Another SHell)
+
+  This RC2014 programme was reached working state on St Patrick's Day 2018.
+
+*******************************************************************************/
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <arch.h>
+#include <arch/rc2014/diskio.h>
+
+#include "ffconf.h"
+#include <lib/rc2014/ff.h>
+
+
+// PRAGMA DEFINES
+#pragma output REGISTER_SP = 0xD800
+#pragma printf = "%s %u %X"     // enables %s, %lu, %X only 
+
+// DEFINES
+
+#define MAX_FILES 1             // number of files open at any time
+#define BUFFER_SIZE 1024        // size of working buffer (on heap)
+#define LINE_SIZE 256           // size of a command line (on heap)
+
+static void * buffer;           /* create a scratch buffer on heap later */
+
+static FATFS *fs;               /* Pointer to the filesystem object (on heap) */
+static DIR *dir;                /* Pointer to the directory object (on heap) */
+
+static FILINFO Finfo;           /* File Information */
+static FIL File[MAX_FILES];     /* File object needed for each open file */
+
+int32_t AccSize;                /* Working register for scan_files function */
+int16_t AccFiles;
+int16_t AccDirs;
+
+extern uint32_t cpm_dsk0_base[4];
+
+__sfr __at 0x38 page_register;  /* Access the page IO register */
+
+/*
+  Function Declarations for builtin shell commands:
+ */
+
+// CP/M related functions
+int8_t ya_mkcpmb(char **args);  // initialise CP/M with up to 4 drives
+
+// system related functions
+int8_t ya_md(char **args);      // memory dump
+int8_t ya_reset(char **args);   // reset RC2014 to cold start, clear all bank information
+int8_t ya_help(char **args);    // help
+int8_t ya_exit(char **args);    // exit and halt
+
+// fat related functions
+int8_t ya_ls(char **args);      // directory listing
+int8_t ya_mount(char **args);   // mount a FAT file system
+
+// disk related functions
+int8_t ya_dd(char **args);      // disk dump sector
+
+// helper functions
+static void put_rc (FRESULT rc);        // print error codes to defined error IO
+static void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt);
+static FRESULT scan_files (char* path); // scan through files in a directory
+
+extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise cpm
+
+/*
+  List of builtin commands.
+ */
+struct Builtin {
+  const char *name;
+  int8_t (*func) (char** args);
+  const char *help;
+};
+
+struct Builtin builtins[] = {
+  // CP/M related functions
+    { "cpm", &ya_mkcpmb, "[file][][][] - initiate CP/M with up to 4 drive files"},
+
+// system related functions
+    { "md", &ya_md, "- [origin] - memory dump"},
+    { "help", &ya_help, "- this is it"},
+    { "exit", &ya_exit, "- exit and halt"},
+
+// fat related functions
+    { "ls", &ya_ls, "[path] - directory listing"},
+    { "mount", &ya_mount, "[path][option] - mount a FAT file system"},
+
+// disk related functions
+    { "dd", &ya_dd, "[drive][sector] - disk dump, sector in hex"},
+};
+
+uint8_t ya_num_builtins() {
+  return sizeof(builtins) / sizeof(struct Builtin);
+}
+
+
+/*
+  Builtin function implementations.
+*/
+
+
+// CP/M related functions
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
+{
+    FRESULT res;
+
+    uint8_t i = 0;
+
+    if (args[1] == NULL) {
+        fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
+    } else {
+        // set up (up to 4) CPM drive LBA locations
+        while(args[i] != NULL)
+        {
+            fprintf(stdout,"Opening \"%s\"", args[i]);
+            res = f_open(&File[0], (const TCHAR *)args[i], FA_OPEN_EXISTING | FA_READ);
+            fputc('\n', stdout);
+            if (res != FR_OK) {
+                put_rc(res);
+                return 1;
+            }
+            cpm_dsk0_base[i] = (&File[0])->obj.fs->database + ((&File[0])->obj.fs->csize * ((&File[0])->obj.sclust - 2));
+            f_close(&File[0]);
+            i++;                // go to next file
+        }
+        fprintf(stdout,"Initialised CP/M\n");
+//      page_register = 0;
+        cpm_boot();
+    }
+    return 1;
+}
+
+
+// system related functions
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "md". args[1] is the origin address.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_md(char **args)       // dump RAM contents from nominated bank from nominated origin.
+{
+    static uint8_t * origin;
+    static uint8_t bank;
+    uint32_t ofs;
+    uint8_t * ptr;
+
+    if (args[1] != NULL) {
+        origin = (uint8_t *)strtoul(args[1], NULL, 16);
+    }
+
+    memcpy(buffer, (void *)origin, 0x100); // grab a page
+    fprintf(stdout, "\nOrigin: %04X\n", (uint16_t)origin);
+    origin += 0x100;                       // go to next page (next time)
+
+    for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x100; ptr += 16, ofs += 16) {
+        put_dump(ptr, ofs, 16);
+    }
+    return 1;
+}
+
+
+/**
+   @brief Builtin command: help.
+   @param args List of args.  args[0] is "help".
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_help(char **args)
+{
+    uint8_t i;
+
+    (void *)args;
+
+    printf("RC2014 - CP/M IDE Monitor v0.1\n");
+    printf("The following functions are built in:\n");
+
+    for (i = 0; i < ya_num_builtins(); ++i) {
+        fprintf(stdout,"  %s %s\n", builtins[i].name, builtins[i].help);
+    }
+
+    return 1;
+}
+
+
+/**
+   @brief Builtin command: exit.
+   @param args List of args.  args[0] is "exit".
+   @return Always returns 0, to terminate execution.
+ */
+int8_t ya_exit(char **args)
+{
+    (void *)args;
+    return 0;
+}
+
+
+// fat related functions
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "ls".  args[1] is the path.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_ls(char **args)
+{
+    FRESULT res;
+    uint32_t p1;
+    uint16_t s1, s2;
+
+    if(args[1] == NULL) {
+        res = f_opendir(dir, (const TCHAR*)".");
+    } else {
+        res = f_opendir(dir, (const TCHAR*)args[1]);
+    }
+
+    if (res != FR_OK) { put_rc(res); return 1; }
+    p1 = s1 = s2 = 0;
+    while(1) {
+        res = f_readdir(dir, &Finfo);
+        if ((res != FR_OK) || !Finfo.fname[0]) break;
+        if (Finfo.fattrib & AM_DIR) {
+            s2++;
+        } else {
+            s1++; p1 += Finfo.fsize;
+        }
+        fprintf(stdout, "%c%c%c%c%c %u/%02u/%02u %02u:%02u %9lu  %s\n",
+                (Finfo.fattrib & AM_DIR) ? 'D' : '-',
+                (Finfo.fattrib & AM_RDO) ? 'R' : '-',
+                (Finfo.fattrib & AM_HID) ? 'H' : '-',
+                (Finfo.fattrib & AM_SYS) ? 'S' : '-',
+                (Finfo.fattrib & AM_ARC) ? 'A' : '-',
+                (Finfo.fdate >> 9) + 1980, (Finfo.fdate >> 5) & 15, Finfo.fdate & 31,
+                (Finfo.ftime >> 11), (Finfo.ftime >> 5) & 63,
+                (DWORD)Finfo.fsize, Finfo.fname);
+    }
+    fprintf(stdout, "%4u File(s),%10lu bytes total\n%4u Dir(s)", s1, p1, s2);
+
+    return 1;
+}
+
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "mount". args[1] is the path, args[2] is the option byte.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_mount(char **args)    // mount a FAT file system
+{
+    if (args[1] == NULL && args[2] == NULL) {
+        fprintf(stdout, "Expected 2 arguments to \"mount\"\n");
+    } else {
+        if (args[2] == NULL) {
+        put_rc(f_mount(fs, "", atoi(args[1])));
+        } else {
+        put_rc(f_mount(fs, (const TCHAR*)args[1], atoi(args[2])));
+        }
+    }
+    return 1;
+}
+
+
+// disk related functions
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "dd".  args[1] is the drive. args[2] is the sector hex.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_dd(char **args)       // disk dump
+{
+    FRESULT res;
+    static uint32_t sect;
+    static uint8_t drv;
+    uint32_t ofs;
+    uint8_t * ptr;
+
+    if (args[1] != NULL && args[2] != NULL) {
+        drv = (uint8_t)atoi(args[1]);
+        sect = strtoul(args[2], NULL, 16);
+    }
+
+    res = disk_initialize(0);
+    if (res != FR_OK) { fprintf(stdout, "rc=%d\n", (WORD)res); return 1; }
+
+    res = disk_read(drv, buffer, sect, 1);
+    if (res != FR_OK) { fprintf(stdout, "rc=%d\n", (WORD)res); return 1; }
+
+    fprintf(stdout, "PD#:%u LBA:%lu\n", drv, sect++);
+    for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x200; ptr += 16, ofs += 16)
+        put_dump(ptr, ofs, 16);
+    return 1;
+}
+
+
+// helper functions
+
+static
+void put_rc (FRESULT rc)
+{
+    const char *str =
+        "OK\0" "DISK_ERR\0" "INT_ERR\0" "NOT_READY\0" "NO_FILE\0" "NO_PATH\0"
+        "INVALID_NAME\0" "DENIED\0" "EXIST\0" "INVALID_OBJECT\0" "WRITE_PROTECTED\0"
+        "INVALID_DRIVE\0" "NOT_ENABLED\0" "NO_FILE_SYSTEM\0" "MKFS_ABORTED\0" "TIMEOUT\0"
+        "LOCKED\0" "NOT_ENOUGH_CORE\0" "TOO_MANY_OPEN_FILES\0" "INVALID_PARAMETER\0";
+
+    FRESULT i;
+    uint8_t res;
+
+    res = (uint8_t)rc;
+
+    for (i = 0; i != res && *str; i++) {
+        while (*str++) ;
+    }
+    fprintf(stderr,"\r\nrc=%u FR_%s\r\n", res, str);
+}
+
+
+static
+void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt)
+{
+    uint8_t i;
+
+    fprintf(stdout,"%08lX:", ofs);
+
+    for(i = 0; i < cnt; i++) {
+        fprintf(stdout," %02X", buff[i]);
+    }
+    fputc(' ', stdout);
+    for(i = 0; i < cnt; i++) {
+        fputc((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.', stdout);
+    }
+    fputc('\n', stdout);
+}
+
+
+static
+FRESULT scan_files (
+    char* path        /* Pointer to the path name working buffer */
+)
+{
+    DIR dirs;
+    FRESULT res;
+    BYTE i;
+
+    if ((res = f_opendir(&dirs, path)) == FR_OK) {
+        while (((res = f_readdir(&dirs, &Finfo)) == FR_OK) && Finfo.fname[0]) {
+            if (Finfo.fattrib & AM_DIR) {
+                AccDirs++;
+                i = strlen(path);
+                path[i] = '/'; strcpy(&path[i+1], Finfo.fname);
+                res = scan_files(path);
+                path[i] = '\0';
+                if (res != FR_OK) break;
+            } else {
+                AccFiles++;
+                AccSize += Finfo.fsize;
+            }
+        }
+    }
+    return res;
+}
+
+
+/**
+   @brief Execute shell built-in function.
+   @param args Null terminated list of arguments.
+   @return 1 if the shell should continue running, 0 if it should terminate
+ */
+int8_t ya_execute(char **args)
+{
+    uint8_t i;
+
+    if (args[0] == NULL) {
+        // An empty command was entered.
+        return 1;
+    }
+
+    for (i = 0; i < ya_num_builtins(); ++i) {
+        if (strcmp(args[0], builtins[i].name) == 0) {
+            return (*builtins[i].func)(args);
+        }
+    }
+
+    return 1;
+}
+
+#define YA_TOK_BUFSIZE 32
+#define YA_TOK_DELIM " \t\r\n\a"
+/**
+   @brief Split a line into tokens (very naively).
+   @param line The line.
+   @return Null-terminated array of tokens.
+ */
+char **ya_split_line(char *line)
+{
+    uint16_t bufsize = YA_TOK_BUFSIZE;
+    uint16_t position = 0;
+    char *token;
+    char **tokens, **tokens_backup;
+
+    tokens = (char **)malloc(bufsize * sizeof(char*));
+
+    if (tokens && line)
+    {
+        token = strtok(line, YA_TOK_DELIM);
+        while (token != NULL) {
+            tokens[position] = token;
+            position++;
+
+            // If we have exceeded the tokens buffer, reallocate.
+            if (position >= bufsize) {
+                bufsize += YA_TOK_BUFSIZE;
+                tokens_backup = tokens;
+                tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
+                if (tokens == NULL) {
+                    free(tokens_backup);
+                    fprintf(stdout, "yash: tokens realloc failure\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            token = strtok(NULL, YA_TOK_DELIM);
+        }
+        tokens[position] = NULL;
+    }
+    return tokens;
+}
+
+/**
+   @brief Loop getting stdin and executing it.
+ */
+void ya_loop(void)
+{
+    char **args;
+    int status;
+    char *line;
+    uint16_t len;
+    uint16_t slen;
+
+    line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
+
+    if (line == NULL) return;
+
+    len = LINE_SIZE;
+
+    do {
+        fprintf(stdout,"\n> ");
+        fflush(stdin);
+
+        slen = getline(&line, &len, stdin);
+        args = ya_split_line(line);
+
+        status = ya_execute(args);
+        free(args);
+
+    } while (status);
+}
+
+
+/**
+   @brief Main entry point.
+   @param argc Argument count.
+   @param argv Argument vector.
+   @return status code
+ */
+void main(int argc, char **argv)
+{
+    (void)argc;
+    (void *)argv;
+
+    fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
+    dir = (DIR *)malloc(sizeof(DIR));                       /* Get work area for the directory */
+    buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
+
+    // Load config files, if any.
+
+    fprintf(stdout, "\r\nRC2014 - CP/M Monitor\r\n");
+ 
+    // Run command loop if we got all the memory allocations we need.
+    if ( fs && dir && buffer)
+        ya_loop();
+
+    // Perform any shutdown/cleanup.
+    free(buffer);
+    free(dir);
+    free(fs);
+
+    return;
+}
+
