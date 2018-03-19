@@ -1235,8 +1235,8 @@ EXIT:
     XOR     A
     LD      (_cpm_bios_canary),A    ;kill the bios canary
     OUT     ($38),A                 ;toggle ROM
-    ld      sp,(_cpm_bios_sp)
-    ret                     ;reset back to ROM monitor
+    LD      SP,(_cpm_bios_sp)
+    RET                             ;reset back to ROM monitor
 ;
 EXIT_MSG:
     DEFM    "Exiting CP/M",0

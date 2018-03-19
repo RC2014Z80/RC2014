@@ -157,21 +157,18 @@ boot:
     ld      ($0020),a       ;rst 20
     ld      ($0028),a       ;rst 28
     ld      ($0030),a       ;rst 30
-    im      1               ;set interrupt mode 1
-
-    ld      a,$01           
-    ld      (_cpm_iobyte),a ;set cpm ioByte to CRT default ($01)
 
     xor     a               ;zero in the accum
     ld      (_cpm_cdisk), a ;select disk zero
 
-wboot:                      ;go to normal start.
+    inc     a          
+    ld      (_cpm_iobyte),a ;set cpm ioByte to CRT default ($01)
 
 ;=============================================================================
 ; Common code for cold and warm boot
 ;=============================================================================
 
-gocpm:
+wboot:                      ;go to normal start.
     di
     call    _acia_reset     ;flush the serial port
     ei
@@ -188,8 +185,8 @@ gocpm:
     ld      bc, 0x20-1
     ldir                    ;clear default FCB
 
-    LD      (hstact),a      ;host buffer inactive
-    LD      (unacnt),a      ;clear unalloc count
+    ld      (hstact),a      ;host buffer inactive
+    ld      (unacnt),a      ;clear unalloc count
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -199,9 +196,9 @@ gocpm:
     ld      (_cpm_cdisk),a  ;reset current disk number to disk0 (A:)
 
 diskchk:
-    ld      c,a             ;send current disk number to the ccp
     ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl  
+    ld      c,a             ;send current disk number to the ccp
     call    getLBAbase      ;get the LBA base address
     ld      a,(hl)          ;check that the LBA is non Zero
     inc     hl
@@ -210,11 +207,11 @@ diskchk:
     or      a,(hl)
     inc     hl
     or      a,(hl)
-    jp      NZ, _cpm_ccp_head   ; valid disk, go to cp/m ccp for further processing
+    jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
     
     ld      (_cpm_bios_canary),a    ;kill the canary
-    out     ($38),a         ;toggle ROM again
-    ret                     ;reset back to ROM monitor
+    out     ($38),a                 ;toggle ROM again
+    ret                             ;reset back to ROM monitor
 
 ;=============================================================================
 ; Console I/O routines
