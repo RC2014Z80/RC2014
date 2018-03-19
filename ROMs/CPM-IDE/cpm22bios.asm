@@ -5,7 +5,7 @@
 ; March 2018
 ;
 
-SECTION rodata_user         ;read only driver (code)
+SECTION rodata_driver               ;read only driver (code)
 
 INCLUDE "config_rc2014_private.inc"
 

@@ -11,12 +11,12 @@
 ;**************************************************************
 ;
 ;
-; Converted to z88dk z80asm for RC2104 by
+; Converted to z88dk z80asm for RC2014 by
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
 
-SECTION rodata_user              ;read only user
+SECTION rodata_driver           ;read only driver (code)
 
 ;------------------------------------------------------------------------------
 ; location setting

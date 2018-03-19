@@ -493,7 +493,7 @@ void main(int argc, char **argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\r\nRC2014 - CP/M Monitor - @feilipu 2018\r\n");
+    fprintf(stdout, "\r\nRC2014 - CP/M Monitor\nfeilipu 2018\r\n");
  
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)
