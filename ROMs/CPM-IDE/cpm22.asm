@@ -1226,6 +1226,7 @@ USER:
 ;**************************************************************
 ;
 EXTERN _cpm_bios_canary
+EXTERN _cpm_bios_sp
 ;
 EXIT:
     LD      BC,EXIT_MSG ;notify exit to bios monitor
@@ -1234,7 +1235,8 @@ EXIT:
     XOR     A
     LD      (_cpm_bios_canary),A    ;kill the bios canary
     OUT     ($38),A                 ;toggle ROM
-    JP      $0000                   ;reset back to ROM monitor
+    ld      sp,(_cpm_bios_sp)
+    ret                     ;reset back to ROM monitor
 ;
 EXIT_MSG:
     DEFM    "Exiting CP/M",0

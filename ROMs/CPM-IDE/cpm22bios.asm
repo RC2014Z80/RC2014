@@ -1,6 +1,6 @@
 ;
 ;
-; Converted to z88dk z80asm for RC2104 by
+; Converted to z88dk z80asm for RC2014 by
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
@@ -127,11 +127,11 @@ wboote:
 PUBLIC _cpm_boot
 
 _cpm_boot:
-    inc     sp              ;pop the cpm_boot() return address
-    inc     sp
 
 boot:
     di                      ;Page 0 will be blank, after toggling ROM
+    
+    ld      (_cpm_bios_sp),sp
 
     xor     a               ;toggle ROM
     out     ($38),a
@@ -159,20 +159,27 @@ boot:
     ld      ($0030),a       ;rst 30
     im      1               ;set interrupt mode 1
 
-    ei
-
     ld      a,$01           
     ld      (_cpm_iobyte),a ;set cpm ioByte to CRT default ($01)
 
     xor     a               ;zero in the accum
     ld      (_cpm_cdisk), a ;select disk zero
 
-    ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
-    ld      (_cpm_bios_canary),hl    
-
 wboot:                      ;go to normal start.
-    
-    xor     a
+
+;=============================================================================
+; Common code for cold and warm boot
+;=============================================================================
+
+gocpm:
+    di
+    call    _acia_reset     ;flush the serial port
+    ei
+
+    ld      bc,$0080        ;default dma address is 0x0080
+    call    setdma
+
+    xor     a               ;0 accumulator
     ld      (_cpm_ccp_tfcb), a
     ld      hl, _cpm_ccp_tfcb
     ld      d, h
@@ -181,17 +188,6 @@ wboot:                      ;go to normal start.
     ld      bc, 0x20-1
     ldir                    ;clear default FCB
 
-;=============================================================================
-; Common code for cold and warm boot
-;=============================================================================
-
-gocpm:
-    ld      bc,$0080        ;default dma address is 0x0080
-    call    setdma
-
-    call    _acia_flush_Rx_di   ;flush the serial port
-
-    xor     a               ;0 accumulator
     LD      (hstact),a      ;host buffer inactive
     LD      (unacnt),a      ;clear unalloc count
 
@@ -199,14 +195,13 @@ gocpm:
     cp      _cpm_disks      ;see if valid disk number
     jr      C,diskchk       ;disk number valid, check existence via valid LBA
 
-diskchg:
     xor     a               ;invalid disk, change to disk 0 (A:)
     ld      (_cpm_cdisk),a  ;reset current disk number to disk0 (A:)
-    ld      c,a             ;send default disk number to the ccp
-    jp      _cpm_ccp_head   ;go to cp/m ccp for further processing
 
 diskchk:
     ld      c,a             ;send current disk number to the ccp
+    ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
+    ld      (_cpm_bios_canary),hl  
     call    getLBAbase      ;get the LBA base address
     ld      a,(hl)          ;check that the LBA is non Zero
     inc     hl
@@ -215,8 +210,11 @@ diskchk:
     or      a,(hl)
     inc     hl
     or      a,(hl)
-    jr      Z,diskchg       ;invalid disk LBA, so load disk 0 (A:) to the ccp
-    jp      _cpm_ccp_head   ;go to cp/m ccp for further processing
+    jp      NZ, _cpm_ccp_head   ; valid disk, go to cp/m ccp for further processing
+    
+    ld      (_cpm_bios_canary),a    ;kill the canary
+    out     ($38),a         ;toggle ROM again
+    ret                     ;reset back to ROM monitor
 
 ;=============================================================================
 ; Console I/O routines
@@ -1549,8 +1547,11 @@ aciaControl:    defb 0                  ; Local control echo of ACIA
 PUBLIC _cpm_bios_canary
 _cpm_bios_canary:   defw 0              ; if it matches $AA55, bios has been loaded, and CP/M is active
 
+PUBLIC  _cpm_bios_sp
+_cpm_bios_sp:       defw 0              ; place the ROM SP when running CP/M, CCP and BDOS have their own.
+
 PUBLIC  _cpm_dsk0_base
-_cpm_dsk0_base: defs 16                 ; base 32 bit LBA of host file for disk 0 (A:) &
+_cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 0 (A:) &
                                         ; 3 additional LBA for host files (B:, C:, D:)
 ;
 ; IDE Status byte
