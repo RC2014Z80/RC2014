@@ -1,4 +1,4 @@
-#CP/M - IDE
+# CP/M - IDE
 
 <bold>NOTE: TEMPORARILY BROKEN DUE TO ASSEMBLER ISSUE.
 [z88dk #655](https://github.com/z88dk/z88dk/issues/655)</bold>
@@ -8,17 +8,15 @@ Each implementation has its own focus, and the same is true here.
 
 ## Concept
 
-This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS formatted IDE drive.
-And further, to do so with the minimum of cards and expense.
+This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS formatted (PATA) IDE drive. And further, to do so with the minimum of cards, complexity, and expense.
 
-In addition optimised drivers from the z88dk are implemented for both the ACIA and for the IDE interface.
+In addition to other CP/M implementations, performance optimised drivers from z88dk are provided for both the ACIA and for the IDE interface.
 
 The ACIA has a 255 byte receive buffer, together with highly optimised buffer management, to minimise potential data loss by buffer overrun. Software control of the 68C50 is provided, but the normal FTDI USB interface is not connected to the correct signal lines to enable hardware flow control.
 
 The IDE interface is optimised for performance and can achieve about 300kB/s throughput. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
 The CP/M-IDE system supports up to 4 drives of nominally 16MBytes each. There can be as many CP/M "drives" on the root directory of the FAT32 formatted IDE drive as needed. And CP/M-IDE can be started with any 4 of them. Knock yourself out.
-
 
 ## Hardware
 
@@ -35,7 +33,7 @@ As noted above, the complete system must also include:
 6. [ACIA Serial](https://rc2014.co.uk/modules/serial-io/)
 7. [Backplane](https://rc2014.co.uk/modules/backplane-8/)
 
-Optionally, replacing 4. and 5 with below can save a slot and provides some improvements.
+Optionally, replacing 4. and 5. with below can save a slot and provides some improvements.
 
 8. [Z80 CPU & Clock](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/)
 
@@ -43,7 +41,12 @@ Optionally, replacing 4. and 5 with below can save a slot and provides some impr
 
 The CP/M-IDE is based on the z88dk implementation for the RC2014, together with the DRI CP/M CCP/BDOS, and a shell and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration.
 
-In addition to the normal z88dk libraries, a FATFS library provided by ChaN and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
+The build command line is below.
+
+```bash
+zcc +rc2014 -subtype=acia -SO3 --opt-code-size -m --list -llib/rc2014/ff --max-allocs-per-node20000 @cpm22.lst -o rc2014-cpm22 -create-app
+```
+In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of disk read or write by CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
 
 ### Boot up
 
@@ -85,7 +88,7 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmcp -f rc2014-16MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
 
-The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014.
+The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
 
 ```
 diskdef rc2014-32MB
