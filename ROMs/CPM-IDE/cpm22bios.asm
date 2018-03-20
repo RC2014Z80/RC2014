@@ -193,7 +193,7 @@ wboot:                      ;go to normal start.
     jr      C,diskchk       ;disk number valid, check existence via valid LBA
 
     xor     a               ;invalid disk, change to disk 0 (A:)
-    ld      (_cpm_cdisk),a  ;reset current disk number to disk0 (A:)
+    ld      (_cpm_cdisk),a  ;reset current disk number to disk 0 (A:)
 
 diskchk:
     ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
