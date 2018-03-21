@@ -10,9 +10,9 @@ Each implementation has its own focus, and the same is true here.
 
 This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS formatted (PATA) IDE drive. And further, to do so with the minimum of cards, complexity, and expense.
 
-In addition to other CP/M implementations, performance optimised drivers from z88dk are provided for both the ACIA and for the IDE interface.
+In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for both the ACIA serial interface and for the IDE disk interface.
 
-The ACIA has a 255 byte receive buffer, together with highly optimised buffer management, to minimise potential data loss by buffer overrun. Software control of the 68C50 is provided, but the normal FTDI USB interface is not connected to the correct signal lines to enable hardware flow control.
+The ACIA interface has a 255 byte receive buffer, together with highly optimised buffer management, to minimise potential data loss by buffer overrun. Software control of the 68C50 is provided, but the normal FTDI USB interface is not connected to the correct signal lines to enable hardware flow control. The transmit interface is also buffered, with direct cut-through when the buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
 The IDE interface is optimised for performance and can achieve about 300kB/s throughput. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
@@ -54,7 +54,7 @@ When the RC2014 first boots, the z88dk system configures a number of items via a
 
 The preamble code copies the CCP/BDOS to the correct location, and then checks for the existence of the BIOS. If the BIOS exists, and a valid drive is found, then control is passed directly to the CCP. This is the situation when a CP/M application overwrites the CCP, and it needs to be rewritten before control can be returned to it.
 
-If the CP/M BIOS doesn't exit or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS and the ACIA and IDE drivers necessary for operation of the shell and CP/M.
+If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS and the ACIA and IDE drivers necessary for operation of the shell and CP/M.
 
 Control is then passed to the shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
@@ -73,6 +73,7 @@ I've also found the [NGS Microshell](http://www.z80.eu/microshell.html) to be ve
 
 As the CP/M-IDE shell doesn't (currently) have a way to format its own CP/M drives, some example drives are provided as zip files. These zip files can be expanded into the root directory of the IDE drive and used or augmented by the CP/M Tools noted below.
 
+Because the CCP/BDOS and BIOS are stored in ROM, there is no "system disk". Cold and warm boot is from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive files are in which drive letter. Except that the `A:` drive will always be the default drive, where you try to select a non-existent drive letter.
 
 ### CP/M TOOLS Usage
 
@@ -89,6 +90,9 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 ```
 
 The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
+The default is for 16MByte drives. 8MByte drives are supported, but there's no point. 32MByte drives are supported by the BIOS, but would require a recompile, and adjusting the BIOS (and hence CCP/BDOS) origin to accommodate the increased allocation vector sizes.
+
+Just stick to the 16MByte default drive. There are up to 4 supported, out of the box.
 
 ```
 diskdef rc2014-32MB
@@ -133,7 +137,7 @@ The command line interface is implemented in C, with the underlying functions ei
 - `cpm [file][][][]` - initialise CP/M with up to 4 drive files
 
 ### System Functions
-- `md [bank][origin]` - memory dump
+- `md [origin]` - memory dump
 - `help` - this is it
 - `exit` - exit and halt
 
