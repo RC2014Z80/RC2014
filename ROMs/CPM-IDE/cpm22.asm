@@ -16,10 +16,7 @@
 ; March 2018
 ;
 
-SECTION rodata_driver           ;read only driver (code)
-
-
-testing:  defb    $55
+SECTION rodata_lib           ;read only library (code)
 
 ;------------------------------------------------------------------------------
 ; location setting
@@ -4189,7 +4186,7 @@ DEPHASE
 ;**************************************************************
 ;
 
-EXTERN    boot      ;cold start
+EXTERN    cboot     ;cold start
 EXTERN    wboot     ;warm start
 EXTERN    const     ;console status
 EXTERN    conin     ;console character in
@@ -4208,7 +4205,7 @@ EXTERN    listst    ;return list status
 EXTERN    sectran   ;sector translate
 
 
-DEFC    BOOT    =   boot
+DEFC    BOOT    =   cboot
 DEFC    WBOOT   =   wboot
 DEFC    CONST   =   const
 DEFC    CONIN   =   conin

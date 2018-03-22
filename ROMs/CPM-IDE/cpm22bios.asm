@@ -84,8 +84,7 @@ _cpm_bios_head:                 ;origin of the cpm bios
 ;
 ;    jump vector for individual subroutines
 ;
-
-PUBLIC    boot      ;cold start
+PUBLIC    cboot     ;cold start
 PUBLIC    wboot     ;warm start
 PUBLIC    const     ;console status
 PUBLIC    conin     ;console character in
@@ -103,7 +102,7 @@ PUBLIC    write     ;write disk
 PUBLIC    listst    ;return list status
 PUBLIC    sectran   ;sector translate
 
-    jp    boot      ;cold start
+    jp    cboot     ;cold start
 wboote:
     jp    wboot     ;warm start
     jp    const     ;console status
@@ -124,17 +123,21 @@ wboote:
 
 ;    individual subroutines to perform each function
 
+EXTERN    pboot     ;location of preamble code to load CCP/BDOS
+PUBLIC    qboot     ;arrival from preamble code
+
 PUBLIC _cpm_boot
 
 _cpm_boot:
 
-boot:
+cboot:
     di                      ;Page 0 will be blank, after toggling ROM
+                            ;so leave interrupts off, until later
     
     ld      (_cpm_bios_sp),sp
+ 
+    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
 
-    xor     a               ;toggle ROM
-    out     ($38),a
                             ;Set up Page 0
 
     ld      a,$C3           ;$C3 is a jmp instruction
@@ -164,11 +167,22 @@ boot:
     inc     a          
     ld      (_cpm_iobyte),a ;set cpm ioByte to CRT default ($01)
 
+    ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
+    ld      (_cpm_bios_canary),hl
+    jr      rboot
+
+wboot:                      ;from a normal restart
+    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
+    jp      pboot           ;load the CCP/BDOS in preamble
+
+qboot:                      ;arrive from preamble
+    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
+
 ;=============================================================================
 ; Common code for cold and warm boot
 ;=============================================================================
 
-wboot:                      ;go to normal start.
+rboot:
     di
     call    _acia_reset     ;flush the serial port
     ei
@@ -196,8 +210,6 @@ wboot:                      ;go to normal start.
     ld      (_cpm_cdisk),a  ;reset current disk number to disk 0 (A:)
 
 diskchk:
-    ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
-    ld      (_cpm_bios_canary),hl  
     ld      c,a             ;send current disk number to the ccp
     call    getLBAbase      ;get the LBA base address
     ld      a,(hl)          ;check that the LBA is non Zero
@@ -210,8 +222,9 @@ diskchk:
     jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
     
     ld      (_cpm_bios_canary),a    ;kill the canary
-    out     ($38),a                 ;toggle ROM again
-    ret                             ;reset back to ROM monitor
+    out     (__IO_PROM_TOGGLE),a    ;toggle ROM again, A any value
+    ret                             ;ret directly back to ROM monitor,
+                                    ;or back to preamble then ROM monitor
 
 ;=============================================================================
 ; Console I/O routines
@@ -1594,7 +1607,7 @@ hstbuf:     defs    hstsiz  ;buffer for host disk sector
 
 dirbf:      defs    128     ;scratch directory area
 
-            defs   0xFEE0 - ASMPC           ;ALIGN to next 32 byte boundary
+            defs   0xFEF0 - ASMPC           ;ALIGN to next 16 byte boundary
                                             ;when finally locating
 
 PUBLIC  aciaTxBuffer
