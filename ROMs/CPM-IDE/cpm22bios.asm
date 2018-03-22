@@ -133,9 +133,7 @@ _cpm_boot:
 cboot:
     di                      ;Page 0 will be blank, after toggling ROM
                             ;so leave interrupts off, until later
-    
-    ld      (_cpm_bios_sp),sp
- 
+
     out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
 
                             ;Set up Page 0
@@ -1556,9 +1554,6 @@ aciaControl:    defb 0                  ; Local control echo of ACIA
 
 PUBLIC _cpm_bios_canary
 _cpm_bios_canary:   defw 0              ; if it matches $AA55, bios has been loaded, and CP/M is active
-
-PUBLIC  _cpm_bios_sp
-_cpm_bios_sp:       defw 0              ; place the ROM SP when running CP/M, CCP and BDOS have their own.
 
 PUBLIC  _cpm_dsk0_base
 _cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 0 (A:) &
