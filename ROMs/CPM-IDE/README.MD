@@ -95,7 +95,7 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 The z88dk command line to build the CP/M-IDE is below.
 
 ```bash
-zcc +rc2014 -subtype=acia -SO3 --opt-code-size -m --list -llib/rc2014/ff --max-allocs-per-node20000 @cpm22.lst -o rc2014-cpm22 -create-app
+zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --max-allocs-per-node200000 @cpm22.lst -o rc2014-cpm22 -create-app
 ```
 In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of disk read or write by CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
 
@@ -185,7 +185,7 @@ Again, here is a view of what success looks like.
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev1.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev1.png"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev2.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev2.png"/></a></td>
 </tr>
 <tr>
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE CLI<center></th>
@@ -204,13 +204,13 @@ Again, here is a view of what success looks like.
 
 ### File System Functions
 - `ls [path]` - directory listing
-- `mount [path][option]` - mount a FAT file system
+- `mount [option]` - mount a FAT file system, option 0 = delayed, 1 = immediate
 
 ### Disk Functions
-- `ds [drive]` - disk status
-- `dd [drive][sector]` - disk dump, sector in HEX
+- `ds` - disk status
+- `dd [sector]` - disk dump, sector in decimal
 
 ## CP/M Command Line Interface
 
 An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the CP/M disks.
-`EXIT` initialises a reboot of the RC2014.
+`EXIT` initialises a clean reboot of the RC2014.
