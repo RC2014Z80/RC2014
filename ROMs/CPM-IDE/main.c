@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include <arch.h>
+#include <arch/rc2014.h>
 #include <arch/rc2014/diskio.h>
 
 #include "ffconf.h"
@@ -40,8 +41,6 @@ static FIL File[MAX_FILES];     /* File object needed for each open file */
 
 extern uint32_t cpm_dsk0_base[4];
 
-__sfr __at 0x38 page_register;  /* Access the page IO register */
-
 /*
   Function Declarations for builtin shell commands:
  */
@@ -66,6 +65,8 @@ int8_t ya_dd(char **args);      // disk dump sector
 static void put_rc (FRESULT rc);        // print error codes to defined error IO
 static void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt);
 
+// external functions
+
 extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise cpm
 
 /*
@@ -84,11 +85,11 @@ struct Builtin builtins[] = {
 // system related functions
     { "md", &ya_md, "- [origin] - memory dump"},
     { "help", &ya_help, "- this is it"},
-    { "exit", &ya_exit, "- exit and halt"},
+    { "exit", &ya_exit, "- exit and restart"},
 
 // fat related functions
-    { "ls", &ya_ls, "[path] - directory listing"},
     { "mount", &ya_mount, "[option] - mount a FAT file system"},
+    { "ls", &ya_ls, "[path] - directory listing"},
 
 // disk related functions
     { "ds", &ya_ds, " - disk status"},
@@ -112,7 +113,7 @@ uint8_t ya_num_builtins() {
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
+int8_t ya_mkcpmb(char **args)   // initialise CP/M with up to 4 drives
 {
     FRESULT res;
     uint8_t i = 0;
@@ -120,7 +121,7 @@ int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
     if (args[1] == NULL) {
         fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
     } else {
-        res = (f_mount(fs, (const TCHAR*)"", 0));
+        res = f_mount(fs, (const TCHAR*)"", 0);
         if (res != FR_OK) { put_rc(res); return 1; }
 
         // set up (up to 4) CPM drive LBA locations
@@ -128,10 +129,7 @@ int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
         {
             fprintf(stdout,"Opening \"%s\"", args[i+1]);
             res = f_open(&File[0], (const TCHAR *)args[i+1], FA_OPEN_EXISTING | FA_READ);
-            if (res != FR_OK) {
-                put_rc(res);
-                return 1;
-            }
+            if (res != FR_OK) { put_rc(res); return 1; }
             cpm_dsk0_base[i] = (&File[0])->obj.fs->database + ((&File[0])->obj.fs->csize * ((&File[0])->obj.sclust - 2));
             fprintf(stdout," at LBA %lu\n", cpm_dsk0_base[i]);
             f_close(&File[0]);
@@ -220,7 +218,7 @@ int8_t ya_ls(char **args)
     uint32_t p1;
     uint16_t s1, s2;
 
-    res = (f_mount(fs, (const TCHAR*)"", 0));
+    res = f_mount(fs, (const TCHAR*)"", 0);
     if (res != FR_OK) { put_rc(res); return 1; }
 
     if(args[1] == NULL) {
@@ -273,9 +271,9 @@ int8_t ya_ls(char **args)
 int8_t ya_mount(char **args)    // mount a FAT file system
 {
     if (args[1] == NULL) {
-    put_rc(f_mount(fs, (const TCHAR*)"", 0));
+        put_rc(f_mount(fs, (const TCHAR*)"", 0));
     } else {
-    put_rc(f_mount(fs, (const TCHAR*)"", atoi(args[1])));
+        put_rc(f_mount(fs, (const TCHAR*)"", atoi(args[1])));
     }
     return 1;
 }
@@ -297,13 +295,13 @@ int8_t ya_ds(char **args)       // disk status
 
     res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
     if (res != FR_OK) { put_rc(res); return 1; }
-    
+
     fprintf(stdout, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
-            "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
-            "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
-            ft[fs->fs_type & 3], (DWORD)fs->csize * 512, fs->n_fats,
-            fs->n_rootdir, fs->fsize, (DWORD)fs->n_fatent - 2,
-            fs->volbase, fs->fatbase, fs->dirbase, fs->database);
+        "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
+        "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
+        ft[fs->fs_type & 3], (DWORD)fs->csize * 512, fs->n_fats,
+        fs->n_rootdir, fs->fsize, (DWORD)fs->n_fatent - 2,
+        fs->volbase, fs->fatbase, fs->dirbase, fs->database);
     return 1;
 }
 
@@ -448,10 +446,8 @@ void ya_loop(void)
     int status;
     char *line;
     uint16_t len;
-    uint16_t slen;
 
     line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
-
     if (line == NULL) return;
 
     len = LINE_SIZE;
@@ -460,7 +456,7 @@ void ya_loop(void)
         fprintf(stdout,"\n> ");
         fflush(stdin);
 
-        slen = getline(&line, &len, stdin);
+        getline(&line, &len, stdin);
         args = ya_split_line(line);
 
         status = ya_execute(args);

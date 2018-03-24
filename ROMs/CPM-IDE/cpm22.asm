@@ -1231,7 +1231,6 @@ EXTERN __Restart
 EXIT:
     LD      BC,EXIT_MSG ;notify exit to bios monitor
     CALL    PLINE
-    
     XOR     A
     LD      (_cpm_bios_canary),A    ;kill the bios canary
     OUT     ($38),A                 ;toggle ROM
