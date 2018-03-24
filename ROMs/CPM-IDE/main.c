@@ -51,9 +51,8 @@ int8_t ya_mkcpmb(char **args);  // initialise CP/M with up to 4 drives
 
 // system related functions
 int8_t ya_md(char **args);      // memory dump
-int8_t ya_reset(char **args);   // reset RC2014 to cold start, clear all bank information
 int8_t ya_help(char **args);    // help
-int8_t ya_exit(char **args);    // exit and halt
+int8_t ya_exit(char **args);    // exit and restart
 
 // fat related functions
 int8_t ya_ls(char **args);      // directory listing
