@@ -66,8 +66,6 @@ pboot:                      ; preamble code also used by wboot
     ld bc, _cpm_bios_bss_tail-_cpm_bios_bss_head-1
     ldir
 
-    call _acia0_init        ; initialise the acia
-
     ; now fall through to normal _main() function and get set up for CP/M
 
 ENDIF

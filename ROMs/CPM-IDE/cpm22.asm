@@ -1226,7 +1226,7 @@ USER:
 ;**************************************************************
 ;
 EXTERN _cpm_bios_canary
-EXTERN __Restart
+EXTERN __Exit
 ;
 EXIT:
     LD      BC,EXIT_MSG ;notify exit to bios monitor
@@ -1234,8 +1234,7 @@ EXIT:
     XOR     A
     LD      (_cpm_bios_canary),A    ;kill the bios canary
     OUT     ($38),A                 ;toggle ROM
-    DI
-    JP      __Restart               ;reset back to ROM monitor
+    JP      __Exit                  ;reset back to ROM monitor
                                     ;initialise from beginning
                                     ;in case large CP/M apps
                                     ;overwrite the heap, etc
