@@ -92,8 +92,8 @@ struct Builtin builtins[] = {
     { "mount", &ya_mount, "[option] - mount a FAT file system"},
 
 // disk related functions
-    { "ds", &ya_ds, "[drive] - disk status"},
-    { "dd", &ya_dd, "[drive][sector] - disk dump, sector in hex"},
+    { "ds", &ya_ds, " - disk status"},
+    { "dd", &ya_dd, "[sector] - disk dump, sector in decimal"},
 };
 
 uint8_t ya_num_builtins() {
@@ -122,7 +122,7 @@ int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
         fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
     } else {
         res = (f_mount(fs, (const TCHAR*)"", 0));
-        if (res != FR_OK) return 1;
+        if (res != FR_OK) { put_rc(res); return 1; }
 
         // set up (up to 4) CPM drive LBA locations
         while(args[i+1] != NULL)
@@ -182,10 +182,9 @@ int8_t ya_md(char **args)       // dump RAM contents from nominated bank from no
 int8_t ya_help(char **args)
 {
     uint8_t i;
-
     (void *)args;
 
-    printf("RC2014 - CP/M IDE Monitor v0.1\n");
+    printf("RC2014 - CP/M IDE Monitor v0.2\n");
     printf("The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -204,6 +203,7 @@ int8_t ya_help(char **args)
 int8_t ya_exit(char **args)
 {
     (void *)args;
+    f_mount(0, (const TCHAR*)"", 0);        /* Unmount the default drive */
     return 0;
 }
 
@@ -222,7 +222,7 @@ int8_t ya_ls(char **args)
     uint16_t s1, s2;
 
     res = (f_mount(fs, (const TCHAR*)"", 0));
-    if (res != FR_OK) return 1;
+    if (res != FR_OK) { put_rc(res); return 1; }
 
     if(args[1] == NULL) {
         res = f_opendir(dir, (const TCHAR*)".");
@@ -286,54 +286,48 @@ int8_t ya_mount(char **args)    // mount a FAT file system
 
 /**
    @brief Builtin command:
-   @param args List of args.  args[0] is "ds".  args[1] is the drive. args[2] is the path
+   @param args List of args.  args[0] is "ds".
    @return Always returns 1, to continue executing.
  */
 int8_t ya_ds(char **args)       // disk status
 {
     FRESULT res;
     int32_t p1;
-#if FF_USE_LABEL
-    int32_t p2;
-#endif
     const uint8_t ft[] = {0, 12, 16, 32};   // FAT type
+    (void *)args;
 
-    if (args[1] == NULL) {
-        fprintf(stdout, "yash: expected 2 arguments to \"ds\"\n");
-    } else {
-        res = f_getfree((const TCHAR*)args[1], (DWORD*)&p1, &fs);
-        if (res != FR_OK) { put_rc(res); return 1; }
-        fprintf(stdout, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
-                "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
-                "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
-                ft[fs->fs_type & 3], (DWORD)fs->csize * 512, fs->n_fats,
-                fs->n_rootdir, fs->fsize, (DWORD)fs->n_fatent - 2,
-                fs->volbase, fs->fatbase, fs->dirbase, fs->database);
-    }
+    res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
+    if (res != FR_OK) { put_rc(res); return 1; }
+    
+    fprintf(stdout, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
+            "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
+            "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
+            ft[fs->fs_type & 3], (DWORD)fs->csize * 512, fs->n_fats,
+            fs->n_rootdir, fs->fsize, (DWORD)fs->n_fatent - 2,
+            fs->volbase, fs->fatbase, fs->dirbase, fs->database);
     return 1;
 }
 
 
 /**
    @brief Builtin command:
-   @param args List of args.  args[0] is "dd".  args[1] is the drive. args[2] is the sector hex.
+   @param args List of args.  args[0] is "dd". args[1] is the sector in decimal.
    @return Always returns 1, to continue executing.
  */
 int8_t ya_dd(char **args)       // disk dump
 {
     FRESULT res;
     static uint32_t sect;
-    static uint8_t drv;
     uint32_t ofs;
     uint8_t * ptr;
 
-    if (args[1] != NULL && args[2] != NULL) {
-        drv = (uint8_t)atoi(args[1]);
-        sect = strtoul(args[2], NULL, 16);
+    if (args[1] != NULL ) {
+        sect = strtoul(args[1], NULL, 10);
     }
-    res = disk_read(drv, buffer, sect, 1);
+
+    res = disk_read( 0, buffer, sect, 1);
     if (res != FR_OK) { fprintf(stdout, "rc=%d\n", (WORD)res); return 1; }
-    fprintf(stdout, "PD#:%u LBA:%lu\n", drv, sect++);
+    fprintf(stdout, "PD#:0 LBA:%lu\n", sect++);
     for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x200; ptr += 16, ofs += 16)
         put_dump(ptr, ofs, 16);
     return 1;
