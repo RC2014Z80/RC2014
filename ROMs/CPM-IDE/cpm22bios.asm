@@ -1602,20 +1602,20 @@ hstbuf:     defs    hstsiz  ;buffer for host disk sector
 
 dirbf:      defs    128     ;scratch directory area
 
-            defs   0xFEF0 - ASMPC           ;ALIGN to next 16 byte boundary
-                                            ;when finally locating
+ALIGN       0xFEF0          ;ALIGN to 16 byte boundary
+                            ;when finally locating
 
 PUBLIC  aciaTxBuffer
 aciaTxBuffer:   defs __IO_ACIA_TX_SIZE  ;Space for the Tx Buffer
 
-            defs   0xFF00 - ASMPC           ;ALIGN to next 256 byte boundary
-                                            ;when finally locating
+ALIGN       0xFF00          ;ALIGN to next 256 byte boundary
+                            ;when finally locating
 
 PUBLIC  aciaRxBuffer
 aciaRxBuffer:   defs __IO_ACIA_RX_SIZE  ;Space for the Rx Buffer
 
 PUBLIC  _cpm_bios_bss_tail
-_cpm_bios_bss_tail:        ;tail of the cpm bios bss
+_cpm_bios_bss_tail:         ;tail of the cpm bios bss
 
 DEPHASE
 
