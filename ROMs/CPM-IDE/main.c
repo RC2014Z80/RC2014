@@ -89,7 +89,7 @@ struct Builtin builtins[] = {
 
 // fat related functions
     { "ls", &ya_ls, "[path] - directory listing"},
-    { "mount", &ya_mount, "[path][option] - mount a FAT file system"},
+    { "mount", &ya_mount, "[option] - mount a FAT file system"},
 
 // disk related functions
     { "ds", &ya_ds, "[drive] - disk status"},
@@ -121,6 +121,9 @@ int8_t ya_mkcpmb(char **args)   // initialise CP/M bank with up to 4 drives
     if (args[1] == NULL) {
         fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
     } else {
+        res = (f_mount(fs, (const TCHAR*)"", 0));
+        if (res != FR_OK) return 1;
+
         // set up (up to 4) CPM drive LBA locations
         while(args[i+1] != NULL)
         {
@@ -218,13 +221,15 @@ int8_t ya_ls(char **args)
     uint32_t p1;
     uint16_t s1, s2;
 
+    res = (f_mount(fs, (const TCHAR*)"", 0));
+    if (res != FR_OK) return 1;
+
     if(args[1] == NULL) {
         res = f_opendir(dir, (const TCHAR*)".");
     } else {
         res = f_opendir(dir, (const TCHAR*)args[1]);
     }
 
-    if (res != FR_OK) { put_rc(res); return 1; }
     p1 = s1 = s2 = 0;
     while(1) {
         res = f_readdir(dir, &Finfo);
@@ -263,19 +268,15 @@ int8_t ya_ls(char **args)
 
 /**
    @brief Builtin command:
-   @param args List of args.  args[0] is "mount". args[1] is the path, args[2] is the option byte.
+   @param args List of args.  args[0] is "mount". args[1] is the option byte.
    @return Always returns 1, to continue executing.
  */
 int8_t ya_mount(char **args)    // mount a FAT file system
 {
-    if (args[1] == NULL && args[2] == NULL) {
-        fprintf(stdout, "Expected 2 arguments to \"mount\"\n");
+    if (args[1] == NULL) {
+    put_rc(f_mount(fs, (const TCHAR*)"", 0));
     } else {
-        if (args[2] == NULL) {
-        put_rc(f_mount(fs, "", atoi(args[1])));
-        } else {
-        put_rc(f_mount(fs, (const TCHAR*)args[1], atoi(args[2])));
-        }
+    put_rc(f_mount(fs, (const TCHAR*)"", atoi(args[1])));
     }
     return 1;
 }
