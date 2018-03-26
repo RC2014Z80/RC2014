@@ -8,9 +8,11 @@ At the moment is composed by the following components:
 - The RC2014 initialization code for ROM/RAM system (```init/``` directory)
 - PiGFX interface library (```pigfx/``` directory)
 - A 2-stage BASIC+assembly hex file loader (in the ```hexload/``` directory)
+- A 1-stage BASIC hex file loader (replacing standard MSBASIC ROM, in the ```HexLoadr/``` directory)
 - The typical "hello world" test
 - [TinyBasicPlus](https://github.com/BleuLlama/TinyBasicPlus) port, originally written by Scott Lawrence and adapted for the Z80/RC2014
 - A simple snake game (in the ```snake/``` directory)
+- An optimised (for performance and simplicity) CP/M using FATFS formatted IDE drives. (in the ```CPM-IDE/``` directory)
 
 ## How to build
 
