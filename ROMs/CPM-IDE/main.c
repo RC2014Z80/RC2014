@@ -226,6 +226,7 @@ int8_t ya_ls(char **args)
     } else {
         res = f_opendir(dir, (const TCHAR*)args[1]);
     }
+    if (res != FR_OK) { put_rc(res); return 1; }
 
     p1 = s1 = s2 = 0;
     while(1) {
