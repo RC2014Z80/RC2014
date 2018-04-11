@@ -1014,7 +1014,11 @@ putc_buffer_tx:
     ld l,1
     jr NC, putc_clean_up_tx     ; buffer full, so drop the Tx byte and clean up
 
+    ld hl, aciaTxCount
+    di
+    inc (hl)                    ; atomic increment of Tx count
     ld hl, (aciaTxIn)           ; get the pointer to where we poke
+    ei
     ld (hl), a                  ; write the Tx byte to the aciaTxIn
 
     ld a,l                      ; check if Tx pointer is at the end of its range
@@ -1024,8 +1028,6 @@ putc_buffer_tx:
 
 putc_tx_buffer_adjusted:
     ld (aciaTxIn), hl           ; write where the next byte should be poked
-    ld hl, aciaTxCount
-    inc (hl)                    ; atomic increment of Tx count
     ld l, 0                     ; indicate Tx buffer was not full
 
 putc_clean_up_tx:
