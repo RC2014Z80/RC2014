@@ -7,9 +7,11 @@ Each implementation has its own focus, and the same is true here.
 
 This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS formatted (PATA) IDE drive. And further, to do so with the minimum of cards, complexity, and expense.
 
-In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for both the ACIA serial interface and for the IDE disk interface.
+In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface and also for the SIO/2 serial interface.
 
 The ACIA receive interface has a 255 byte buffer, together with highly optimised buffer management, to minimise potential data loss through buffer overrun. Software control of the 68C50 ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+
+The SIO/2 has both ports enabled. Both ports have a 255 byte receive buffer, and a 15 byte transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 vector steering is implemented.
 
 The IDE interface is optimised for performance and can achieve about 300kB/s throughput. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
@@ -48,6 +50,10 @@ As noted above, the complete system must also include:
 Optionally, replacing 4. and 5. with below can save a slot and provides some improvements.
 
 8. [Z80 CPU & Clock](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/)
+
+Additionally, the SIO/2 dual serial interface can be substituted for 6., the ACIA serial card.
+
+9. [SIO board](https://rc2014.co.uk/modules/dual-serial-module-sio2/)
 
 ## Configuration
 
@@ -92,11 +98,14 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 
 ### Building
 
-The z88dk command line to build the CP/M-IDE is below.
+The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
 
 ```bash
 zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --max-allocs-per-node200000 @cpm22.lst -o rc2014-cpm22 -create-app
+
+zcc +rc2014 -subtype=sio -SO3 -llib/rc2014/ff --max-allocs-per-node200000 @cpm22.lst -o rc2014-sio-cpm22 -create-app
 ```
+
 In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of disk read or write by CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
 
 ### Boot up
@@ -108,6 +117,10 @@ The preamble code copies the CCP/BDOS to the correct location, and then checks f
 If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS and the ACIA and IDE drivers necessary for operation of the shell and CP/M.
 
 Control is then passed to the shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
+
+Where the SIO dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have local echo enabled, as is customary with teletype interfaces.
+
+CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
 The CLI provides some other basic functions, such as `ls`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
 
