@@ -140,7 +140,7 @@ cboot:
 
     ld      a,$C3           ;$C3 is a jmp instruction
     ld      ($0000),a       ;for jmp to wboot
-    ld      hl, wboote      ;wboot entry point
+    ld      hl,wboote       ;wboot entry point
     ld      ($0001),hl      ;set address field for jmp at 0 to wboote
 
     ld      ($0005),a       ;for jmp to bdos entry point
@@ -157,7 +157,7 @@ cboot:
     ld      ($0038),a       ;rst 38
 
     xor     a               ;zero in the accum
-    ld      (_cpm_cdisk), a ;select disk zero
+    ld      (_cpm_cdisk),a ;select disk zero
 
     ld      a,(_bios_iobyte);get bios iobyte from shell     
     ld      (_cpm_iobyte),a ;set cpm iobyte to that selected by bios shell
@@ -187,12 +187,12 @@ rboot:
     call    setdma
 
     xor     a               ;0 accumulator
-    ld      (_cpm_ccp_tfcb), a
-    ld      hl, _cpm_ccp_tfcb
-    ld      d, h
-    ld      e, l
+    ld      (_cpm_ccp_tfcb),a
+    ld      hl,_cpm_ccp_tfcb
+    ld      d,h
+    ld      e,l
     inc     de
-    ld      bc, 0x20-1
+    ld      bc,0x20-1
     ldir                    ;clear default FCB
 
     ld      (hstact),a      ;host buffer inactive
@@ -229,24 +229,24 @@ diskchk:
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
     and     00001011b       ;mask off console and high bit of reader
-    cp      00001010b       ;redirected to asci1 TTY
+    cp      00001010b       ;redirected to siob TTY
     jr      Z,const1
-    cp      00000010b       ;redirected to asci1 TTY
+    cp      00000010b       ;redirected to siob TTY
     jr      Z,const1
 
     and     00000011b       ;remove the reader from the mask - only console bits then remain
     cp      00000001b
     jr      NZ,const1
 const0:
-    call    _sioa_pollc    ;check whether any characters are in CRT Rx0 buffer
-    jr      NC, dataEmpty
+    call    _sioa_pollc     ;check whether any characters are in CRT Rx0 buffer
+    jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
     ret
 
 const1:
-    call    _siob_pollc    ;check whether any characters are in TTY Rx1 buffer
-    jr      C, dataReady
+    call    _siob_pollc     ;check whether any characters are in TTY Rx1 buffer
+    jr      C,dataReady
 dataEmpty:
     xor     a
     ret
@@ -259,14 +259,14 @@ conin:    ;console character into register a
     cp      00000001b
     jr      NZ,conin1
 conin0:
-   call     _sioa_getc     ;check whether any characters are in CRT Rx0 buffer
-   jr       NC, conin0      ;if Rx buffer is empty
+   call     _sioa_getc      ;check whether any characters are in CRT Rx0 buffer
+   jr       NC,conin0       ;if Rx buffer is empty
    and      $7F             ;strip parity bit
    ret
 
 conin1:
-   call     _siob_getc     ;check whether any characters are in TTY Rx1 buffer
-   jr       NC, conin1      ;if Rx buffer is empty
+   call     _siob_getc      ;check whether any characters are in TTY Rx1 buffer
+   jr       NC,conin1       ;if Rx buffer is empty
    and      $7F             ;strip parity bit
    ret
 
@@ -277,7 +277,7 @@ reader:
     jr      Z,conin0
     cp      00000000b
     jr      Z,conin1
-    ld      a,$1A           ;CTRL-Z if not asci0 or asci1
+    ld      a,$1A           ;CTRL-Z if not sioa or siob
     ret
 
 conout:    ;console character output from register c
@@ -782,12 +782,10 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
     ld a,(hl)                   ; get the Tx byte
     ei
     out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
-    ld a,l                      ; check if Tx pointer is at the end of its range
-    cp +(siobTxBuffer+__IO_SIO_TX_SIZE-1)&0xff
-    jr Z,siob_tx_reset_buffer   ; if at end of range, reset Tx pointer to start of Tx buffer
-    inc hl                      ; else advance to next byte in Tx buffer
-
-siob_tx_buffer_adjusted:
+    inc l                       ; move the Tx pointer, just low byte along
+    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    ld l,a                      ; return the low byte to l
     ld (siobTxOut),hl           ; write where the next byte should be popped
 
 siob_tx_end:                    ; if we've more Tx bytes to send, we're done for now
@@ -803,10 +801,6 @@ siob_tx_int_pend:
     out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
     jr siob_tx_end
 
-siob_tx_reset_buffer:
-    ld hl,siobTxBuffer         ; move tx buffer pointer back to start of buffer
-    jr siob_tx_buffer_adjusted
-
 __siob_interrupt_rx_char:
     push af
     push hl
@@ -816,7 +810,7 @@ siob_rx_get:
     ld l,a                      ; put it in L
     ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer      
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
-    jr NC, siob_rx_check        ; buffer full, check whether we need to drain H/W FIFO
+    jr NC,siob_rx_check         ; buffer full, check whether we need to drain H/W FIFO
     ld a,l                      ; get Rx byte from l
     ld hl,siobRxCount
     inc (hl)                    ; atomically increment Rx buffer count
@@ -827,7 +821,7 @@ siob_rx_get:
 
 ;   ld a,(siobRxCount)          ; get the current Rx count
 ;   cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-;   jr C, siob_rx_check         ; if the buffer is fullish reset the RTS line
+;   jr C,siob_rx_check          ; if the buffer is fullish reset the RTS line
                                 ; this means getting characters will be slower
                                 ; when the buffer is fullish,
                                 ; but we stop the lemmings.
@@ -862,7 +856,7 @@ __siob_interrupt_rx_error:
     in a,(__IO_SIOB_CONTROL_REGISTER)   ; load Read Register 1
                                         ; test whether we have error on SIOB
     and __IO_SIO_RR1_RX_FRAMING_ERROR|__IO_SIO_RR1_RX_OVERRUN|__IO_SIO_RR1_RX_PARITY_ERROR
-    jr Z, siob_interrupt_rx_exit        ; clear error, and exit
+    jr Z,siob_interrupt_rx_exit         ; clear error, and exit
     in a,(__IO_SIOB_DATA_REGISTER)      ; remove errored Rx byte from the SIOB
 
 siob_interrupt_rx_exit:
@@ -886,15 +880,13 @@ __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
     ld a,(hl)                   ; get the Tx byte
     ei
     out (__IO_SIOA_DATA_REGISTER),a ; output the Tx byte to the SIOA
-    ld a,l                      ; check if Tx pointer is at the end of its range
-    cp +(sioaTxBuffer+__IO_SIO_TX_SIZE-1)&0xff
-    jr Z,sioa_tx_reset_buffer   ; if at end of range, reset Tx pointer to start of Tx buffer
-    inc hl                      ; else advance to next byte in Tx buffer
-
-sioa_tx_buffer_adjusted:
+    inc l                       ; move the Tx pointer, just low byte along
+    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    ld l,a                      ; return the low byte to l
     ld (sioaTxOut),hl           ; write where the next byte should be popped
 
-sioa_tx_end:                        ; if we've more Tx bytes to send, we're done for now
+sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for now
     pop hl
     pop af
 
@@ -907,11 +899,6 @@ sioa_tx_int_pend:
     out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
     jr sioa_tx_end
 
-sioa_tx_reset_buffer:
-    ld hl,sioaTxBuffer         ; move tx buffer pointer back to start of buffer
-    jr sioa_tx_buffer_adjusted
-
-
 __sioa_interrupt_rx_char:
     push af
     push hl
@@ -921,7 +908,7 @@ sioa_rx_get:
     ld l,a                      ; put it in L
     ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer      
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
-    jr NC, sioa_rx_check        ; buffer full, check whether we need to drain H/W FIFO
+    jr NC,sioa_rx_check         ; buffer full, check whether we need to drain H/W FIFO
 
     ld a,l                      ; get Rx byte from l
     ld hl,sioaRxCount
@@ -931,26 +918,26 @@ sioa_rx_get:
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (sioaRxIn),hl            ; write where the next byte should be poked
 
-;       ld a,(sioaRxCount)          ; get the current Rx count
-;       cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-;       jr C, sioa_rx_check         ; if the buffer is fullish reset the RTS line
+;   ld a,(sioaRxCount)          ; get the current Rx count
+;   cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
+;   jr C,sioa_rx_check          ; if the buffer is fullish reset the RTS line
                                 ; this means getting characters will be slower
                                 ; when the buffer is fullish,
                                 ; but we stop the lemmings.
 
-;       ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
-;       out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
-;       in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
-;       ld l,a                      ; put it in L
+;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
+;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
+;   in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
+;   ld l,a                      ; put it in L
     
-;       ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-;       out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
+;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
+;   out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
 
-;       ld a,~__IO_SIO_WR5_RTS      ; clear RTS
-;       and l                       ; with previous contents of R5
-;       out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
+;   ld a,~__IO_SIO_WR5_RTS      ; clear RTS
+;   and l                       ; with previous contents of R5
+;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
 
-sioa_rx_check:                      ; SIO has 4 byte Rx H/W FIFO
+sioa_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
     in a,(__IO_SIOA_CONTROL_REGISTER)   ; get the SIOA register R0
     rrca                        ; test whether we have received on SIOA
     jr C,sioa_rx_get            ; if still more bytes in H/W FIFO, get them
@@ -968,7 +955,7 @@ __sioa_interrupt_rx_error:
     in a,(__IO_SIOA_CONTROL_REGISTER)   ; load Read Register 1
                                         ; test whether we have error on SIOA
     and __IO_SIO_RR1_RX_FRAMING_ERROR|__IO_SIO_RR1_RX_OVERRUN|__IO_SIO_RR1_RX_PARITY_ERROR
-    jr Z, sioa_interrupt_rx_exit        ; clear error, and exit
+    jr Z,sioa_interrupt_rx_exit         ; clear error, and exit
 
     in a,(__IO_SIOA_DATA_REGISTER)      ; remove errored Rx byte from the SIOA
 
@@ -983,34 +970,34 @@ sioa_interrupt_rx_exit:
 
 _sioa_flush_rx:
     xor a
-    ld (sioaRxCount), a         ; reset the Rx counter (set 0)  		
-    ld hl, sioaRxBuffer         ; load Rx buffer pointer home
-    ld (sioaRxIn), hl
-    ld (sioaRxOut), hl
+    ld (sioaRxCount),a          ; reset the Rx counter (set 0)  		
+    ld hl,sioaRxBuffer          ; load Rx buffer pointer home
+    ld (sioaRxIn),hl
+    ld (sioaRxOut),hl
     ret
 
 _siob_flush_rx:
     xor a
-    ld (siobRxCount), a         ; reset the Rx counter (set 0)  		
-    ld hl, siobRxBuffer         ; load Rx buffer pointer home
-    ld (siobRxIn), hl
-    ld (siobRxOut), hl
+    ld (siobRxCount),a          ; reset the Rx counter (set 0)  		
+    ld hl,siobRxBuffer          ; load Rx buffer pointer home
+    ld (siobRxIn),hl
+    ld (siobRxOut),hl
     ret
 
 _sioa_flush_tx:
     xor a
-    ld (sioaTxCount), a         ; reset the Tx counter (set 0)
-    ld hl, sioaTxBuffer         ; load Tx buffer pointer home
-    ld (sioaTxIn), hl
-    ld (sioaTxOut), hl
+    ld (sioaTxCount),a          ; reset the Tx counter (set 0)
+    ld hl,sioaTxBuffer          ; load Tx buffer pointer home
+    ld (sioaTxIn),hl
+    ld (sioaTxOut),hl
     ret
 
 _siob_flush_tx:
     xor a
-    ld (siobTxCount), a         ; reset the Tx counter (set 0)
-    ld hl, siobTxBuffer         ; load Tx buffer pointer home
-    ld (siobTxIn), hl
-    ld (siobTxOut), hl
+    ld (siobTxCount),a          ; reset the Tx counter (set 0)
+    ld hl,siobTxBuffer          ; load Tx buffer pointer home
+    ld (siobTxIn),hl
+    ld (siobTxOut),hl
     ret
 
 _sioa_flush_rx_di:
@@ -1056,7 +1043,7 @@ _sioa_getc:
     ret Z                       ; if the count is zero, then return
 
 ;   cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-;   jr NC, sioa_getc_clean_up   ; if the buffer NOT emptyish, don't change the RTS
+;   jr NC,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
@@ -1074,15 +1061,15 @@ _sioa_getc:
 ;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
     
 sioa_getc_clean_up:
-    ld hl, sioaRxCount
+    ld hl,sioaRxCount
     di
     dec (hl)                    ; atomically decrement Rx count
-    ld hl, (sioaRxOut)          ; get the pointer to place where we pop the Rx byte
+    ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
     ei
-    ld a, (hl)                  ; get the Rx byte
+    ld a,(hl)                   ; get the Rx byte
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
-    ld (sioaRxOut), hl          ; write where the next byte should be popped
-    ld l, a                     ; put the byte in hl
+    ld (sioaRxOut),hl           ; write where the next byte should be popped
+    ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
 
@@ -1097,7 +1084,7 @@ _siob_getc:
     ret Z                       ; if the count is zero, then return
 
 ;   cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-;   jr NC, siob_getc_clean_up   ; if the buffer NOT emptyish, don't change the RTS
+;   jr NC,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
@@ -1115,38 +1102,38 @@ _siob_getc:
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
     
 siob_getc_clean_up:
-    ld hl, siobRxCount
+    ld hl,siobRxCount
     di
     dec (hl)                    ; atomically decrement Rx count
-    ld hl, (siobRxOut)          ; get the pointer to place where we pop the Rx byte
+    ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
     ei
-    ld a, (hl)                  ; get the Rx byte
+    ld a,(hl)                   ; get the Rx byte
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
-    ld (siobRxOut), hl          ; write where the next byte should be popped
-    ld l, a                     ; put the byte in hl
+    ld (siobRxOut),hl           ; write where the next byte should be popped
+    ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
 
 _sioa_peekc:
-    ld a, (sioaRxCount)         ; get the number of bytes in the Rx buffer
-    ld l, a                     ; and put it in hl
+    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
+    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
-    ld hl, (sioaRxOut)          ; get the pointer to place where we pop the Rx byte
-    ld a, (hl)                  ; get the Rx byte
-    ld l, a                     ; and put it in hl
+    ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
+    ld a,(hl)                   ; get the Rx byte
+    ld l,a                      ; and put it in hl
     ret
 
 _siob_peekc:
-    ld a, (siobRxCount)         ; get the number of bytes in the Rx buffer
-    ld l, a                     ; and put it in hl
+    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
+    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
-    ld hl, (siobRxOut)          ; get the pointer to place where we pop the Rx byte
-    ld a, (hl)                  ; get the Rx byte
-    ld l, a                     ; and put it in hl
+    ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
+    ld a,(hl)                   ; get the Rx byte
+    ld l,a                      ; and put it in hl
     ret
 
 _sioa_pollc:
@@ -1191,7 +1178,7 @@ _sioa_putc:
     jr Z,sioa_putc_buffer_tx    ; if not, so abandon immediate Tx
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
-    out (__IO_SIOA_DATA_REGISTER),a ; output the Tx byte to the SIOA
+    out (__IO_SIOA_DATA_REGISTER),a     ; output the Tx byte to the SIOA
 
     ld l,0                      ; indicate Tx buffer was not full
     ei
@@ -1200,7 +1187,7 @@ _sioa_putc:
 sioa_putc_buffer_tx:
     ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,sioa_putc_buffer_tx_overflow   ; buffer full, so drop the Tx byte and return
+    jp NC,sioa_putc_buffer_tx_overflow  ; buffer full, so drop the Tx byte and return
     
     ld a,l                      ; Tx byte
     ld hl,sioaTxCount
@@ -1208,20 +1195,13 @@ sioa_putc_buffer_tx:
     ld hl,(sioaTxIn)            ; get the pointer to where we poke
     ei
     ld (hl),a                   ; write the Tx byte to the sioaTxIn
-
-    ld a,l                      ; check if Tx pointer is at the end of its range
-    cp +(sioaTxBuffer + __IO_SIO_TX_SIZE - 1)&0xff
-    jr Z,sioa_putc_buffer_tx_reset   ; if at end of range, reset Tx pointer to start of Tx buffer
-    inc hl                      ; else advance to next byte in Tx buffer
-
-sioa_putc_buffer_tx_exit:
-    ld (sioaTxIn), hl           ; write where the next byte should be poked
+    inc l                       ; move the Tx pointer, just low byte along
+    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    ld l,a                      ; return the low byte to l
+    ld (sioaTxIn),hl            ; write where the next byte should be poked
     ld l,0                      ; indicate Tx buffer was not full
     ret
-
-sioa_putc_buffer_tx_reset:
-    ld hl,sioaTxBuffer          ; move tx buffer pointer back to start of buffer
-    jr sioa_putc_buffer_tx_exit
 
 sioa_putc_buffer_tx_overflow:
     ld l,1                      ; indicate Tx buffer was full
@@ -1244,7 +1224,7 @@ _siob_putc:
     jr Z,siob_putc_buffer_tx    ; if not, so abandon immediate Tx
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
-    out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
+    out (__IO_SIOB_DATA_REGISTER),a     ; output the Tx byte to the SIOB
 
     ld l,0                      ; indicate Tx buffer was not full
     ei
@@ -1253,7 +1233,7 @@ _siob_putc:
 siob_putc_buffer_tx:
     ld a,(siobTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,siob_putc_buffer_tx_overflow   ; buffer full, so drop the Tx byte and return
+    jp NC,siob_putc_buffer_tx_overflow  ; buffer full, so drop the Tx byte and return
 
     ld a,l                      ; Tx byte
     ld hl,siobTxCount
@@ -1261,20 +1241,13 @@ siob_putc_buffer_tx:
     ld hl,(siobTxIn)            ; get the pointer to where we poke
     ei
     ld (hl),a                   ; write the Tx byte to the siobTxIn
-
-    ld a,l                      ; check if Tx pointer is at the end of its range
-    cp +(siobTxBuffer + __IO_SIO_TX_SIZE - 1)&0xff
-    jr Z,siob_putc_buffer_tx_reset   ; if at end of range, reset Tx pointer to start of Tx buffer
-    inc hl                      ; else advance to next byte in Tx buffer
-
-siob_putc_buffer_tx_exit:
-    ld (siobTxIn), hl           ; write where the next byte should be poked
+    inc l                       ; move the Tx pointer, just low byte along
+    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    ld l,a                      ; return the low byte to l
+    ld (siobTxIn),hl            ; write where the next byte should be poked
     ld l,0                      ; indicate Tx buffer was not full
     ret
-
-siob_putc_buffer_tx_reset:
-    ld hl,siobTxBuffer          ; move tx buffer pointer back to start of buffer
-    jr siob_putc_buffer_tx_exit
 
 siob_putc_buffer_tx_overflow:
     ld l,1                      ; indicate Tx buffer was full
@@ -1295,18 +1268,18 @@ PUBLIC ide_read_block, ide_write_block
 ide_read_byte:
     push bc
     push de
-    ld d, a                 ;copy address to D
-    ld bc, __IO_PIO_IDE_CTL
-    out (c), a              ;drive address onto control lines
+    ld d,a                  ;copy address to D
+    ld bc,__IO_PIO_IDE_CTL
+    out (c),a               ;drive address onto control lines
     or __IO_IDE_RD_LINE
-    out (c), a              ;and assert read pin
-    ld bc, __IO_PIO_IDE_LSB
-    in e, (c)               ;read the lower byte
-    ld bc, __IO_PIO_IDE_CTL
-    out (c), d              ;deassert read pin
+    out (c),a               ;and assert read pin
+    ld bc,__IO_PIO_IDE_LSB
+    in e,(c)                ;read the lower byte
+    ld bc,__IO_PIO_IDE_CTL
+    out (c),d               ;deassert read pin
     xor a
-    out (c), a              ;deassert all control pins
-    ld a, e
+    out (c),a               ;deassert all control pins
+    ld a,e
     pop de
     pop bc
     ret
@@ -1316,43 +1289,43 @@ ide_read_byte:
 ide_read_block:
     push bc
     push de
-    ld bc, __IO_PIO_IDE_CTL
-    ld d, __IO_IDE_DATA
-    out (c), d              ;drive address onto control lines
-    ld e, $0                ;keep iterative count in e
+    ld bc,__IO_PIO_IDE_CTL
+    ld d,__IO_IDE_DATA
+    out (c),d               ;drive address onto control lines
+    ld e,$0                 ;keep iterative count in e
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_rdblk2:
-    ld d, __IO_IDE_DATA|__IO_IDE_RD_LINE
-    out (c), d              ;and assert read pin
-    ld bc, __IO_PIO_IDE_LSB ;drive lower lines with lsb
+    ld d,__IO_IDE_DATA|__IO_IDE_RD_LINE
+    out (c),d               ;and assert read pin
+    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
     ini                     ;read the lower byte (HL++)
     inc c                   ;drive upper lines with msb
     ini                     ;read the upper byte (HL++)
     inc c                   ;drive control port
-    ld d, __IO_IDE_DATA
-    out (c), d              ;deassert read pin
+    ld d,__IO_IDE_DATA
+    out (c),d               ;deassert read pin
     dec e                   ;keep iterative count in e
-    jr NZ, ide_rdblk2
+    jr NZ,ide_rdblk2
 
 ELSE
 ide_rdblk2:
-    ld d, __IO_IDE_DATA|__IO_IDE_RD_LINE
-    out (c), d              ;and assert read pin
-    ld bc, __IO_PIO_IDE_LSB ;drive lower lines with lsb
+    ld d,__IO_IDE_DATA|__IO_IDE_RD_LINE
+    out (c),d               ;and assert read pin
+    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
     ini                     ;read the lower byte (HL++)
-    ld bc, __IO_PIO_IDE_MSB ;drive upper lines with msb
+    ld bc,__IO_PIO_IDE_MSB  ;drive upper lines with msb
     ini                     ;read the upper byte (HL++)
-    ld bc, __IO_PIO_IDE_CTL
-    ld d, __IO_IDE_DATA
-    out (c), d              ;deassert read pin
+    ld bc,__IO_PIO_IDE_CTL
+    ld d,__IO_IDE_DATA
+    out (c),d               ;deassert read pin
     dec e                   ;keep iterative count in e
-    jr NZ, ide_rdblk2
+    jr NZ,ide_rdblk2
 
 ENDIF
-;   ld bc, __IO_PIO_IDE_CTL ;remembering what's in bc
-    ld d, $0
-    out (c), d              ;deassert all control pins
+;   ld bc,__IO_PIO_IDE_CTL ;remembering what's in bc
+    ld d,$0
+    out (c),d              ;deassert all control pins
     pop de
     pop bc
     ret
@@ -1363,24 +1336,24 @@ ENDIF
 ide_write_byte:
     push bc
     push de
-    ld d, a                 ;copy address to D
-    ld bc, __IO_PIO_IDE_CONFIG
-    ld a, __IO_PIO_IDE_WR
-    out (c), a              ;config 8255 chip, write mode
-    ld bc, __IO_PIO_IDE_CTL
-    ld a, d
-    out (c), a              ;drive address onto control lines
+    ld d,a                  ;copy address to D
+    ld bc,__IO_PIO_IDE_CONFIG
+    ld a,__IO_PIO_IDE_WR
+    out (c),a               ;config 8255 chip, write mode
+    ld bc,__IO_PIO_IDE_CTL
+    ld a,d
+    out (c),a               ;drive address onto control lines
     or __IO_IDE_WR_LINE
-    out (c), a              ;and assert write pin
-    ld bc, __IO_PIO_IDE_LSB
-    out (c), e              ;drive lower lines with lsb
-    ld bc, __IO_PIO_IDE_CTL
-    out (c), d              ;deassert write pin
+    out (c),a               ;and assert write pin
+    ld bc,__IO_PIO_IDE_LSB
+    out (c),e               ;drive lower lines with lsb
+    ld bc,__IO_PIO_IDE_CTL
+    out (c),d               ;deassert write pin
     xor a
-    out (c), a              ;deassert all control pins
-    ld bc, __IO_PIO_IDE_CONFIG
-    ld a, __IO_PIO_IDE_RD
-    out (c), a              ;config 8255 chip, read mode
+    out (c),a               ;deassert all control pins
+    ld bc,__IO_PIO_IDE_CONFIG
+    ld a,__IO_PIO_IDE_RD
+    out (c),a               ;config 8255 chip, read mode
     pop de
     pop bc
     ret
@@ -1390,49 +1363,49 @@ ide_write_byte:
 ide_write_block:
     push bc
     push de
-    ld bc, __IO_PIO_IDE_CONFIG
-    ld d, __IO_PIO_IDE_WR
-    out (c), d              ;config 8255 chip, write mode
-    ld bc, __IO_PIO_IDE_CTL
-    ld d, __IO_IDE_DATA
-    out (c), d              ;drive address onto control lines
-    ld e, $0                ;keep iterative count in e
+    ld bc,__IO_PIO_IDE_CONFIG
+    ld d,__IO_PIO_IDE_WR
+    out (c),d               ;config 8255 chip, write mode
+    ld bc,__IO_PIO_IDE_CTL
+    ld d,__IO_IDE_DATA
+    out (c),d               ;drive address onto control lines
+    ld e,$0                 ;keep iterative count in e
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_wrblk2: 
-    ld d, __IO_IDE_DATA|__IO_IDE_WR_LINE
-    out (c), d              ;and assert write pin
-    ld bc, __IO_PIO_IDE_LSB ;drive lower lines with lsb
+    ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
+    out (c),d               ;and assert write pin
+    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
     outi                    ;write the lower byte (HL++)
     inc c                   ;drive upper lines with msb
     outi                    ;write the upper byte (HL++)
     inc c                   ;drive control port
-    ld d, __IO_IDE_DATA
-    out (c), d              ;deassert write pin
+    ld d,__IO_IDE_DATA
+    out (c),d               ;deassert write pin
     dec e                   ;keep iterative count in e
-    jr NZ, ide_wrblk2
+    jr NZ,ide_wrblk2
 
 ELSE
 ide_wrblk2: 
-    ld d, __IO_IDE_DATA|__IO_IDE_WR_LINE
-    out (c), d              ;and assert write pin
-    ld bc, __IO_PIO_IDE_LSB ;drive lower lines with lsb
+    ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
+    out (c),d               ;and assert write pin
+    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
     outi                    ;write the lower byte (HL++)
-    ld bc, __IO_PIO_IDE_MSB ;drive upper lines with msb
+    ld bc,__IO_PIO_IDE_MSB  ;drive upper lines with msb
     outi                    ;write the upper byte (HL++)
-    ld bc, __IO_PIO_IDE_CTL
-    ld d, __IO_IDE_DATA
-    out (c), d              ;deassert write pin
+    ld bc,__IO_PIO_IDE_CTL
+    ld d,__IO_IDE_DATA
+    out (c),d               ;deassert write pin
     dec e                   ;keep iterative count in e
-    jr NZ, ide_wrblk2
+    jr NZ,ide_wrblk2
 
 ENDIF
-;   ld bc, __IO_PIO_IDE_CTL ;remembering what's in bc
-    ld d, $0
-    out (c), d              ;deassert all control pins
-    ld bc, __IO_PIO_IDE_CONFIG
-    ld d, __IO_PIO_IDE_RD
-    out (c), d              ;config 8255 chip, read mode
+;   ld bc,__IO_PIO_IDE_CTL  ;remembering what's in bc
+    ld d,$0
+    out (c),d               ;deassert all control pins
+    ld bc,__IO_PIO_IDE_CONFIG
+    ld d,__IO_PIO_IDE_RD
+    out (c),d               ;config 8255 chip, read mode
     pop de
     pop bc
     ret
@@ -1449,24 +1422,24 @@ PUBLIC ide_wait_ready, ide_wait_drq, ide_test_error
 
 ide_setup_lba:
     push hl
-    ld a, __IO_IDE_LBA0
+    ld a,__IO_IDE_LBA0
     call ide_write_byte     ;set LBA0 0:7
-    ld e, d
-    ld a, __IO_IDE_LBA1
+    ld e,d
+    ld a,__IO_IDE_LBA1
     call ide_write_byte     ;set LBA1 8:15
-    ld e, c
-    ld a, __IO_IDE_LBA2
+    ld e,c
+    ld a,__IO_IDE_LBA2
     call ide_write_byte     ;set LBA2 16:23
-    ld a, b
+    ld a,b
     and 00001111b           ;lowest 4 bits used only
     or  11100000b           ;to enable LBA address mode
-    ld hl, _ideStatus       ;set bit 4 accordingly
-    bit 0, (hl)
-    jr Z, ide_setup_master
+    ld hl,_ideStatus        ;set bit 4 accordingly
+    bit 0,(hl)
+    jr Z,ide_setup_master
     or $10                  ;if it is a slave, set that bit
 ide_setup_master:
-    ld e, a
-    ld a, __IO_IDE_LBA3
+    ld e,a
+    ld a,__IO_IDE_LBA3
     call ide_write_byte     ;set LBA3 24:27 + bits 5:7=111
     pop hl
     ret
@@ -1482,15 +1455,15 @@ ide_setup_master:
 ide_wait_ready:
     push af
 ide_wait_ready2:
-    ld a, __IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld a,__IO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     push af
     and 00100001b           ;test for ERR or DFE
-    jr nz, ide_wait_error
+    jr nz,ide_wait_error
     pop af
     and 11000000b           ;mask off BuSY and RDY bits
     xor 01000000b           ;wait for RDY to be set and BuSY to be clear
-    jr nz, ide_wait_ready2
+    jr nz,ide_wait_ready2
     pop af
     scf                     ;set carry flag on success
     ret
@@ -1508,15 +1481,15 @@ ide_wait_error:
 ide_wait_drq:
     push af
 ide_wait_drq2:
-    ld a, __IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld a,__IO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     push af
     and 00100001b           ;test for ERR or DFE
-    jr nz, ide_wait_error
+    jr nz,ide_wait_error
     pop af
     and 10001000b           ;mask off BuSY and DRQ bits
     xor 00001000b           ;wait for DRQ to be set and BuSY to be clear
-    jr nz, ide_wait_drq2
+    jr nz,ide_wait_drq2
     pop af
     scf                     ;set carry flag on success
     ret
@@ -1528,14 +1501,14 @@ ide_wait_drq2:
 
 ide_test_error:
     push af
-    ld a, __IO_IDE_ALT_STATUS    ;select status register
+    ld a,__IO_IDE_ALT_STATUS    ;select status register
     call ide_read_byte      ;get status in A
-    bit 0, a                ;test ERR bit
-    jr Z, ide_test_success
-    bit 5, a
-    jr NZ, ide_test2        ;test write error bit
+    bit 0,a                 ;test ERR bit
+    jr Z,ide_test_success
+    bit 5,a
+    jr NZ,ide_test2         ;test write error bit
 
-    ld a, __IO_IDE_ERROR    ;select error register
+    ld a,__IO_IDE_ERROR     ;select error register
     call ide_read_byte      ;get error register in a
 ide_test2:
     inc sp                  ;pop old af
@@ -1566,18 +1539,18 @@ ide_read_sector:
     push bc
     push de
     call ide_wait_ready     ;make sure drive is ready
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_setup_lba      ;tell it which sector we want in BCDE
-    ld e, $1
-    ld a, __IO_IDE_SEC_CNT
+    ld e,$1
+    ld a,__IO_IDE_SEC_CNT
     call ide_write_byte     ;set sector count to 1
-    ld e, __IDE_CMD_READ
-    ld a, __IO_IDE_COMMAND
+    ld e,__IDE_CMD_READ
+    ld a,__IO_IDE_COMMAND
     call ide_write_byte     ;ask the drive to read it
     call ide_wait_ready     ;make sure drive is ready to proceed
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_wait_drq       ;wait until it's got the data
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_read_block     ;grab the data into (HL++)
 
 _ide_x_sector_ok:
@@ -1611,89 +1584,37 @@ ide_write_sector:
     push bc
     push de
     call ide_wait_ready     ;make sure drive is ready
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_setup_lba      ;tell it which sector we want in BCDE
-    ld e, $1
-    ld a, __IO_IDE_SEC_CNT
+    ld e,$1
+    ld a,__IO_IDE_SEC_CNT
     call ide_write_byte     ;set sector count to 1
-    ld e, __IDE_CMD_WRITE
-    ld a, __IO_IDE_COMMAND
+    ld e,__IDE_CMD_WRITE
+    ld a,__IO_IDE_COMMAND
     call ide_write_byte     ;instruct drive to write a sector
     call ide_wait_ready     ;make sure drive is ready to proceed
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_wait_drq       ;wait until it wants the data
-    jr NC, _disk_x_sector_error
+    jr NC,_disk_x_sector_error
     call ide_write_block    ;send the data to the drive from (HL++)
     call ide_wait_ready
-    jr NC, _disk_x_sector_error
-;   ld e, __IDE_CMD_CACHE_FLUSH
-;   ld a, __IO_IDE_COMMAND
+    jr NC,_disk_x_sector_error
+;   ld e,__IDE_CMD_CACHE_FLUSH
+;   ld a,__IO_IDE_COMMAND
 ;   call ide_write_byte     ;tell drive to flush its hardware cache
 ;   call ide_wait_ready     ;wait until the write is complete
-;   jr NC, _disk_x_sector_error
+;   jr NC,_disk_x_sector_error
     jr _ide_x_sector_ok     ;carry = 1 on return = operation ok
 
-;==============================================================================
-;       DEBUGGING SUBROUTINES
-;
-
-PUBLIC pstring, pnewline
-PUBLIC phexwd, phex
-
-    ; print string from location in DE to asci0/1, modifies AF, DE, & HL
-pstring: 
-    ld a, (de)          ; Get character from DE address
-    or a                ; Is it $00 ?
-    ret Z               ; Then return on terminator
-    ld l, a
-    call _sioa_putc     ; Print it
-    inc de              ; Point to next character 
-    jr pstring          ; Continue until $00
-
-    ; print CR/LF to sioa, modifies AF & HL
-pnewline:
-    ld l, CHAR_CR
-    call _sioa_putc
-    ld l, CHAR_LF
-    jp _sioa_putc
-
-    ; print contents of HL as 16 bit number in ASCII HEX, modifies AF & HL
-phexwd:
-    push hl
-    ld l, h         ; high byte to L
-    call phex
-    pop hl          ; recover HL, for low byte in L  
-    call phex
-    ret
-
-    ; print contents of L as 8 bit number in ASCII HEX to sioa modifies AF & HL
-phex:
-    ld a, l
-    push af         ; _sioa_putc modifies AF, HL
-    rrca
-    rrca
-    rrca
-    rrca
-    call  phex_conv
-    pop af
-phex_conv:
-    and  $0F
-    add  a,$90
-    daa
-    adc  a,$40
-    daa
-    ld l, a
-    jp _sioa_putc
-
 PUBLIC  _cpm_bios_tail
-_cpm_bios_tail:                 ;tail of the cpm bios
-
-;------------------------------------------------------------------------------
-; start of fixed tables - aligned data
-;------------------------------------------------------------------------------
+_cpm_bios_tail:             ;tail of the cpm bios
 
 PUBLIC  _cpm_bios_rodata_head
-_cpm_bios_rodata_head:          ;origin of the cpm bios data
+_cpm_bios_rodata_head:      ;origin of the cpm bios rodata
+
+;------------------------------------------------------------------------------
+; start of fixed tables - aligned rodata
+;------------------------------------------------------------------------------
 
 ALIGN 0x10
 
@@ -1709,9 +1630,8 @@ _cpm_sio_interrupt_vectors:     ;origin of the SIO/2 IM2 interrupt vectors
     defw        __sioa_interrupt_rx_error
 
 ;------------------------------------------------------------------------------
-; start of fixed tables - non aligned data
+; start of fixed tables - non aligned rodata
 ;------------------------------------------------------------------------------
-
 ;
 ;    fixed data tables for four-drive standard drives
 ;    no translations
@@ -1764,41 +1684,37 @@ _cpm_bios_bss_bridge:
 
 DEPHASE
 
-;------------------------------------------------------------------------------
-; end of fixed tables - non aligned data
-;------------------------------------------------------------------------------
-
 SECTION bss_driver
+
+;------------------------------------------------------------------------------
+; start of bss tables
+;------------------------------------------------------------------------------
 
 PHASE _cpm_bios_bss_bridge
 
 PUBLIC  _cpm_bios_bss_head
 _cpm_bios_bss_head:         ;head of the cpm bios bss
 
-PUBLIC sioaRxCount, sioaRxIn, sioaRxOut, sioaRxLock
-PUBLIC siobRxCount, siobRxIn, siobRxOut, siobRxLock
-PUBLIC sioaTxCount, sioaTxIn, sioaTxOut, sioaTxLock
-PUBLIC siobTxCount, siobTxIn, siobTxOut, siobTxLock
+PUBLIC sioaRxCount, sioaRxIn, sioaRxOut
+PUBLIC siobRxCount, siobRxIn, siobRxOut
+PUBLIC sioaTxCount, sioaTxIn, sioaTxOut
+PUBLIC siobTxCount, siobTxIn, siobTxOut
 
 sioaRxCount:    defb 0                  ; Space for Rx Buffer Management 
 sioaRxIn:       defw sioaRxBuffer       ; non-zero item in bss since it's initialized anyway
 sioaRxOut:      defw sioaRxBuffer       ; non-zero item in bss since it's initialized anyway
-sioaRxLock:     defb 0                  ; lock flag for Rx exclusion
 
 siobRxCount:    defb 0                  ; Space for Rx Buffer Management 
 siobRxIn:       defw siobRxBuffer       ; non-zero item in bss since it's initialized anyway
 siobRxOut:      defw siobRxBuffer       ; non-zero item in bss since it's initialized anyway
-siobRxLock:     defb 0                  ; lock flag for Rx exclusion
 
 sioaTxCount:    defb 0                  ; Space for Tx Buffer Management
 sioaTxIn:       defw sioaTxBuffer       ; non-zero item in bss since it's initialized anyway
 sioaTxOut:      defw sioaTxBuffer       ; non-zero item in bss since it's initialized anyway
-sioaTxLock:     defb 0                  ; lock flag for Tx exclusion
 
 siobTxCount:    defb 0                  ; Space for Tx Buffer Management
 siobTxIn:       defw siobTxBuffer       ; non-zero item in bss since it's initialized anyway
 siobTxOut:      defw siobTxBuffer       ; non-zero item in bss since it's initialized anyway
-siobTxLock:     defb 0                  ; lock flag for Tx exclusion
 
 PUBLIC _bios_iobyte
 _bios_iobyte:   defb 0                  ; transfer the IOBYTE from the bios to CP/M
@@ -1853,21 +1769,31 @@ hstbuf:     defs    hstsiz  ;buffer for host disk sector
 
 dirbf:      defs    128     ;scratch directory area
 
-ALIGN       0xFDE0          ;ALIGN to 16 byte boundary
-                            ;when finally locating
+;------------------------------------------------------------------------------
+; start of bss tables - aligned data
+;------------------------------------------------------------------------------
+
 PUBLIC sioaTxBuffer
 PUBLIC siobTxBuffer
+
+ALIGN       __IO_SIO_TX_SIZE            ;ALIGN to __IO_SIO_TX_SIZE byte boundary
+                                        ;when finally locating
 
 sioaTxBuffer:   defs __IO_SIO_TX_SIZE   ; Space for the Tx Buffer
 siobTxBuffer:   defs __IO_SIO_TX_SIZE   ; Space for the Tx Buffer
 
-ALIGN       0xFE00          ;ALIGN to next 256 byte boundary
-                            ;when finally locating
 PUBLIC sioaRxBuffer
 PUBLIC siobRxBuffer
 
+ALIGN       __IO_SIO_RX_SIZE            ;ALIGN to next __IO_SIO_RX_SIZE byte boundary
+                                        ;when finally locating
+                            
 sioaRxBuffer:   defs __IO_SIO_RX_SIZE   ; Space for the Rx Buffer
 siobRxBuffer:   defs __IO_SIO_RX_SIZE   ; Space for the Rx Buffer
+
+;------------------------------------------------------------------------------
+; end of bss tables
+;------------------------------------------------------------------------------
 
 PUBLIC  _cpm_bios_bss_tail
 _cpm_bios_bss_tail:         ;tail of the cpm bios bss
