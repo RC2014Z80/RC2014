@@ -72,12 +72,12 @@ static void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt);
 
 // external functions
 
-extern uint8_t sioa_flush_rx_di(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // Rx0 flush routine
-extern uint8_t sioa_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // Rx0 polling routine, checks Rx0 buffer fullness
-extern uint8_t sioa_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);  // Rx0 receive routine, from Rx0 buffer
-extern uint8_t siob_flush_rx_di(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // Rx1 flush routine
-extern uint8_t siob_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // Rx1 polling routine, checks Rx1 buffer fullness
-extern uint8_t siob_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);  // Rx1 receive routine, from Rx1 buffer
+extern uint8_t sioa_flush_rx_di(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // SIOA flush routine
+extern uint8_t sioa_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // SIOA polling routine, checks SIOA buffer fullness
+extern uint8_t sioa_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);  // SIOA receive routine, from SIOA buffer
+extern uint8_t siob_flush_rx_di(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // SIOB flush routine
+extern uint8_t siob_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh); // SIOB polling routine, checks SIOB buffer fullness
+extern uint8_t siob_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);  // SIOB receive routine, from SIOB buffer
 
 extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise cpm
 
@@ -490,6 +490,7 @@ void ya_loop(void)
             }
         }
     }
+    fprintf(output," :-)\n");
 
     len = LINE_SIZE;
 
@@ -524,8 +525,8 @@ void main(int argc, char **argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\r\nRC2014 - CP/M Monitor\nfeilipu 2018\r\n");
-    fprintf(ttyout, "\r\nRC2014 - CP/M Monitor\nfeilipu 2018\r\n");
+    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2018\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2018\n\n> :?");
  
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)
