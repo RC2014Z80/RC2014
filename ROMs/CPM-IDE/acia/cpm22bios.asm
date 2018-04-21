@@ -1132,7 +1132,7 @@ ide_write_byte:
     ld d,a                  ;copy address to D
     ld bc,__IO_PIO_IDE_CONFIG
     ld a,__IO_PIO_IDE_WR
-    out (c),a               ;config 8255 chip,write mode
+    out (c),a               ;config 8255 chip, write mode
     ld bc,__IO_PIO_IDE_CTL
     ld a,d
     out (c),a               ;drive address onto control lines
@@ -1158,7 +1158,7 @@ ide_write_block:
     push de
     ld bc,__IO_PIO_IDE_CONFIG
     ld d,__IO_PIO_IDE_WR
-    out (c),d               ;config 8255 chip,write mode
+    out (c),d               ;config 8255 chip, write mode
     ld bc,__IO_PIO_IDE_CTL
     ld d,__IO_IDE_DATA
     out (c),d               ;drive address onto control lines
@@ -1471,20 +1471,18 @@ PHASE _cpm_bios_bss_bridge
 PUBLIC  _cpm_bios_bss_head
 _cpm_bios_bss_head:         ;head of the cpm bios bss
 
-PUBLIC  aciaRxCount
-PUBLIC  aciaRxIn
-PUBLIC  aciaRxOut
-PUBLIC  aciaTxCount
-PUBLIC  aciaTxIn
-PUBLIC  aciaTxOut
+PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
+PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
 PUBLIC  aciaControl
 
 aciaRxCount:    defb 0                  ; Space for Rx Buffer Management 
 aciaRxIn:       defw aciaRxBuffer       ; non-zero item in bss since it's initialized anyway
 aciaRxOut:      defw aciaRxBuffer       ; non-zero item in bss since it's initialized anyway
+
 aciaTxCount:    defb 0                  ; Space for Tx Buffer Management
 aciaTxIn:       defw aciaTxBuffer       ; non-zero item in bss since it's initialized anyway
 aciaTxOut:      defw aciaTxBuffer       ; non-zero item in bss since it's initialized anyway
+
 aciaControl:    defb 0                  ; Local control echo of ACIA
 
 PUBLIC _cpm_bios_canary

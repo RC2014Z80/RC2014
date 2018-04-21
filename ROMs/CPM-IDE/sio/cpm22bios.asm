@@ -157,7 +157,7 @@ cboot:
     ld      ($0038),a       ;rst 38
 
     xor     a               ;zero in the accum
-    ld      (_cpm_cdisk),a ;select disk zero
+    ld      (_cpm_cdisk),a  ;select disk zero
 
     ld      a,(_bios_iobyte);get bios iobyte from shell     
     ld      (_cpm_iobyte),a ;set cpm iobyte to that selected by bios shell
@@ -1323,9 +1323,9 @@ ide_rdblk2:
     jr NZ,ide_rdblk2
 
 ENDIF
-;   ld bc,__IO_PIO_IDE_CTL ;remembering what's in bc
+;   ld bc,__IO_PIO_IDE_CTL  ;remembering what's in bc
     ld d,$0
-    out (c),d              ;deassert all control pins
+    out (c),d               ;deassert all control pins
     pop de
     pop bc
     ret

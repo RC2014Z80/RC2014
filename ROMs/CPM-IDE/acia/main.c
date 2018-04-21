@@ -20,7 +20,6 @@
 #include "ffconf.h"
 #include <lib/rc2014/ff.h>
 
-
 // PRAGMA DEFINES
 #pragma output REGISTER_SP = 0xD800
 #pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
@@ -181,8 +180,8 @@ int8_t ya_help(char **args)
     uint8_t i;
     (void *)args;
 
-    printf("RC2014 - CP/M IDE Monitor v0.2\n");
-    printf("The following functions are built in:\n");
+    fprintf(stdout,"RC2014 - CP/M IDE Monitor v0.2\n");
+    fprintf(stdout,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
         fprintf(stdout,"  %s %s\n", builtins[i].name, builtins[i].help);
