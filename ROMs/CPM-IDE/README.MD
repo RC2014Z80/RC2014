@@ -26,7 +26,13 @@ The CP/M-IDE system supports up to 4 drives of nominally 16MBytes each. There ca
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090689.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090689.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE Hardware<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with ACIA<center></th>
+</tr>
+<tr>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1398.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1398.jpg"/></a></td>
+</tr>
+<tr>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO<center></th>
 </tr>
 </tbody>
 </table>
@@ -43,7 +49,7 @@ In addition to the RC2014 Classic which contains the CPU and ACIA serial cards, 
 
 As noted above, the complete system must also include:
 
-4. [CPU board](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/)
+4. [CPU](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/)
 5. [Clock](https://rc2014.co.uk/modules/clock/)
 6. [ACIA Serial](https://rc2014.co.uk/modules/serial-io/)
 7. [Backplane](https://rc2014.co.uk/modules/backplane-8/)
@@ -54,7 +60,7 @@ Optionally, replacing 4. and 5. with below can save a slot and provides some imp
 
 Additionally, the SIO/2 dual serial interface can be substituted for 6., the ACIA serial card.
 
-9. [SIO board](https://rc2014.co.uk/modules/dual-serial-module-sio2/)
+9. [SIO Serial](https://rc2014.co.uk/modules/dual-serial-module-sio2/)
 
 As noted Compact Flash cards are supported in native 16 bit PATA mode, as demonstrated below.
 
