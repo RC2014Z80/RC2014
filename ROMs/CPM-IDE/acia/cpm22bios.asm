@@ -1016,6 +1016,10 @@ putc_buffer_tx:
     ld l,0                      ; indicate Tx buffer was not full
 
 putc_buffer_tx_exit:
+    ld a,(aciaControl)          ; get the ACIA control echo byte
+    and __IO_ACIA_CR_TEI_RTS0   ; test whether ACIA interrupt is set
+    ret NZ                      ; if so then just return
+    
     di                          ; critical section begin
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
