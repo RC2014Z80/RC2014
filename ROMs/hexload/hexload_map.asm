@@ -9,10 +9,10 @@
 ; https://feilipu.me/
 ;
 
-SECTION     CODE
+SECTION     code_user
 ORG         0x8900
 
-SECTION     DATA
+SECTION     rodata_user
 ORG         -1
 
 ;==============================================================================
