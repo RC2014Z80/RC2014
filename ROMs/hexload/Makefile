@@ -1,4 +1,4 @@
-all:	hexload.txt
+all:	hexload.bas
 
 hexload.txt: hexload__.bin
 	python bin2bas.py > hexload.bas
