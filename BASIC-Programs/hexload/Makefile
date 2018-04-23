@@ -1,6 +1,6 @@
 all:	hexload.bas
 
-hexload.txt: hexload__.bin
+hexload.bas: hexload__.bin
 	python bin2bas.py > hexload.bas
 
 hexload__.bin: hexload.asm
@@ -8,4 +8,4 @@ hexload__.bin: hexload.asm
 	appmake +glue -b hexload --ihex --clean
 
 .PHONY clean:
-	rm -f *.bin *.err *.hex *.ihx *.lis *.obj *.map zcc_opt.def
+	rm -f *.bin *.err *.hex *.ihx *.lis *.obj *.map zcc_opt.def hexload.bas

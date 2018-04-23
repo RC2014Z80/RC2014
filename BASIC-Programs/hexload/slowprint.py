@@ -8,9 +8,6 @@ for line in sys.stdin:
         sys.stdout.flush();
         sleep(0.01);
 
-    sys.stdout.write('\r');
+    sys.stdout.write('\r\n');
     sys.stdout.flush();
-    sleep(0.05);
-    sys.stdout.write('\n');
-    sys.stdout.flush();
-    sleep(0.05);
+    sleep(0.1);

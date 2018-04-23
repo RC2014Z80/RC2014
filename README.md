@@ -2,6 +2,11 @@
 
 Official RC2014 repository for hardware schematics / software and more!
 
+## New to the RC2014
+
+Want to get started with Assembly and C programming, but don't have a EEPROM burner?
+Then use the `hexload` program.
+
 ## Contributing and installation notes
 
 This repository links to third party projects and code written for RC2014 (for instance pigfx, some emulators, etc) as git submodules.
