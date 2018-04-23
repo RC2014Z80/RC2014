@@ -12,13 +12,13 @@ Do you want to do Assembly or C language programming, and then load and run thes
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="http://rc2014.co.uk/wp-content/uploads/2014/10/RC2014_Overview.jpg" target="_blank"><img src="http://rc2014.co.uk/wp-content/uploads/2014/10/RC2014_Overview.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><centre><a href="http://rc2014.co.uk/wp-content/uploads/2014/10/RC2014_Overview.jpg" target="_blank"><img src="http://rc2014.co.uk/wp-content/uploads/2014/10/RC2014_Overview.jpg"/></a></centre></td>
 </tr>
 <tr>
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 Classic<center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="http://rc2014.co.uk/wp-content/uploads/2016/10/2016-10-04t16-58-14.434z-mini2.jpg.855x570_q85_pad_rcrop01.jpg-1.jpeg" target="_blank"><img src="http://rc2014.co.uk/wp-content/uploads/2016/10/2016-10-04t16-58-14.434z-mini2.jpg.855x570_q85_pad_rcrop01.jpg-1.jpeg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><centre><a href="https://rc2014.co.uk/wp-content/uploads/2016/10/2016-10-04t16-58-14.434z-mini2.jpg.855x570_q85_pad_rcrop01.jpg-1.jpeg" target="_blank"><img src="http://rc2014.co.uk/wp-content/uploads/2016/10/2016-10-04t16-58-14.434z-mini2.jpg.855x570_q85_pad_rcrop01.jpg-1.jpeg"/></a></centre></td>
 </tr>
 <tr>
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 Mini<center></th>
@@ -36,7 +36,7 @@ Do you want to do Assembly or C language programming, and then load and run thes
 
 You should see one of these two messages.
 
-```bash
+```
 80 SBC By Grant Searle
 
 Memory top? 35071
@@ -48,7 +48,7 @@ Ok
 
 or
 
-```bash
+```
 Z80 SBC By Grant Searle
 
 Cold or warm start (C or W)? C
@@ -63,7 +63,7 @@ Ok
 Once you have pasted all of the `hexload.bas` file into your terminal,
 the following message should appear (following lots of Basic commands):
 
-```bash
+```
 ...
 ...
 run
@@ -78,9 +78,9 @@ HEX LOADER by Filippo Bergamasco & feilipu for z88dk
 
 At that point, copy-paste the desired Intel HEX file, i.e. the Assembly or C language compiled program in HEX format, into the terminal.
 
-An example `helloworld.hex` is provided to check that this process is working. You should see the "RC2014" hello world as below.
+An example [`helloworld.hex`](https://raw.githubusercontent.com/RC2014Z80/RC2014/master/BASIC-Programs/hexload/helloworld.hex) is provided to check that this process is working. You should see the "RC2014" hello world as below.
 
-```bash
+```
 ...
 ...
 9550 data 999
@@ -118,7 +118,7 @@ Ok
 On a Linux system assuming an USB-to-serial converter attached as `/dev/ttyUSB0` the following
 commands can be used:
 
-```bash
+```
 $ cd hexload
 $ python slowprint.py < hexload.bas > /dev/ttyUSB0
 $ cat < helloworld.hex > /dev/ttyUSB0
@@ -140,7 +140,7 @@ Before we can run the `hexload` program we have to upload and run a Basic progra
 
 Once we have the `hexload` colon prompt then we can use it to upload, and also start, our own program with the origin of `0x9000`.
 
-```bash
+```
 Loading Data
 Start Address: 8900
 End Address:   89D7
@@ -150,7 +150,7 @@ HEX LOADER by Filippo Bergamasco & feilipu for z88dk
 :
 ```
 
-An additional test program provided by Z88DK is the `password.hex` program also in this directory, which demonstrates the terminal editing capabilities of the Z88DK standard library. It is available in the examples directory of Z88dk.
+An additional test program provided by Z88DK is the [`password.hex`](https://raw.githubusercontent.com/RC2014Z80/RC2014/master/BASIC-Programs/hexload/password.hex) program also in this directory, which demonstrates the terminal editing capabilities of the Z88DK standard library. It is available in the examples directory of Z88dk.
 
 
 ## How to prepare C Programs?
@@ -159,13 +159,13 @@ The easiest way to compile C programs for the RC2014 is using the Z88DK.
 
 The simple command line (to get started) looks like this below.
 
-```bash
+```
 zcc +rc2014 -subtype=basic -clib=sdcc_iy helloworld.c -o helloworld -create-app
 ```
 
 Whilst there are many additional options which can add information about the process, the above provides the intel hex or `ihx` information that can be uploaded to the RC2014 and run.
 
-The `+rc2014` advises that the machine is the RC2014, and the `-subtype=basic` advises that the program should be compiled with `0x9000` as its origin, and that it should use the serial drivers included in the MS Basic ROM.
+The `+rc2014` advises that the machine is the RC2014, and the `-subtype=basic` advises that the program should be compiled with `0x9000` as its origin, and that it should use the serial drivers included in the standard MS Basic ROM. The `-clib=sdcc_iy` sets sdcc as the compiler, reserving register pair `iy` for the library usage.
 
 The [Z88DK examples](https://github.com/z88dk/z88dk/tree/master/libsrc/_DEVELOPMENT/EXAMPLES) include some classic games including StarTrek, Sudoku, Eliza, and Chess, all written in C, that can be compiled and run on the RC2014.
 
