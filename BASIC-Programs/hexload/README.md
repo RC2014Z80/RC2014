@@ -2,7 +2,7 @@
 
 Hexload is a basic program, that uploads an assembly language program to support uploading other programs into the memory of the RC2014.
 
-## C and Assembly file upload for new users (No EEPROM programmer required)
+## C and Assembly file upload, no EEPROM programmer required
 
 Just built a Classic or Mini RC2014, and don't yet have an EEPROM burner?
 
@@ -172,3 +172,15 @@ The [Z88DK examples](https://github.com/z88dk/z88dk/tree/master/libsrc/_DEVELOPM
 The [Z88DK source code](https://github.com/z88dk/z88dk) has a (actually two) full standard C libraries, and two alternative compilers (sccz80 and patched sdcc) to chose from. It supports over 50 machine types (including the RC2014), and is very actively maintained. But initially, the above incantation provides a good result.
 
 Full instructions to use the Z88DK are available from the [Wiki](https://www.z88dk.org/wiki/doku.php) and support is available on the [forum](https://www.z88dk.org/forum/forums.php).
+
+## Advanced hexload usage
+
+When the program returns, it will show the `ABPASS` return value (in the example it is 0), and then the `OK` from Basic. Once this happens, the program can be simply restarted by `PRINT USR(x)`, where `x` is the value passed via the `DEINT` parameter into the program.
+
+This means that the program can be started as often as needed, and can be (for example) treated as an assembly subroutine from a Basic program you load to replace the `hexload.bas` program.
+
+When the RC2014 is warm restarted (select `W` when the RESET button is pressed), all memory contents are preserved. So this allows the user to restart the program without reloading any information.
+
+Also after the first load of `hexload.bas`, loading an abridged version e.g. `hexload-warm.bas` (which excludes the lines 1000 through 1070 which loads the data and the lines 9010 through 9550 containing the `data`) will run the hexload assembly program installed at `0x8900` again, allowing you to download a new version of your program, without needing to reload full `hexload.bas` again. It is left to you to create the abridged program, simply by deleting the relevant lines.
+
+In this way, if your program crashes you can simply RESET, select `W` for warm boot, and then `RUN` the abridged hexload program to download a revised version of your program to the RC2014.
