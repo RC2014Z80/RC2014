@@ -785,6 +785,7 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
+    or siobTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (siobTxOut),hl           ; write where the next byte should be popped
 
@@ -883,6 +884,7 @@ __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
+    or sioaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (sioaTxOut),hl           ; write where the next byte should be popped
 
@@ -1198,6 +1200,7 @@ sioa_putc_buffer_tx:
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
+    or sioaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (sioaTxIn),hl            ; write where the next byte should be poked
     ld l,0                      ; indicate Tx buffer was not full
@@ -1244,6 +1247,7 @@ siob_putc_buffer_tx:
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
+    or siobTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (siobTxIn),hl            ; write where the next byte should be poked
     ld l,0                      ; indicate Tx buffer was not full
