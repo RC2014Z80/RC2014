@@ -1187,10 +1187,11 @@ _sioa_putc:
 sioa_putc_buffer_tx:
     ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,sioa_putc_buffer_tx   ; buffer full, so keep trying
+    jr NC,sioa_putc_buffer_tx_overflow   ; buffer full, so keep trying
     
     ld a,l                      ; Tx byte
     ld hl,sioaTxCount
+    di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(sioaTxIn)            ; get the pointer to where we poke
     ei
@@ -1203,6 +1204,10 @@ sioa_putc_buffer_tx:
     ld l,a                      ; return the low byte to l
     ld (sioaTxIn),hl            ; write where the next byte should be poked
     ret
+
+sioa_putc_buffer_tx_overflow:
+    ei
+    jr sioa_putc_buffer_tx
 
 _siob_putc:
     ; enter    : l = char to output
@@ -1227,10 +1232,11 @@ _siob_putc:
 siob_putc_buffer_tx:
     ld a,(siobTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,siob_putc_buffer_tx   ; buffer full, so keep trying
+    jr NC,siob_putc_buffer_tx_overflow   ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
     ld hl,siobTxCount
+    di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(siobTxIn)            ; get the pointer to where we poke
     ei
@@ -1243,6 +1249,10 @@ siob_putc_buffer_tx:
     ld l,a                      ; return the low byte to l
     ld (siobTxIn),hl            ; write where the next byte should be poked
     ret
+
+siob_putc_buffer_tx_overflow:
+    ei
+    jr siob_putc_buffer_tx
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - 8255 functions
