@@ -1181,15 +1181,13 @@ _sioa_putc:
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
     out (__IO_SIOA_DATA_REGISTER),a     ; output the Tx byte to the SIOA
-
-    ld l,0                      ; indicate Tx buffer was not full
     ei
     ret                         ; and just complete
 
 sioa_putc_buffer_tx:
     ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,sioa_putc_buffer_tx_overflow  ; buffer full, so drop the Tx byte and return
+    jp NC,sioa_putc_buffer_tx   ; buffer full, so keep trying
     
     ld a,l                      ; Tx byte
     ld hl,sioaTxCount
@@ -1197,18 +1195,13 @@ sioa_putc_buffer_tx:
     ld hl,(sioaTxIn)            ; get the pointer to where we poke
     ei
     ld (hl),a                   ; write the Tx byte to the sioaTxIn
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
     or sioaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (sioaTxIn),hl            ; write where the next byte should be poked
-    ld l,0                      ; indicate Tx buffer was not full
-    ret
-
-sioa_putc_buffer_tx_overflow:
-    ld l,1                      ; indicate Tx buffer was full
-    ei
     ret
 
 _siob_putc:
@@ -1228,15 +1221,13 @@ _siob_putc:
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
     out (__IO_SIOB_DATA_REGISTER),a     ; output the Tx byte to the SIOB
-
-    ld l,0                      ; indicate Tx buffer was not full
     ei
     ret                         ; and just complete
 
 siob_putc_buffer_tx:
     ld a,(siobTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jp NC,siob_putc_buffer_tx_overflow  ; buffer full, so drop the Tx byte and return
+    jp NC,siob_putc_buffer_tx   ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
     ld hl,siobTxCount
@@ -1244,18 +1235,13 @@ siob_putc_buffer_tx:
     ld hl,(siobTxIn)            ; get the pointer to where we poke
     ei
     ld (hl),a                   ; write the Tx byte to the siobTxIn
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
     or siobTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (siobTxIn),hl            ; write where the next byte should be poked
-    ld l,0                      ; indicate Tx buffer was not full
-    ret
-
-siob_putc_buffer_tx_overflow:
-    ld l,1                      ; indicate Tx buffer was full
-    ei
     ret
 
 ;------------------------------------------------------------------------------

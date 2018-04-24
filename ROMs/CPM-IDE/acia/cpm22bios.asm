@@ -994,13 +994,12 @@ _acia_putc:
     
     ld a,l                      ; Retrieve Tx character
     out (__IO_ACIA_DATA_REGISTER),a   ; immediately output the Tx byte to the ACIA
-    ld l,0                      ; indicate Tx buffer was not full
     ret                         ; and just complete
 
 putc_buffer_tx:
     ld a,(aciaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_ACIA_TX_SIZE - 1    ; check whether there is space in the buffer
-    jr NC,putc_buffer_tx_overflow   ; buffer full, so drop the Tx byte and return
+    jr NC,putc_buffer_tx        ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
     ld hl,aciaTxCount
@@ -1009,15 +1008,14 @@ putc_buffer_tx:
     ld hl,(aciaTxIn)            ; get the pointer to where we poke
     ei
     ld (hl),a                   ; write the Tx byte to the aciaTxIn
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_ACIA_TX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or aciaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (aciaTxIn),hl            ; write where the next byte should be poked
-    ld l,0                      ; indicate Tx buffer was not full
 
-putc_buffer_tx_exit:
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and __IO_ACIA_CR_TEI_RTS0   ; test whether ACIA interrupt is set
     ret NZ                      ; if so then just return
@@ -1030,10 +1028,6 @@ putc_buffer_tx_exit:
     out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
     ei                          ; critical section end
     ret
-
-putc_buffer_tx_overflow:
-    ld l,1                      ; indicate Tx buffer was full
-    jr putc_buffer_tx_exit
 
     defc _acia0_interrupt = _acia_interrupt
     defc _acia0_init = _acia_init
