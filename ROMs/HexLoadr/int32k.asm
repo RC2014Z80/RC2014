@@ -142,7 +142,9 @@ RXA:
         out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
 
 rxa_clean_up:
-        ld hl,serRxBufUsed
+        push hl                     ; store HL so we don't clobber it
+
+        ld hl, serRxBufUsed
         di
         dec (hl)                    ; atomically decrement Rx count
         ld hl, (serRxOutPtr)        ; get the pointer to place where we pop the Rx byte
@@ -152,7 +154,7 @@ rxa_clean_up:
         inc l                       ; move the Rx pointer low byte along
         ld (serRxOutPtr), hl        ; write where the next byte should be popped
 
-        ld l,a                      ; and put it in hl
+        pop hl                      ; recover HL
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
