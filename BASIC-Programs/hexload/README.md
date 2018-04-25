@@ -165,23 +165,23 @@ zcc +rc2014 -subtype=basic -clib=sdcc_iy helloworld.c -o helloworld -create-app
 
 Whilst there are many additional options which can add information about the process, the above provides the intel hex or `ihx` information that can be uploaded to the RC2014 and run.
 
-The `+rc2014` advises that the machine is the RC2014, and the `-subtype=basic` advises that the program should be compiled with `0x9000` as its origin, and that it should use the serial drivers included in the standard MS Basic ROM. The `-clib=sdcc_iy` sets sdcc as the compiler, reserving register pair `iy` for the library usage.
+The `+rc2014` advises that the machine is the RC2014, and the `-subtype=basic` advises that the program should be compiled with `0x9000` as its origin, and that it should use the serial drivers included in the standard MS Basic ROM. The `-clib=sdcc_iy` sets sdcc as the compiler, reserving register pair `iy` for the library usage. There are many options available for the compile process, but initially the above incantation provides a good result.
 
 The [Z88DK examples](https://github.com/z88dk/z88dk/tree/master/libsrc/_DEVELOPMENT/EXAMPLES) include some classic games including StarTrek, Sudoku, Eliza, and Chess, all written in C, that can be compiled and run on the RC2014.
 
-The [Z88DK source code](https://github.com/z88dk/z88dk) has a (actually two) full standard C libraries, and two alternative compilers (sccz80 and patched sdcc) to chose from. It supports over 50 machine types (including the RC2014), and is very actively maintained. But initially, the above incantation provides a good result.
+The [Z88DK source code](https://github.com/z88dk/z88dk) has a (actually two) full standard C libraries, and two alternative compilers (sccz80 and patched sdcc) to chose from. It supports over 50 machine types (including the RC2014), and is very actively maintained.
 
 Full instructions to use the Z88DK are available from the [Wiki](https://www.z88dk.org/wiki/doku.php) and support is available on the [forum](https://www.z88dk.org/forum/forums.php).
 
 ## Normal usage
 
-Once a program has been uploaded it will be automatically started by the `hexload` program. It can be run as often as needed by typing `print usr(0)`in lowercase or upper case `PRINT USR(0)`.
+Once a program has been uploaded it will be automatically started by the `hexload` program. It can be run as often as needed by typing `print usr(0)`in lowercase or uppercase `PRINT USR(0)`.
 
 To upload a new program version type `run` or `RUN` and `hexload` will restart, and will wait for your new Intel Hex program to be uploaded from the serial port.
 
 When the RC2014 is warm restarted (select `W` when the RESET button is pressed), all memory contents are preserved. So this allows the user to restart the program without reloading any information.
 
-In this way, if your program crashes you can simply RESET, select `W` for warm boot, and then `RUN` the still residen `hexload` program to download a revised version of your program to the RC2014.
+In this way, if your program crashes you can simply RESET, select `W` for warm boot, and then `RUN` the still resident `hexload` program to download a revised version of your program to the RC2014.
 
 ## Advanced usage
 
@@ -197,5 +197,5 @@ DEINT   $0A07   ; Get integer value into DE
 ACPASS  $117C   ; Return integer AC
 ABPASS  $117D   ; Return integer AB
 ```
-Note that your program should jump to `ABPASS` when it exists, as this routine provides the final `RET` instruction.
+Note that your program should jump to `ABPASS` when it exits, as this routine provides the final `RET` instruction.
 
