@@ -124,9 +124,9 @@ $ python slowprint.py < hexload.bas > /dev/ttyUSB0
 $ cat < helloworld.hex > /dev/ttyUSB0
 ```
 
-## How does `hexload` work?
+## How does hexload work?
 
-So how does this process work?
+So how does this process of uploading work?
 
 The RC2014 Classic or Mini has 32kB of RAM, that is located from address `0x8000`. The MS Basic program installed by default uses some bytes from `0x8000` through to `0x8183` to manage itself, and it usually leaves the bytes from there through to `0xFFFF` free for BASIC programs.
 
@@ -173,14 +173,29 @@ The [Z88DK source code](https://github.com/z88dk/z88dk) has a (actually two) ful
 
 Full instructions to use the Z88DK are available from the [Wiki](https://www.z88dk.org/wiki/doku.php) and support is available on the [forum](https://www.z88dk.org/forum/forums.php).
 
-## Advanced hexload usage
+## Normal usage
 
-When the program returns, it will show the `ABPASS` return value (in the example it is 0), and then the `OK` from Basic. Once this happens, the program can be simply restarted by `PRINT USR(x)`, where `x` is the value passed via the `DEINT` parameter into the program.
+Once a program has been uploaded it will be automatically started by the `hexload` program. It can be run as often as needed by typing `print usr(0)`in lowercase or upper case `PRINT USR(0)`.
 
-This means that the program can be started as often as needed, and can be (for example) treated as an assembly subroutine from a Basic program you load to replace the `hexload.bas` program.
+To upload a new program version type `run` or `RUN` and `hexload` will restart, and will wait for your new Intel Hex program to be uploaded from the serial port.
 
 When the RC2014 is warm restarted (select `W` when the RESET button is pressed), all memory contents are preserved. So this allows the user to restart the program without reloading any information.
 
-Also after the first load of `hexload.bas`, loading an abridged version e.g. `hexload-warm.bas` (which excludes the lines 1000 through 1070 which loads the data and the lines 9010 through 9550 containing the `data`) will run the hexload assembly program installed at `0x8900` again, allowing you to download a new version of your program, without needing to reload full `hexload.bas` again. It is left to you to create the abridged program, simply by deleting the relevant lines.
+In this way, if your program crashes you can simply RESET, select `W` for warm boot, and then `RUN` the still residen `hexload` program to download a revised version of your program to the RC2014.
 
-In this way, if your program crashes you can simply RESET, select `W` for warm boot, and then `RUN` the abridged hexload program to download a revised version of your program to the RC2014.
+## Advanced usage
+
+Integers can be passed into your programs by the parameter in the `USR(x)` command, and can be obtained into the DE registers using the `DEINT` routine.
+
+When the program returns, it will show the `ABPASS` return value (in the example it is 0), and then the `OK` from Basic. Once this happens, the program can be simply restarted by `PRINT USR(x)`, where `x` is the value passed via the `DEINT` routine into the program.
+
+This means that the program can be started as often as needed, and can be (for example) treated as an assembly subroutine from a Basic program you load to replace the `hexload.bas` program.
+
+Your assembly or C program can reference the `DEINT` and `ABPASS` routines at these addresses.
+```
+DEINT   $0A07   ; Get integer value into DE
+ACPASS  $117C   ; Return integer AC
+ABPASS  $117D   ; Return integer AB
+```
+Note that your program should jump to `ABPASS` when it exists, as this routine provides the final `RET` instruction.
+
