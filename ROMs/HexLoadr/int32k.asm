@@ -58,14 +58,13 @@ serialInt:
         jr NC, im1_tx_check         ; buffer full, check if we can send something
 
         ld a, l                     ; get Rx byte from l
+        ld hl, serRxBufUsed
+        inc (hl)                    ; atomically increment Rx buffer count
         ld hl, (serRxInPtr)         ; get the pointer to where we poke
         ld (hl), a                  ; write the Rx byte to the serRxInPtr address
 
         inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr), hl         ; write where the next byte should be poked
-
-        ld hl, serRxBufUsed
-        inc (hl)                    ; atomically increment Rx buffer count
 
 im1_tx_check:                       ; now start doing the Tx stuff
         in a, (SER_STATUS_ADDR)     ; get the status of the ACIA
@@ -83,6 +82,7 @@ im1_tx_check:                       ; now start doing the Tx stuff
         inc l                       ; move the Tx pointer, just low byte, along
         ld a, SER_TX_BUFSIZE-1      ; load the buffer size, (n^2)-1
         and l                       ; range check
+        or serTxBuf&0xFF            ; locate base
         ld l, a                     ; return the low byte to l
         ld (serTxOutPtr), hl        ; write where the next byte should be popped
 
@@ -129,19 +129,6 @@ RXA:
         ld a, (serRxBufUsed)        ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
         jr Z, RXA                   ; wait, if there are no bytes available
-        
-        push hl                     ; Store HL so we don't clobber it
-
-        ld hl, (serRxOutPtr)        ; get the pointer to place where we pop the Rx byte
-        ld a, (hl)                  ; get the Rx byte
-        ld i, a                     ; save the Rx byte in I
-
-        inc l                       ; move the Rx pointer low byte along
-        ld (serRxOutPtr), hl        ; write where the next byte should be popped
-
-        ld hl,serRxBufUsed
-        dec (hl)                    ; atomically decrement Rx count
-        ld a,(hl)                   ; get the newly decremented Rx count
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
         jr NC, rxa_clean_up         ; if the buffer is too full, don't change the RTS
@@ -151,12 +138,21 @@ RXA:
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
         or SER_TDI_RTS0             ; set RTS low.
         ld (serControl), a          ; write the ACIA control echo byte back
-        out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
         ei                          ; critical section end
+        out (SER_CTRL_ADDR), a      ; set the ACIA CTRL register
 
 rxa_clean_up:
-        ld a, i                     ; get the Rx byte from I
-        pop hl                      ; recover HL
+        ld hl,serRxBufUsed
+        di
+        dec (hl)                    ; atomically decrement Rx count
+        ld hl, (serRxOutPtr)        ; get the pointer to place where we pop the Rx byte
+        ei
+        ld a, (hl)                  ; get the Rx byte
+
+        inc l                       ; move the Rx pointer low byte along
+        ld (serRxOutPtr), hl        ; write where the next byte should be popped
+
+        ld l,a                      ; and put it in hl
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
@@ -185,17 +181,20 @@ txa_buffer_out:
         jr NC, txa_buffer_out       ; buffer full, so wait till it has space
 
         ld a, l                     ; Retrieve Tx character
+
+        ld hl, serTxBufUsed
+        di
+        inc (hl)                    ; atomic increment of Tx count
         ld hl, (serTxInPtr)         ; get the pointer to where we poke
+        ei
         ld (hl), a                  ; write the Tx byte to the serTxInPtr
 
         inc l                       ; move the Tx pointer, just low byte along
         ld a, SER_TX_BUFSIZE-1      ; load the buffer size, (n^2)-1
         and l                       ; range check
+        or serTxBuf&0xFF            ; locate base
         ld l, a                     ; return the low byte to l
         ld (serTxInPtr), hl         ; write where the next byte should be poked
-
-        ld hl, serTxBufUsed
-        inc (hl)                    ; atomic increment of Tx count
 
         pop hl                      ; recover HL
 
