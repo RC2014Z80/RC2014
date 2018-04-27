@@ -150,13 +150,19 @@ Once the CP/M BIOS has established that it has a valid CP/M drive, simply becaus
 
 ### CP/M System Disk
 
-I have found that the [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that can just be loaded onto a disk for a complete ready to run CP/M.
+The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M.
 
-I've also found the [NGS Microshell](http://www.z80.eu/microshell.html) to be very useful, so I add it to my system disk too. No need to add it permanently. In fact, adding it will remove the special `EXIT` function I built into the CCP to return to the shell.
+Also, the [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it will remove the special `EXIT` function built into the DRI CCP to return to the shell.
 
 As the CP/M-IDE shell doesn't (currently) have a way to format its own CP/M drives, some example drives are provided as zip files. These zip files can be expanded into the root directory of the IDE drive and used or augmented by the CP/M Tools noted below.
 
 Because the CCP/BDOS and BIOS are stored in ROM, there is no "system disk". Cold and warm boot is from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive files are in which drive letter. Except that the `A:` drive will always be the default drive, where you try to select a non-existent drive letter.
+
+### CP/M Application Disks
+
+The [CP/M Drives directory] contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BASCOM53.CPM.zip). MS Basic 5.29 is available in the example [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
+
+An empty [CP/M 16MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to full size when it creates them on FATFS. Using (unzipping) this templalate, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any IDE hard drive or Compact Flash card.
 
 ### CP/M TOOLS Usage
 
