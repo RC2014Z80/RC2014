@@ -5,7 +5,7 @@ Official RC2014 repository for hardware schematics / software and more!
 ## New to the RC2014
 
 Want to get started with Assembly and C programming, but don't have a EEPROM burner?
-Then use the `hexload` program.
+Then use the [`hexload`](https://github.com/RC2014Z80/RC2014/tree/master/BASIC-Programs/hexload) Basic program to upload your work.
 
 ## Contributing and installation notes
 

@@ -1,6 +1,6 @@
 # Hexload
 
-Hexload is a basic program, that uploads an assembly language program to support uploading other programs into the memory of the RC2014.
+Hexload is a MS Basic program, that uploads an assembled binary program to support uploading other Intel HEX formatted programs into the memory of the RC2014.
 
 ## C and Assembly file upload, no EEPROM programmer required
 
@@ -99,7 +99,7 @@ HEX LOADER by Filippo Bergamasco & feilipu for z88dk
 
 Done
 
- 0 
+ 0
 USR(0) -> 0x9000, z88dk default
 
 Hello World R
@@ -109,7 +109,7 @@ Hello World 0
 Hello World 1
 Hello World 4
 
- 0 
+ 0
 Ok
 ```
 
@@ -189,9 +189,9 @@ Integers can be passed into your programs by the parameter in the `USR(x)` comma
 
 When the program returns, it will show the `ABPASS` return value (in the example it is 0), and then the `OK` from Basic. Once this happens, the program can be simply restarted by `PRINT USR(x)`, where `x` is the value passed via the `DEINT` routine into the program.
 
-This means that the program can be started as often as needed, and can be (for example) treated as an assembly subroutine from a Basic program you load to replace the `hexload.bas` program.
+This means that the program can be started as often as needed, and can be (for example) treated as a subroutine from a Basic program you load to replace the `hexload.bas` program, after uploading your subroutine program. This can be useful where you need to write a driver for hardware, or need an optimised calculation written in assembly language.
 
-Your assembly or C program can reference the `DEINT` and `ABPASS` routines at these addresses.
+Your assembly or C program can reference the MS Basic `DEINT` and `ABPASS` routines at these addresses.
 ```
 DEINT   $0A07   ; Get integer value into DE
 ACPASS  $117C   ; Return integer AC
