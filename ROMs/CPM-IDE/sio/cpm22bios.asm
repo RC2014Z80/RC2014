@@ -776,18 +776,24 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
     or a                        ; check whether it is zero
     jr Z,siob_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
 
-    ld hl,siobTxCount
-    dec (hl)                    ; atomically decrement current Tx count
     ld hl,(siobTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
-    ei
     out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
+    
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
     or siobTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (siobTxOut),hl           ; write where the next byte should be popped
+
+    ld hl,siobTxCount
+    dec (hl)                    ; atomically decrement current Tx count
+    jr NZ,siob_tx_end
+
+siob_tx_int_pend:
+    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
+    out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
 
 siob_tx_end:                    ; if we've more Tx bytes to send, we're done for now
     pop hl
@@ -797,10 +803,6 @@ __siob_interrupt_ext_status:
     ei
     reti
 
-siob_tx_int_pend:
-    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
-    out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
-    jr siob_tx_end
 
 __siob_interrupt_rx_char:
     push af
@@ -875,18 +877,24 @@ __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
     or a                        ; check whether it is zero
     jr Z,sioa_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
 
-    ld hl,sioaTxCount
-    dec (hl)                    ; atomically decrement current Tx count
     ld hl,(sioaTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
-    ei
     out (__IO_SIOA_DATA_REGISTER),a ; output the Tx byte to the SIOA
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
     or sioaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (sioaTxOut),hl           ; write where the next byte should be popped
+
+    ld hl,sioaTxCount
+    dec (hl)                    ; atomically decrement current Tx count
+    jr NZ,sioa_tx_end
+
+sioa_tx_int_pend:
+    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
+    out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
 
 sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for now
     pop hl
@@ -896,10 +904,6 @@ __sioa_interrupt_ext_status:
     ei
     reti
 
-sioa_tx_int_pend:
-    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
-    out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
-    jr sioa_tx_end
 
 __sioa_interrupt_rx_char:
     push af
