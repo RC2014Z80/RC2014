@@ -1225,7 +1225,7 @@ ide_setup_lba:
     call ide_write_byte     ;set LBA2 16:23
     ld a,b
     and 00001111b           ;lowest 4 bits used only
-    or  11100000b           ;to enable LBA address mode
+    or  11100000b           ;to enable LBA address mode, Master only
     ld hl,_ideStatus        ;set bit 4 accordingly
     bit 0,(hl)
     jr Z,ide_setup_master
