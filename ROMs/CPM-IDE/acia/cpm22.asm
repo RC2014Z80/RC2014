@@ -397,7 +397,7 @@ GETDSK:
     LD    C,25
     JP    ENTRY
 ;
-;   Set the stabdard dma address.
+;   Set the standard dma address.
 ;
 STDDMA:
     LD    DE,TBUFF
@@ -4080,8 +4080,10 @@ _cpm_bdos_tail:         ;tail of the cpm bdos
 PUBLIC  _cpm_bdos_data
 _cpm_bdos_data:             ;origin of the cpm bdos data
 
-EMPTYFCB:   DEFB    0E5H    ;empty directory segment indicator.
-USERDMA:    DEFW    0080H   ;user's dma address (defaults to 80h).
+EMPTYFCB:   DEFB    $E5     ;empty directory segment indicator.
+USERDMA:    DEFW    $0080   ;user's dma address (defaults to 80h).
+
+STARTING:   DEFB    2       ;starting position for cursor.
 
 PUBLIC  _cpm_bdos_data_tail
 _cpm_bdos_data_tail:        ;tail of the cpm bios data
@@ -4103,7 +4105,6 @@ PUBLIC  _cpm_bdos_bss_head
 _cpm_bdos_bss_head:         ;head of the cpm bdos bss
 
 OUTFLAG:    DEFB    0       ;output flag (non zero means no output).
-STARTING:   DEFB    2       ;starting position for cursor.
 CURPOS:     DEFB    0       ;cursor position (0=start of line).
 PRTFLAG:    DEFB    0       ;printer flag (control-p toggle). List if non zero.
 CHARBUF:    DEFB    0       ;single input character buffer.
@@ -4170,9 +4171,9 @@ CKSUMTBL:   DEFS    16,0
 ;
 ;   Stack area for BDOS calls.
 ;
-USRSTACK:   DEFW    0       ;save users stack pointer here.
             DEFS    48,0
 STKAREA:                    ;top of stack area.
+USRSTACK:   DEFW    0       ;save users stack pointer here.
 ;
 PUBLIC  _cpm_bdos_bss_tail
 _cpm_bdos_bss_tail:        ;tail of the cpm bdos bss
