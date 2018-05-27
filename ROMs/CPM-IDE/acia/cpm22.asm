@@ -1424,7 +1424,7 @@ NBYTES:     DEFW    0        ;byte counter used by TYPE.
 ;
 ;   ccp stack area.
 ;
-            DEFS    16,0
+            DEFS    32,0
 CCPSTACK:                   ;top of ccp stack area.
 
 ;
@@ -1645,7 +1645,7 @@ OUTCHR1:
     DEC    (HL)        ;restore and check for the start of the line.
     LD    A,(HL)
     OR    A
-    RET    Z        ;ingnore control characters at the start of the line.
+    RET    Z        ;ignore control characters at the start of the line.
     LD    A,C
     CP    BS        ;is it a backspace?
     JP    NZ,OUTCHR2
@@ -1668,7 +1668,7 @@ SHOWIT:
     LD    C,'^'        ;for a control character, preceed it with '^'.
     CALL    OUTCHAR
     POP    AF
-    OR    '@'        ;and then use the letter equivelant.
+    OR    '@'        ;and then use the letter equivalent.
     LD    C,A
 ;
 ;   Function to output (C) to the console device and expand tabs

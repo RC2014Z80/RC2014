@@ -138,16 +138,7 @@ cboot:
 
                             ;Set up Page 0
 
-    ld      a,$C3           ;$C3 is a jmp instruction
-    ld      ($0000),a       ;for jmp to wboot
-    ld      hl,wboote       ;wboot entry point
-    ld      ($0001),hl      ;set address field for jmp at 0 to wboote
-
-    ld      ($0005),a       ;for jmp to bdos entry point
-    ld      hl,_cpm_bdos_head
-    ld      ($0006),hl      ;set address field of Jump at 5 to bdos
-
-    ld      a,$C9           ;$C9 is a ret instruction for:
+    ld      a,$C9           ;C9 is a ret instruction for:
     ld      ($0008),a       ;rst 08
     ld      ($0010),a       ;rst 10
     ld      ($0018),a       ;rst 18
@@ -159,7 +150,7 @@ cboot:
     xor     a               ;zero in the accum
     ld      (_cpm_cdisk),a  ;select disk zero
 
-    ld      a,(_bios_iobyte);get bios iobyte from shell     
+    ld      a,(_bios_iobyte);get bios iobyte from shell
     ld      (_cpm_iobyte),a ;set cpm iobyte to that selected by bios shell
 
     ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
@@ -178,15 +169,22 @@ qboot:                      ;arrive from preamble
 ;=============================================================================
 
 rboot:
-    di
-    call    _sioa_reset     ;flush the serial ports
-    call    _siob_reset
-    ei
+    ld      a,$C3           ;C3 is a jmp instruction
+    ld      ($0000),a       ;for jmp to wboot
+    ld      hl,wboote       ;wboot entry point
+    ld      ($0001),hl      ;set address field for jmp at 0 to wboote
+
+    ld      ($0005),a       ;C3 for jmp to bdos entry point
+    ld      hl,_cpm_bdos_head   ;bdos entry point
+    ld      ($0006),hl      ;set address field of Jump at 5 to bdos
 
     ld      bc,$0080        ;default dma address is 0x0080
     call    setdma
 
     xor     a               ;0 accumulator
+    ld      (hstact),a      ;host buffer inactive
+    ld      (unacnt),a      ;clear unalloc count
+
     ld      (_cpm_ccp_tfcb),a
     ld      hl,_cpm_ccp_tfcb
     ld      d,h
@@ -195,8 +193,10 @@ rboot:
     ld      bc,0x20-1
     ldir                    ;clear default FCB
 
-    ld      (hstact),a      ;host buffer inactive
-    ld      (unacnt),a      ;clear unalloc count
+    di
+    call    _sioa_reset     ;flush the serial ports
+    call    _siob_reset
+    ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -1184,7 +1184,7 @@ _sioa_putc:
     jr Z,sioa_putc_buffer_tx    ; if not, so abandon immediate Tx
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
-    out (__IO_SIOA_DATA_REGISTER),a     ; output the Tx byte to the SIOA
+    out (__IO_SIOA_DATA_REGISTER),a ; immediately output the Tx byte to the SIOA
     ei
     ret                         ; and just complete
 
@@ -1229,7 +1229,7 @@ _siob_putc:
     jr Z,siob_putc_buffer_tx    ; if not, so abandon immediate Tx
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
-    out (__IO_SIOB_DATA_REGISTER),a     ; output the Tx byte to the SIOB
+    out (__IO_SIOB_DATA_REGISTER),a ; immediately output the Tx byte to the SIOB
     ei
     ret                         ; and just complete
 
@@ -1437,10 +1437,10 @@ ide_setup_lba:
     ld a,b
     and 00001111b           ;lowest 4 bits used only
     or  11100000b           ;to enable LBA address mode, Master only
-    ld hl,_ideStatus        ;set bit 4 accordingly
-    bit 0,(hl)
-    jr Z,ide_setup_master
-    or $10                  ;if it is a slave, set that bit
+;   ld hl,_ideStatus        ;set bit 4 accordingly
+;   bit 0,(hl)
+;   jr Z,ide_setup_master
+;   or $10                  ;if it is a slave, set that bit
 ide_setup_master:
     ld e,a
     ld a,__IO_IDE_LBA3
@@ -1735,8 +1735,8 @@ _cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 
 ; bit 1 : Flag 0 = master not previously accessed 
 ; bit 2 : Flag 0 = slave not previously accessed
 
-PUBLIC  _ideStatus
-_ideStatus: defb    0
+;PUBLIC  _ideStatus
+;_ideStatus: defb   0
 
 ;    scratch ram area for bios use
 ;
@@ -1769,9 +1769,8 @@ alv01:      defs    ((hstalb-1)/8)+1    ;allocation vector 1
 alv02:      defs    ((hstalb-1)/8)+1    ;allocation vector 2
 alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 
-hstbuf:     defs    hstsiz  ;buffer for host disk sector
-
 dirbf:      defs    128     ;scratch directory area
+hstbuf:     defs    hstsiz  ;buffer for host disk sector
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data

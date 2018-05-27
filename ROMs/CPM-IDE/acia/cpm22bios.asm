@@ -138,20 +138,7 @@ cboot:
 
                             ;Set up Page 0
 
-    ld      a,$C3           ;$C3 is a jmp instruction
-    ld      ($0000),a       ;for jmp to wboot
-    ld      hl,wboote       ;wboot entry point
-    ld      ($0001),hl      ;set address field for jmp at 0 to wboote
-
-    ld      ($0005),a       ;for jmp to bdos entry point
-    ld      hl,_cpm_bdos_head
-    ld      ($0006),hl      ;set address field of Jump at 5 to bdos
-
-    ld      ($0038),a       ;for jmp to _acia_interrupt
-    ld      hl,_acia_interrupt
-    ld      ($0039),hl      ;enable acia interrupt at rst 38
-
-    ld      a,$C9           ;$C9 is a ret instruction for:
+    ld      a,$C9           ;C9 is a ret instruction for:
     ld      ($0008),a       ;rst 08
     ld      ($0010),a       ;rst 10
     ld      ($0018),a       ;rst 18
@@ -159,10 +146,15 @@ cboot:
     ld      ($0028),a       ;rst 28
     ld      ($0030),a       ;rst 30
 
+    ld      a,$C3           ;C3 is a jmp instruction
+    ld      ($0038),a       ;for jmp to _acia_interrupt
+    ld      hl,_acia_interrupt
+    ld      ($0039),hl      ;enable acia interrupt at rst 38
+
     xor     a               ;zero in the accum
     ld      (_cpm_cdisk),a  ;select disk zero
 
-    inc     a          
+    ld      a,$01
     ld      (_cpm_iobyte),a ;set cpm ioByte to CRT default ($01)
 
     ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
@@ -181,14 +173,22 @@ qboot:                      ;arrive from preamble
 ;=============================================================================
 
 rboot:
-    di
-    call    _acia_reset     ;flush the serial port
-    ei
+    ld      a,$C3           ;C3 is a jmp instruction
+    ld      ($0000),a       ;for jmp to wboot
+    ld      hl,wboote       ;wboot entry point
+    ld      ($0001),hl      ;set address field for jmp at 0 to wboote
+
+    ld      ($0005),a       ;C3 for jmp to bdos entry point
+    ld      hl,_cpm_bdos_head   ;bdos entry point
+    ld      ($0006),hl      ;set address field of Jump at 5 to bdos
 
     ld      bc,$0080        ;default dma address is 0x0080
     call    setdma
 
     xor     a               ;0 accumulator
+    ld      (hstact),a      ;host buffer inactive
+    ld      (unacnt),a      ;clear unalloc count
+
     ld      (_cpm_ccp_tfcb),a
     ld      hl,_cpm_ccp_tfcb
     ld      d,h
@@ -197,8 +197,9 @@ rboot:
     ld      bc,0x20-1
     ldir                    ;clear default FCB
 
-    ld      (hstact),a      ;host buffer inactive
-    ld      (unacnt),a      ;clear unalloc count
+    di
+    call    _acia_reset     ;flush the serial port
+    ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -948,7 +949,6 @@ getc_clean_up_rx:
 
     inc l                       ; move the Rx pointer low byte along
     ld (aciaRxOut),hl           ; write where the next byte should be popped
-
     ld l,a                      ; and put it in hl
     scf                         ; indicate char received
     ret
@@ -993,12 +993,12 @@ _acia_putc:
     jr Z,putc_buffer_tx         ; if not, so abandon immediate Tx
     
     ld a,l                      ; Retrieve Tx character
-    out (__IO_ACIA_DATA_REGISTER),a   ; immediately output the Tx byte to the ACIA
+    out (__IO_ACIA_DATA_REGISTER),a ; immediately output the Tx byte to the ACIA
     ret                         ; and just complete
 
 putc_buffer_tx:
     ld a,(aciaTxCount)          ; Get the number of bytes in the Tx buffer
-    cp __IO_ACIA_TX_SIZE - 1    ; check whether there is space in the buffer
+    cp __IO_ACIA_TX_SIZE-1      ; check whether there is space in the buffer
     jr NC,putc_buffer_tx        ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
@@ -1226,10 +1226,10 @@ ide_setup_lba:
     ld a,b
     and 00001111b           ;lowest 4 bits used only
     or  11100000b           ;to enable LBA address mode, Master only
-    ld hl,_ideStatus        ;set bit 4 accordingly
-    bit 0,(hl)
-    jr Z,ide_setup_master
-    or $10                  ;if it is a slave, set that bit
+;   ld hl,_ideStatus        ;set bit 4 accordingly
+;   bit 0,(hl)
+;   jr Z,ide_setup_master
+;   or $10                  ;if it is a slave, set that bit
 ide_setup_master:
     ld e,a
     ld a,__IO_IDE_LBA3
@@ -1403,7 +1403,7 @@ PUBLIC  _cpm_bios_tail
 _cpm_bios_tail:             ;tail of the cpm bios
 
 PUBLIC  _cpm_bios_rodata_head
-_cpm_bios_rodata_head:      ;origin of the cpm bios data
+_cpm_bios_rodata_head:      ;origin of the cpm bios rodata
 
 ;------------------------------------------------------------------------------
 ; start of fixed tables - non aligned rodata
@@ -1497,8 +1497,8 @@ _cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 
 ; bit 1 : Flag 0 = master not previously accessed 
 ; bit 2 : Flag 0 = slave not previously accessed
 
-PUBLIC  _ideStatus
-_ideStatus: defb    0
+;PUBLIC  _ideStatus
+;_ideStatus: defb   0
 
 ;    scratch ram area for bios use
 ;
@@ -1531,9 +1531,8 @@ alv01:      defs    ((hstalb-1)/8)+1    ;allocation vector 1
 alv02:      defs    ((hstalb-1)/8)+1    ;allocation vector 2
 alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 
-hstbuf:     defs    hstsiz  ;buffer for host disk sector
-
 dirbf:      defs    128     ;scratch directory area
+hstbuf:     defs    hstsiz  ;buffer for host disk sector
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data
