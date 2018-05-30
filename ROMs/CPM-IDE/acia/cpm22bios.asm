@@ -134,6 +134,8 @@ cboot:
     di                      ;Page 0 will be blank, after toggling ROM
                             ;so leave interrupts off, until later
 
+    ld      sp,bios_stack   ;temporary stack
+
     out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
 
                             ;Set up Page 0
@@ -162,6 +164,7 @@ cboot:
     jr      rboot
 
 wboot:                      ;from a normal restart
+    ld      sp,bios_stack   ;temporary stack
     out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
     jp      pboot           ;load the CCP/BDOS in preamble
 
@@ -1533,6 +1536,7 @@ alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 
 dirbf:      defs    128     ;scratch directory area
 hstbuf:     defs    hstsiz  ;buffer for host disk sector
+bios_stack:                 ;temporary bios stack origin
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data
