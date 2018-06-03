@@ -30,7 +30,7 @@ PUBLIC pboot
 pboot:                      ; preamble code also used by wboot
     ld hl,_rodata_cpm_ccp_head
     ld de,_cpm_ccp_head
-    ld bc,_cpm_bdos_data_tail - _cpm_ccp_head
+    ld bc,_cpm_bdos_data_tail-_cpm_ccp_head
     ldir
 
     xor a
@@ -39,10 +39,10 @@ pboot:                      ; preamble code also used by wboot
     ld d,h
     ld e,l
     inc de
-    ld bc, _cpm_bdos_bss_tail-_cpm_bdos_bss_head-1
+    ld bc,_cpm_bdos_bss_tail-_cpm_bdos_bss_head-1
     ldir
 
-    ld hl, _cpm_bios_canary ; check that the CP/M BIOS is active
+    ld hl,_cpm_bios_canary  ; check that the CP/M BIOS is active
     ld a, (hl)              ; grab first byte $AA
     rrca                    ; rotate it to $55
     inc hl                  ; point to second byte $55
@@ -54,7 +54,7 @@ pboot:                      ; preamble code also used by wboot
 
     ld hl,_rodata_cpm_bios_head
     ld de,_cpm_bios_head
-    ld bc,_cpm_bios_rodata_tail - _cpm_bios_head
+    ld bc,_cpm_bios_rodata_tail-_cpm_bios_head
     ldir
 
     xor a
@@ -63,7 +63,7 @@ pboot:                      ; preamble code also used by wboot
     ld d,h
     ld e,l
     inc de
-    ld bc, _cpm_bios_bss_tail-_cpm_bios_bss_head-1
+    ld bc,_cpm_bios_bss_tail-_cpm_bios_bss_head-1
     ldir
 
     ; now fall through to normal _main() function and get set up for CP/M

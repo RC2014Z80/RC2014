@@ -1419,7 +1419,7 @@ NBYTES:     DEFW    0        ;byte counter used by TYPE.
 ;
 ;   Room for expansion, and prevent potential stack overflow.
 ;
-;            DEFS    12,0
+;           DEFS    12,0
 
 ;
 ;   ccp stack area.

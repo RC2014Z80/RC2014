@@ -200,10 +200,6 @@ rboot:
     ld      bc,0x20-1
     ldir                    ;clear default FCB
 
-    di
-    call    _acia_reset     ;flush the serial port
-    ei
-
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
     jr      C,diskchk       ;disk number valid, check existence via valid LBA

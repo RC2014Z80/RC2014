@@ -196,11 +196,6 @@ rboot:
     ld      bc,0x20-1
     ldir                    ;clear default FCB
 
-    di
-    call    _sioa_reset     ;flush the serial ports
-    call    _siob_reset
-    ei
-
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
     jr      C,diskchk       ;disk number valid, check existence via valid LBA
