@@ -23,19 +23,21 @@ E000	1	1	1	 oooooooX
 
 The value of the digit represents the ROM image that sits in that particular 8k bank.  Currently, it will be one of the following;
 
-0 – Empty bank, available for user to program
+0 - Empty bank, available for user to program
 
-R – Microsoft BASIC, for 32k RAM, 68B50 ACIA, with origin 0x0000
+R - Microsoft BASIC, for 32k RAM, 68B50 ACIA, with origin 0x0000
 
-K – Microsoft BASIC, for 56k RAM, 68B50 ACIA, with origin 0x0000
+K - Microsoft BASIC, for 56k RAM, 68B50 ACIA, with origin 0x0000
 
-1 – CP/M Monitor, for pageable ROM, 64k RAM, 68B50 ACIA, CF Module at 0x10, with origin at 0x0000
+1 - CP/M Monitor, for pageable ROM, 64k RAM, 68B50 ACIA, CF Module at 0x10, with origin at 0x0000
 
-2 – Microsoft BASIC, for 32k RAM, SIO/2, with origin 0x0000
+2 - Microsoft BASIC, for 32k RAM, SIO/2, with origin 0x0000
 
-4 – Microsoft BASIC, for 56k RAM, SIO/2, with origin 0x0000
+4 - Microsoft BASIC, for 56k RAM, SIO/2, with origin 0x0000
 
-5 – Microsoft BASIC, for CP/M installation,64k RAM, 68B50 ACIA, CF Module at 0x10, with origin at 0x2000
+6 - CP/M Monitor, for pageable ROM, 64k RAM, SIO/2, CF Module at 0x10, with origin at 0x0000
 
-6 – CP/M Monitor, for pageable ROM, 64k RAM, SIO/2, CF Module at 0x10, with origin at 0x0000
+88 - Small Computer Monitor for pageable ROM, 64k RAM, SIO/2 or 68B50 ACIA, with Microsoft BASIC and CP/M boot options
+
+9 - Small Computer Monitor for any ROM, any RAM, any UART
 
