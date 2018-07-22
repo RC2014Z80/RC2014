@@ -267,13 +267,13 @@ conin:    ;console character into register a
 conin0:
    call     _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
    jr       NC,conin0       ;if Rx buffer is empty
-   and      $7F             ;strip parity bit
+;  and      $7F             ;strip parity bit - support 8 bit XMODEM
    ret
 
 conin1:
    call     _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
    jr       NC,conin1       ;if Rx buffer is empty
-   and      $7F             ;strip parity bit
+;  and      $7F             ;strip parity bit - support 8 bit XMODEM
    ret
 
 reader:
