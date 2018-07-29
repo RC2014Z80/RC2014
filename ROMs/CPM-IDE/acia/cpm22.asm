@@ -1449,21 +1449,10 @@ ALIGN   0x100                   ;ALIGN the FBASE to a page
 PUBLIC  _cpm_bdos_head
 _cpm_bdos_head:                 ;origin of the cpm bdos
 
-FBASE:
-    JP    FBASE1
-;
-;   Bdos error table.
-;
-BADSCTR:    DEFW    ERROR1      ;bad sector on read or write
-BADSLCT:    DEFW    ERROR2      ;bad disk select
-RODISK:     DEFW    ERROR3      ;disk is read only
-ROFILE:     DEFW    ERROR4      ;file is read only
-
-;
 ;   Entry into bdos. (DE) or (E) are the parameters passed. The
 ;   function number desired is in register (C).
 ;
-FBASE1:
+FBASE:
     EX      DE,HL        ;save the (DE) parameters.
     LD      (PARAMS),HL
     EX      DE,HL
@@ -1508,27 +1497,27 @@ FUNCTNS:
 ;
 ;   Bdos error message section.
 ;
-ERROR1:
-    LD    HL,BADSEC    ;bad sector message.
-    CALL    PRTERR        ;print it and get a 1 char response.
+BADSCTR:
+    LD    HL,BADSEC     ;bad sector message.
+    CALL  PRTERR        ;print it and get a 1 char response.
     CP    CNTRLC        ;re-boot request (control-c)?
-    JP    Z,0        ;yes.
-    RET            ;no, return to retry i/o function.
-;
-ERROR2:
-    LD    HL,BADSEL    ;bad drive selected.
-    JP    ERROR5
+    JP    Z,0           ;yes.
+    RET                 ;no, return to retry i/o function.
 
-ERROR3:
-    LD    HL,DISKRO    ;disk is read only.
-    JP    ERROR5
+BADSLCT:
+    LD    HL,BADSEL     ;bad drive selected.
+    JP    ERRORBDOS
 
-ERROR4:
-    LD    HL,FILERO    ;file is read only.
+RODISK:
+    LD    HL,DISKRO     ;disk is read only.
+    JP    ERRORBDOS
 
-ERROR5:
-    CALL    PRTERR
-    JP    0        ;always reboot on these errors.
+ROFILE:
+    LD    HL,FILERO     ;file is read only.
+
+ERRORBDOS:
+    CALL  PRTERR
+    JP    0             ;always reboot on these errors.
 
 BDOSERR:    DEFM    "Bdos Err On "
 BDOSDRV:    DEFM    " : $"
@@ -1954,16 +1943,7 @@ IOERR1:
 ;   Select error occured, jump to error routine.
 ;
 SLCTERR:
-    LD    HL,BADSLCT
-;
-;   Jump to (HL) indirectly.
-;
-JUMPHL:
-    LD    E,(HL)
-    INC    HL
-    LD    D,(HL)        ;now (DE) contain the desired address.
-    EX    DE,HL
-    JP    (HL)
+    JP    BADSLCT
 ;
 ;   Block move. (DE) to (HL), (C) bytes total.
 ;
@@ -2054,8 +2034,7 @@ DOWRITE:
 IORET:
     OR      A
     RET     Z               ;return unless an error occured.
-    LD      HL,BADSCTR      ;bad read/write on this sector.
-    JP      JUMPHL
+    JP      BADSCTR         ;bad read/write on this sector.
 ;
 ;   Routine to select the track and sector that the desired
 ;   block number falls in.
@@ -2390,23 +2369,21 @@ WRTPRTD:
 ;   Check for a read only file.
 ;
 CHKROFL:
-    CALL    FCB2HL        ;set (HL) to file entry in directory buffer.
+    CALL    FCB2HL      ;set (HL) to file entry in directory buffer.
 CKROF1:
-    LD    DE,9        ;look at bit 7 of the ninth byte.
+    LD     DE,9         ;look at bit 7 of the ninth byte.
     ADD    HL,DE
-    LD    A,(HL)
+    LD     A,(HL)
     RLA    
-    RET    NC        ;return if ok.
-    LD    HL,ROFILE    ;else, print error message and terminate.
-    JP    JUMPHL
+    RET    NC           ;return if ok.
+    JP     ROFILE       ;else, print error message and terminate.
 ;
 ;   Check the write protect status of the active disk.
 ;
 CHKWPRT:
     CALL    GETWPRT
-    RET    Z        ;return if ok.
-    LD    HL,RODISK    ;else print message and terminate.
-    JP    JUMPHL
+    RET     Z          ;return if ok.
+    JP      RODISK     ;else print message and terminate.
 ;
 ;   Routine to set (HL) pointing to the proper entry in the
 ;   directory buffer.
