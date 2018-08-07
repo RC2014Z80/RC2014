@@ -45,7 +45,7 @@ In addition to the RC2014 Classic which contains the CPU and ACIA serial cards, 
 
 1. [64kB RAM](https://rc2014.co.uk/modules/64k-ram/)
 2. [Pageable ROM](https://rc2014.co.uk/modules/pageable-rom/)
-3. [IDE Adapter](https://www.tindie.com/products/edbrindley/ide-adapter-pcb-for-the-rc2014-computer/)
+3. [IDE Adapter](https://www.tindie.com/products/Semachthemonkey/8255-based-ide-disk-drive-interface-for-rc2014/)
 
 As noted above, the complete system must also include:
 
