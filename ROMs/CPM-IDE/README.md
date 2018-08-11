@@ -123,9 +123,9 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
 
 ```bash
-zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --max-allocs-per-node200000 @cpm22.lst -o rc2014-acia-cpm22 -create-app
+zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --max-allocs-per-node400000 @cpm22.lst -o rc2014-acia-cpm22 -create-app
 
-zcc +rc2014 -subtype=sio -SO3 -llib/rc2014/ff --max-allocs-per-node200000 @cpm22.lst -o rc2014-sio-cpm22 -create-app
+zcc +rc2014 -subtype=sio -SO3 -llib/rc2014/ff --max-allocs-per-node400000 @cpm22.lst -o rc2014-sio-cpm22 -create-app
 ```
 
 In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of disk read or write by CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
@@ -136,7 +136,7 @@ When the RC2014 first boots, the z88dk system configures a number of items via a
 
 The preamble code copies the CCP/BDOS to the correct location, and then checks for the existence of the BIOS. If the BIOS exists, and a valid drive is found, then control is passed directly to the CCP. This is the situation when a CP/M application overwrites the CCP, and it needs to be rewritten before control can be returned to it.
 
-If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS and the ACIA and IDE drivers necessary for operation of the shell and CP/M.
+If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS, the ACIA or SIO drivers, and the IDE drivers necessary for operation of the shell and CP/M.
 
 Control is then passed to the shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
