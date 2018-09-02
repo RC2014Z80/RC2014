@@ -401,8 +401,8 @@ chgdsk:
 ;read the selected CP/M sector
 read:
     xor     a
-    ld      (unacnt),a
-    ld      a,1
+    ld      (unacnt),a		;unacnt = 0
+    inc     a
     ld      (readop),a      ;read operation
     ld      (rsflag),a      ;must read data
     ld      a,wrual
@@ -430,8 +430,8 @@ write:
     ld      (readop),a      ;not a read operation
     ld      a,c             ;write type in c
     ld      (wrtype),a
-    cp      wrual           ;write unallocated?
-    jr      NZ,chkuna       ;check for unalloc
+    and     wrual           ;write unallocated?
+    jr      Z,chkuna        ;check for unalloc
 
 ;           write to unallocated, set parameters
     ld      a,cpmbls/128    ;next unalloc recs
@@ -589,9 +589,9 @@ rwmove:
 
 ;           data has been moved to/from host buffer
     ld      a,(wrtype)      ;write type
-    cp      wrdir           ;to directory?
+    and     wrdir           ;to directory?
     ld      a,(erflag)      ;in case of errors
-    ret     NZ              ;no further processing
+    ret     Z               ;no further processing
 
 ;        clear host buffer for directory write
     or      a               ;errors?
