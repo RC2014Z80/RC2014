@@ -118,6 +118,14 @@ Rather than spend time on long descriptions, one picture is worth 2kByte.
 
 The CP/M-IDE is based on the z88dk implementation for the RC2014, together with the DRI CP/M CCP/BDOS, and a shell and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration.
 
+### Installation
+
+Using the correct HEX file for the hardware configuration (ACIA, Spencer SIO, or SMB SIO) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
+
+Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 16777216 Bytes on your IDE or CF drive.
+
+Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
+
 ### Building
 
 The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
@@ -164,6 +172,8 @@ The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs
 
 An empty [CP/M 16MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 16777216 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card.
 
+FAT32 supports over 65,000 files in its root directory. Using a 2TB drive it is possible to store this many CP/M-IDE drives on one 2TB drive, but this upper limit hasn't been tested.
+
 ### CP/M TOOLS Usage
 
 CP/M drive files can be read and written using a host computer with any operating system, by using the [`cpmtools`](http://www.moria.de/~michael/cpmtools/) utilities, simply by inserting the PATA IDE drive in a USB drive caddy.
@@ -180,7 +190,7 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
 The default is for 16MByte drives. 8MByte drives are supported, but there's no point. 32MByte drives are supported by the BIOS, but would require a recompile, and adjusting the BIOS (and hence CCP/BDOS) origin to accommodate the increased allocation vector sizes.
 
-Just stick to the 16MByte default drive. There are up to 4 supported, out of the box.
+Just stick to the 16MByte default drive. There are up to 4 supported by CP/M-IDE, out of the box.
 
 ```
 diskdef rc2014-32MB
