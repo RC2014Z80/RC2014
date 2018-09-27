@@ -136,7 +136,8 @@ cboot:
 
     ld      sp,bios_stack   ;temporary stack
 
-    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
+    ld      a,$01                   ;A = $01 RAM
+    out     (__IO_PROM_TOGGLE),a    ;latch ROM OUT
 
                             ;Set up Page 0
 
@@ -159,13 +160,15 @@ cboot:
     ld      (_cpm_bios_canary),hl
     jr      rboot
 
-wboot:                      ;from a normal restart
-    ld      sp,bios_stack   ;temporary stack
-    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
-    jp      pboot           ;load the CCP/BDOS in preamble
+wboot:                              ;from a normal restart
+    ld      sp,bios_stack           ;temporary stack
+    xor     a                       ;A = $00 ROM
+    out     (__IO_PROM_TOGGLE),a    ;latch ROM IN
+    jp      pboot                   ;load the CCP/BDOS in preamble
 
-qboot:                      ;arrive from preamble
-    out     (__IO_PROM_TOGGLE),a    ;toggle ROM, A any value
+qboot:                              ;arrive from preamble
+    ld      a,$01                   ;A = $01 RAM
+    out     (__IO_PROM_TOGGLE),a    ;latch ROM OUT
 
 ;=============================================================================
 ; Common code for cold and warm boot
@@ -221,7 +224,8 @@ diskchk:
     jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
     
     ld      (_cpm_bios_canary),a    ;kill the canary
-    out     (__IO_PROM_TOGGLE),a    ;toggle ROM again, A any value
+;   xor     a                       ;A = $00 ROM
+    out     (__IO_PROM_TOGGLE),a    ;latch ROM IN
     ret                             ;ret directly back to ROM monitor,
                                     ;or back to preamble then ROM monitor
 

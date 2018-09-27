@@ -62,6 +62,9 @@ Additionally, the SIO/2 dual serial interface can be substituted for 6., the ACI
 
 9. [SIO Serial](https://rc2014.co.uk/modules/dual-serial-module-sio2/)
 
+Also works with Grant Searle's [9 Chip CP/M](http://searle.hostei.com/grant/cpm/index.html) if a 32kB ROM is used, and with Steve Cousins' [SC108 (Z80, RAM, ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/), because Richard Deane cared enough to ask.
+Thanks Richard.
+
 As noted Compact Flash cards are supported in native 16 bit PATA mode, as demonstrated below.
 
 <div>
