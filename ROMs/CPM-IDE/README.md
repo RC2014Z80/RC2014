@@ -151,7 +151,7 @@ If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is
 
 Control is then passed to the shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
-Where the SIO dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have local echo enabled, as is customary with teletype interfaces.
+Where the SIO dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
 
 CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
