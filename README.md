@@ -1,16 +1,3 @@
-# Easter Discount Hunt
-
-Do you enjoy hunting for eggs at Easter? Do you like 15% discount from RC2014 products? You've come to the right place to start your Easter Discount Hunt! Simply find the other clues that are spread across the RC2014 website, Tindie, Twitter, Instagram, GitHub, Google Groups  and the RC2014 Newsletter (next edition will come out on Sunday with the final clue) and piece them together for 15% off of my Tindie store
-
-- https://rc2014.co.uk/
-- https://twitter.com/ZxSpectROM
-- https://www.instagram.com/rc2014z80/?hl=en
-- https://www.tindie.com/stores/Semachthemonkey/
-- http://eepurl.com/b9GTZf
-- https://groups.google.com/forum/#!forum/rc2014-z80
-
-See image file above for your first clue!
-
 # RC2014
 
 Official RC2014 repository for hardware schematics / software and more!
