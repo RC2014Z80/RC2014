@@ -134,9 +134,9 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
 
 ```bash
-zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --allow-unsafe-read --max-allocs-per-node400000 @cpm22.lst -o rc2014-acia-cpm22 -create-app
+zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --max-allocs-per-node400000 @cpm22.lst -o rc2014-acia-cpm22 -create-app
 
-zcc +rc2014 -subtype=sio -SO3  -llib/rc2014/ff --allow-unsafe-read --max-allocs-per-node400000 @cpm22.lst -o rc2014-sio-cpm22 -create-app
+zcc +rc2014 -subtype=sio -SO3  -llib/rc2014/ff --max-allocs-per-node400000 @cpm22.lst -o rc2014-sio-cpm22 -create-app
 ```
 
 In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the write functions for FATFS, but this doesn't affect the use of disk read or write by CP/M. It simply means that CP/M "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
@@ -254,7 +254,7 @@ Again, here is a view of what success looks like.
 ### System Functions
 - `md [origin]` - memory dump
 - `help` - this is it
-- `exit` - exit and halt
+- `exit` - exit and restart
 
 ### File System Functions
 - `ls [path]` - directory listing
