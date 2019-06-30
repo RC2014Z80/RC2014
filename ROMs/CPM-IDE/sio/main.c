@@ -193,7 +193,7 @@ int8_t ya_help(char **args)
     uint8_t i;
     (void *)args;
 
-    fprintf(output,"RC2014 - CP/M IDE Monitor v0.2\n");
+    fprintf(output,"RC2014 - CP/M IDE Monitor v1.0\n");
     fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
