@@ -15,10 +15,11 @@
 
 #include <arch.h>
 #include <arch/rc2014.h>
-#include <arch/rc2014/diskio.h>
 
 #include "ffconf.h"
 #include <lib/rc2014/ff.h>
+
+#include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
 #pragma output REGISTER_SP = 0xD600    // below the CP/M CCP
