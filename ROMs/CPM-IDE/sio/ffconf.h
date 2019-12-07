@@ -24,7 +24,7 @@
 
 #if __RC2014
 #define FF_FS_MINIMIZE  0
-#elif __YAZ180 
+#elif __YAZ180
 #define FF_FS_MINIMIZE  0
 #elif __SCZ180
 #define FF_FS_MINIMIZE  0
@@ -200,13 +200,11 @@
 #endif
 /* Number of volumes (logical drives) to be used. (1-10) */
 
-
 #if  __SCZ180
 #define FF_STR_VOLUME_ID    1
 #define FF_VOLUME_STRS     "MD1","MD0","IDE0","SD0","SD1"
 #else
-#define FF_STR_VOLUME_ID    1
-#define FF_VOLUME_STRS     "IDE0"
+#define FF_STR_VOLUME_ID    0
 #endif
 
 /* FF_STR_VOLUME_ID switches support for volume ID in arbitrary strings.
