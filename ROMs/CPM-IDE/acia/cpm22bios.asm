@@ -1073,9 +1073,9 @@ ide_read_byte:
     out (c),a               ;drive address onto control lines
     or __IO_IDE_RD_LINE
     out (c),a               ;and assert read pin
-    ld bc,__IO_PIO_IDE_LSB
+    ld c,__IO_PIO_IDE_LSB
     in e,(c)                ;read the lower byte
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     out (c),d               ;deassert read pin
     xor a
     out (c),a               ;deassert all control pins
@@ -1089,43 +1089,40 @@ ide_read_byte:
 ide_read_block:
     push bc
     push de
-    ld bc,__IO_PIO_IDE_CTL
+    ld bc,__IO_PIO_IDE_CTL  ;keep iterative count in b
     ld d,__IO_IDE_DATA
-    out (c),d               ;drive address onto control lines
-    ld e,$0                 ;keep iterative count in e
+    out (c),d               ;drive address onto control lines           
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_rdblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_RD_LINE
     out (c),d               ;and assert read pin
-    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
+    ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
     ini                     ;read the lower byte (HL++)
     inc c                   ;drive upper lines with msb
     ini                     ;read the upper byte (HL++)
     inc c                   ;drive control port
     ld d,__IO_IDE_DATA
     out (c),d               ;deassert read pin
-    dec e                   ;keep iterative count in e
-    jr NZ,ide_rdblk2
+    djnz ide_rdblk2         ;keep iterative count in b
 
 ELSE
 ide_rdblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_RD_LINE
     out (c),d               ;and assert read pin
-    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
+    ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
     ini                     ;read the lower byte (HL++)
-    ld bc,__IO_PIO_IDE_MSB  ;drive upper lines with msb
+    ld c,__IO_PIO_IDE_MSB   ;drive upper lines with msb
     ini                     ;read the upper byte (HL++)
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     ld d,__IO_IDE_DATA
     out (c),d               ;deassert read pin
-    dec e                   ;keep iterative count in e
-    jr NZ,ide_rdblk2
+    djnz ide_rdblk2         ;keep iterative count in b
 
 ENDIF
-;   ld bc,__IO_PIO_IDE_CTL  ;remembering what's in bc
-    ld d,$0
-    out (c),d               ;deassert all control pins
+;   ld c,__IO_PIO_IDE_CTL   ;remembering what's in c
+;   ld b,$0
+    out (c),b               ;deassert all control pins
     pop de
     pop bc
     ret
@@ -1140,18 +1137,18 @@ ide_write_byte:
     ld bc,__IO_PIO_IDE_CONFIG
     ld a,__IO_PIO_IDE_WR
     out (c),a               ;config 8255 chip, write mode
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     ld a,d
     out (c),a               ;drive address onto control lines
     or __IO_IDE_WR_LINE
     out (c),a               ;and assert write pin
-    ld bc,__IO_PIO_IDE_LSB
+    ld c,__IO_PIO_IDE_LSB
     out (c),e               ;drive lower lines with lsb
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     out (c),d               ;deassert write pin
     xor a
     out (c),a               ;deassert all control pins
-    ld bc,__IO_PIO_IDE_CONFIG
+    ld c,__IO_PIO_IDE_CONFIG
     ld a,__IO_PIO_IDE_RD
     out (c),a               ;config 8255 chip, read mode
     pop de
@@ -1163,47 +1160,44 @@ ide_write_byte:
 ide_write_block:
     push bc
     push de
-    ld bc,__IO_PIO_IDE_CONFIG
+    ld bc,__IO_PIO_IDE_CONFIG   ;keep iterative count in b
     ld d,__IO_PIO_IDE_WR
     out (c),d               ;config 8255 chip, write mode
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     ld d,__IO_IDE_DATA
     out (c),d               ;drive address onto control lines
-    ld e,$0                 ;keep iterative count in e
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_wrblk2: 
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
-    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
+    ld c,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
     outi                    ;write the lower byte (HL++)
     inc c                   ;drive upper lines with msb
     outi                    ;write the upper byte (HL++)
     inc c                   ;drive control port
     ld d,__IO_IDE_DATA
     out (c),d               ;deassert write pin
-    dec e                   ;keep iterative count in e
-    jr NZ,ide_wrblk2
+    djnz ide_wrblk2         ;keep iterative count in b
 
 ELSE
 ide_wrblk2: 
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
-    ld bc,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
+    ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
     outi                    ;write the lower byte (HL++)
-    ld bc,__IO_PIO_IDE_MSB  ;drive upper lines with msb
+    ld c,__IO_PIO_IDE_MSB   ;drive upper lines with msb
     outi                    ;write the upper byte (HL++)
-    ld bc,__IO_PIO_IDE_CTL
+    ld c,__IO_PIO_IDE_CTL
     ld d,__IO_IDE_DATA
     out (c),d               ;deassert write pin
-    dec e                   ;keep iterative count in e
-    jr NZ,ide_wrblk2
+    djnz ide_wrblk2         ;keep iterative count in b
 
 ENDIF
-;   ld bc,__IO_PIO_IDE_CTL  ;remembering what's in bc
-    ld d,$0
-    out (c),d               ;deassert all control pins
-    ld bc,__IO_PIO_IDE_CONFIG
+;   ld c,__IO_PIO_IDE_CTL   ;remembering what's in c
+;   ld b,$0
+    out (c),b               ;deassert all control pins
+    ld c,__IO_PIO_IDE_CONFIG
     ld d,__IO_PIO_IDE_RD
     out (c),d               ;config 8255 chip, read mode
     pop de
