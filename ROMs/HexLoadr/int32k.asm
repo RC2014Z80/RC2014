@@ -240,9 +240,9 @@ HEX_WAIT_COLON:
         call HEX_READ_BYTE          ; read lower byte of address
         ld e, a                     ; store in E
         call HEX_READ_BYTE          ; read record type
-        cp 01                       ; check if record type is 01 (end of file)
+        dec a                       ; check if record type is 01 (end of file)
         jr Z, HEX_END_LOAD
-        cp 00                       ; check if record type is 00 (data)
+        inc a                       ; check if record type is 00 (data)
         jr NZ, HEX_INVAL_TYPE       ; if not, error
 HEX_READ_DATA:
         call HEX_READ_BYTE
