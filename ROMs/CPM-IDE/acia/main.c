@@ -55,6 +55,8 @@ int8_t ya_exit(char **args);    // exit and restart
 
 // fat related functions
 int8_t ya_ls(char **args);      // directory listing
+int8_t ya_cd(char **args);      // change the current working directory
+int8_t ya_pwd(char **args);     // show the current working directory
 int8_t ya_mount(char **args);   // mount a FAT file system
 
 // disk related functions
@@ -90,6 +92,8 @@ struct Builtin builtins[] = {
 // fat related functions
     { "mount", &ya_mount, "[option] - mount a FAT file system"},
     { "ls", &ya_ls, "[path] - directory listing"},
+    { "cd", &ya_cd, "[path] - change the current working directory"},
+    { "pwd", &ya_pwd, "- show the current working directory"},
 
 // disk related functions
     { "ds", &ya_ds, " - disk status"},
@@ -181,7 +185,7 @@ int8_t ya_help(char **args)
     uint8_t i;
     (void *)args;
 
-    fprintf(stdout,"RC2014 - CP/M IDE Monitor v1.0\n");
+    fprintf(stdout,"RC2014 - CP/M IDE Monitor v1.1\n");
     fprintf(stdout,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -260,6 +264,49 @@ int8_t ya_ls(char **args)
         put_rc(res);
     }
 
+    return 1;
+}
+
+
+/**
+   @brief Builtin command: change directory.
+   @param args List of args.  args[0] is "cd".  args[1] is the directory.
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_cd(char **args)
+{
+    if (args[1] == NULL) {
+        fprintf(stdout, "yash: expected 1 argument to \"cd\"\n");
+    } else {
+        put_rc(f_chdir((const TCHAR*)args[1]));
+    }
+    return 1;
+}
+
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "pwd".
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_pwd(char **args)      // show the current working directory
+{
+    FRESULT res;
+    uint8_t * directory;                         /* put directory buffer on heap */
+
+    (void *)args;
+
+    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory buffer */
+
+    if (directory != NULL) {
+        res = f_getcwd(directory, sizeof(uint8_t)*LINE_SIZE);
+        if (res != FR_OK) {
+            put_rc(res);
+        } else {
+            fprintf(stdout, "%s", directory);
+        }
+        free(directory);
+    }
     return 1;
 }
 
@@ -484,7 +531,7 @@ void main(int argc, char **argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2019\n\n> :-)\n");
+    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2020\n\n> :-)\n");
  
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)
