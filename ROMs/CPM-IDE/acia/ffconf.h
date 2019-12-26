@@ -10,10 +10,6 @@
 
 #if __RC2014
 #define FF_FS_READONLY  1
-#elif __YAZ180
-#define FF_FS_READONLY  0
-#elif __SCZ180
-#define FF_FS_READONLY  0
 #else
 #define FF_FS_READONLY  0
 #endif
@@ -22,15 +18,8 @@
 /  f_unlink(), f_mkdir(), f_chmod(), f_rename(), f_truncate()
 /  and optional writing functions as well. */
 
-#if __RC2014
+
 #define FF_FS_MINIMIZE  0
-#elif __YAZ180
-#define FF_FS_MINIMIZE  0
-#elif __SCZ180
-#define FF_FS_MINIMIZE  0
-#else
-#define FF_FS_MINIMIZE  0
-#endif
 /* This option defines minimization level to remove some basic API functions.
 /
 /   0: Basic functions are fully enabled.
@@ -65,15 +54,7 @@
 /* This option switches f_expand function. (0:Disable or 1:Enable) */
 
 
-#if __RC2014
-#define FF_USE_CHMOD    0
-#elif __YAZ180 
 #define FF_USE_CHMOD    1
-#elif __SCZ180
-#define FF_USE_CHMOD    1
-#else
-#define FF_USE_CHMOD    0
-#endif
 /* This option switches attribute manipulation functions, f_chmod() and f_utime().
 /  (0:Disable or 1:Enable) Also FF_FS_READONLY needs to be 0 to enable this option. */
 
@@ -172,15 +153,8 @@
 /   3: Unicode in UTF-8
 */
 
-#if __RC2014
-#define FF_FS_RPATH     1
-#elif __YAZ180
+
 #define FF_FS_RPATH     2
-#elif __SCZ180
-#define FF_FS_RPATH     2
-#else
-#define FF_FS_RPATH     2
-#endif
 /* This option configures support for relative path.
 /
 /   0: Disable relative path and remove related functions.
@@ -193,20 +167,15 @@
 / Drive/Volume Configurations
 /---------------------------------------------------------------------------*/
 
-#if  __SCZ180
+#if  __HBIOS
 #define FF_VOLUMES      5
 #else
 #define FF_VOLUMES      1
 #endif
 /* Number of volumes (logical drives) to be used. (1-10) */
 
-#if  __SCZ180
-#define FF_STR_VOLUME_ID    1
-#define FF_VOLUME_STRS     "MD1","MD0","IDE0","SD0","SD1"
-#else
-#define FF_STR_VOLUME_ID    0
-#endif
 
+#define FF_STR_VOLUME_ID    0
 /* FF_STR_VOLUME_ID switches support for volume ID in arbitrary strings.
 /  When FF_STR_VOLUME_ID is set to 1 or 2, arbitrary strings can be used as drive
 /  number in the path name. FF_VOLUME_STRS defines the volume ID strings for each
@@ -274,17 +243,13 @@
 
 #if __RC2014
 #define FF_FS_NORTC     1
-#elif __YAZ180
-#define FF_FS_NORTC     0
-#elif  __SCZ180
-#define FF_FS_NORTC     0
 #else
-#define FF_FS_NORTC     1
-#warning - Check whether you have get_fattime() available.
+#define FF_FS_NORTC     0
 #endif
+
 #define FF_NORTC_MON    1
 #define FF_NORTC_MDAY   1
-#define FF_NORTC_YEAR   2019
+#define FF_NORTC_YEAR   2020
 /* The option FF_FS_NORTC switches timestamp function. If the system does not have
 /  any RTC function or valid timestamp is not needed, set FF_FS_NORTC = 1 to disable
 /  the timestamp function. Every object modified by FatFs will have a fixed timestamp
@@ -319,7 +284,7 @@
 /      lock control is independent of re-entrancy. */
 
 
-/* #include <somertos.h>	// O/S definitions */
+/* #include <somertos.h>	// O/S specific definitions */
 #define FF_FS_REENTRANT 0
 #define FF_FS_TIMEOUT   1000
 #define FF_SYNC_t       HANDLE
@@ -339,7 +304,6 @@
 /  The FF_SYNC_t defines O/S dependent sync object type. e.g. HANDLE, ID, OS_EVENT*,
 /  SemaphoreHandle_t and etc. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
-
 
 
 /*--- End of configuration options ---*/

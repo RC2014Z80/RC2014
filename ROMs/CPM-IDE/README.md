@@ -155,7 +155,7 @@ Where the SIO dual serial board is being used, the shell will wait for a `:` to 
 
 CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
-The CLI provides some other basic functions, such as `ls`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
+The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
 
 Once the CP/M BIOS has established that it has a valid CP/M drive, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
@@ -254,10 +254,12 @@ Again, here is a view of what success looks like.
 ### System Functions
 - `md [origin]` - memory dump
 - `help` - this is it
-- `exit` - exit and restart
+- `exit` - exit and restart shell
 
 ### File System Functions
 - `ls [path]` - directory listing
+- `cd [path]` - change the current working directory
+- `pwd` - show the current working directory
 - `mount [option]` - mount a FAT file system, option 0 = delayed, 1 = immediate
 
 ### Disk Functions
