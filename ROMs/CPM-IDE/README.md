@@ -41,29 +41,28 @@ The CP/M-IDE system supports up to 4 drives of nominally 16MBytes each. There ca
 
 ## Hardware
 
-In addition to the RC2014 Classic which contains the CPU and ACIA serial cards, just three cards are necessary.
+In addition to the [RC2014 Plus](https://www.tindie.com/products/Semachthemonkey/rc2014-plus-homebrew-z80-computer-kit/) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary.
+An additional 32k RAM must be installed in the 64k RAM module.
 
-1. [64kB RAM](https://rc2014.co.uk/modules/64k-ram/)
-2. [Pageable ROM](https://rc2014.co.uk/modules/pageable-rom/)
-3. [IDE Adapter](https://www.tindie.com/products/Semachthemonkey/8255-based-ide-disk-drive-interface-for-rc2014/)
+1. [IDE Interface](https://www.tindie.com/products/Semachthemonkey/8255-based-ide-disk-drive-interface-for-rc2014/).
+2. [64kB RAM](https://rc2014.co.uk/modules/64k-ram/).
 
 As noted above, the complete system must also include:
 
-4. [CPU](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/)
-5. [Clock](https://rc2014.co.uk/modules/clock/)
-6. [ACIA Serial](https://rc2014.co.uk/modules/serial-io/)
-7. [Backplane](https://rc2014.co.uk/modules/backplane-8/)
+3. [CPU](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
+4. [Clock](https://rc2014.co.uk/modules/clock/).
+5. [SIO Dual Serial](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
+6. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or Backplane Pro.
 
-Optionally, replacing 4. and 5. with below can save a slot and provides some improvements.
+Optionally, replacing 3. and 4. with below can save a slot and provides some improvements.
 
-8. [Z80 CPU & Clock](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/)
+- [Z80 CPU & Clock](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
 
-Additionally, the SIO/2 dual serial interface can be substituted for 6., the ACIA serial card.
+Additionally, the ACIA serial card could be substituted for the SIO/2 dual serial interface.
 
-9. [SIO Serial](https://rc2014.co.uk/modules/dual-serial-module-sio2/)
+- [ACIA Serial](https://rc2014.co.uk/modules/serial-io/).
 
-Also works with Grant Searle's [9 Chip CP/M](http://searle.hostei.com/grant/cpm/index.html) if a 32kB ROM is used, and with Steve Cousins' [SC108 (Z80, RAM, ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/), because Richard Deane cared enough to ask.
-Thanks Richard.
+Also works with Grant Searle's [9 Chip CP/M](http://searle.hostei.com/grant/cpm/index.html) if a 32kB ROM is used, and with Steve Cousins' [SC108 (Z80, RAM, ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/), because Richard Deane cared enough to ask. Thanks Richard.
 
 As noted Compact Flash cards are supported in native 16 bit PATA mode, as demonstrated below.
 
