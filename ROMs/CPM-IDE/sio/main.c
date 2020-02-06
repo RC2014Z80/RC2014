@@ -408,7 +408,7 @@ void put_rc (FRESULT rc)
 
     res = (uint8_t)rc;
 
-    for (i = 0; i != res && *str; i++) {
+    for (i = 0; i != res && *str; ++i) {
         while (*str++) ;
     }
     fprintf(error,"\r\nrc=%u FR_%s\r\n", res, str);
@@ -422,11 +422,11 @@ void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt)
 
     fprintf(output,"%08lX:", ofs);
 
-    for(i = 0; i < cnt; i++) {
+    for(i = 0; i < cnt; ++i) {
         fprintf(output," %02X", buff[i]);
     }
     fputc(' ', output);
-    for(i = 0; i < cnt; i++) {
+    for(i = 0; i < cnt; ++i) {
         fputc((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.', output);
     }
     fputc('\n', output);
@@ -562,7 +562,7 @@ void ya_loop(void)
    @param argv Argument vector.
    @return status code
  */
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     (void)argc;
     (void *)argv;
@@ -585,6 +585,6 @@ void main(int argc, char **argv)
     free(dir);
     free(fs);
 
-    return;
+    return 0;
 }
 
