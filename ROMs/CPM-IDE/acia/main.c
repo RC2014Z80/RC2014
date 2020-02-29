@@ -366,7 +366,7 @@ int8_t ya_dd(char **args)       // disk dump
     uint32_t ofs;
     uint8_t * ptr;
 
-    if (args[1] != NULL ) {
+    if (args[1] != NULL) {
         sect = strtoul(args[1], NULL, 10);
     }
 
@@ -511,6 +511,8 @@ void ya_loop(void)
         free(args);
 
     } while (status);
+
+    free(line);
 }
 
 
