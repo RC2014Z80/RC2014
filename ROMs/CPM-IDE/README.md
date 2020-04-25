@@ -140,7 +140,7 @@ zcc +rc2014 -subtype=acia -SO3 -llib/rc2014/ff --math32 --max-allocs-per-node400
 zcc +rc2014 -subtype=sio -SO3  -llib/rc2014/ff --math32 --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 ```
 
-In addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to the space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice.
+Prior to running the above build commants, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 is installed. This provides a high quality FATFS implementation. Unfortunately, due to flash space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
 
 ### Boot up
 
@@ -174,7 +174,7 @@ Because the CCP/BDOS and BIOS are stored in ROM, there is no "system disk". Cold
 
 The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BASCOM53.CPM.zip). MS Basic 5.29 is available in the example [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
 
-An empty [CP/M 16MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 16777216 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card.
+An empty [CP/M 16MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 16777216 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provided a new 16MB CP/M drive which can store up to 1024 files.
 
 FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is possible to store more than that many CP/M-IDE drives on one IDE drive, but this upper limit hasn't been tested.
 
@@ -192,44 +192,24 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmcp -f rc2014-16MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
 The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
-The default is for 16MByte drives. 8MByte drives are supported, but there's no point. 32MByte drives are supported by the BIOS, but would require a recompile, and adjusting the BIOS (and hence CCP/BDOS) origin to accommodate the increased allocation vector sizes.
+The default is for 16MByte drives, with up to 1024 files each. 8MByte drives are supported, but there's no point. 32MByte drives are supported by the BIOS, but would require a recompile, and adjusting the BIOS (and hence CCP/BDOS) origin to accommodate the increased allocation vector sizes.
 
 Just stick to the 16MByte default drive. There are up to 4 supported by CP/M-IDE, out of the box.
 
 ```
-diskdef rc2014-32MB
-  seclen 512
-  tracks 2048
-  sectrk 32
-  blocksize 4096
-  maxdir 512
-  skew 0
-  boottrk -
-  os 2.2
-end
-
 diskdef rc2014-16MB
   seclen 512
   tracks 1024
   sectrk 32
   blocksize 4096
-  maxdir 512
+  maxdir 1024
   skew 0
   boottrk -
   os 2.2
 end
 
-diskdef rc2014-8MB
-  seclen 512
-  tracks 512
-  sectrk 32
-  blocksize 4096
-  maxdir 512
-  skew 0
-  boottrk -
-  os 2.2
-end
 ```
+
 ## Shell Command Line Interface
 
 The command line interface is implemented in C, with the underlying functions either in C or in assembly.
