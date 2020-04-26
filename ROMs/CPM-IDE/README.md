@@ -17,7 +17,7 @@ The IDE interface is optimised for performance and can achieve about 300kB/s thr
 
 The IDE interface supports both PATA hard drives and Compact Flash cards in native 16 bit PATA mode.
 
-The CP/M-IDE system supports up to 4 drives of nominally 16MBytes each. There can be as many CP/M "drives" on the FAT32 formatted IDE drive as needed. And CP/M-IDE can be started with any 4 of them. Collections of CP/M "drives" can be stored in any sub-directories. Knock yourself out.
+The CP/M-IDE system supports up to 4 drives of nominally 8 MBytes each. There can be as many CP/M "drives" on the FAT32 formatted IDE drive as needed. And CP/M-IDE can be started with any 4 of them. Collections of CP/M "drives" can be stored in any sub-directories. Knock yourself out.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -126,7 +126,7 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 
 Using the correct HEX file for the hardware configuration (ACIA, Spencer SIO, or SMB SIO) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
-Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 16777216 Bytes on your IDE or CF drive.
+Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive.
 
 Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
 
@@ -172,9 +172,9 @@ Because the CCP/BDOS and BIOS are stored in ROM, there is no "system disk". Cold
 
 ### CP/M Application Disks
 
-The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BASCOM53.CPM.zip). MS Basic 5.29 is available in the example [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
+The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/MSBASCOM.CPM.zip). MS Basic (Interpreter) 5.29 is available in the [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
 
-An empty [CP/M 16MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 16777216 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provided a new 16MB CP/M drive which can store up to 1024 files.
+An empty [CP/M 8 MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 8388608 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provides a new 8 MB CP/M drive which can store up to 2048 files.
 
 FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is possible to store more than that many CP/M-IDE drives on one IDE drive, but this upper limit hasn't been tested.
 
@@ -187,22 +187,20 @@ The CP/M TOOLS package v2.20 is available from debian repositories.
 Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com`).
 
 ```bash
-> fsed.cpm -f rc2014-16MB a.cpm
-> cpmls -f rc2014-16MB a.cpm
-> cpmcp -f rc2014-16MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
+> fsed.cpm -f rc2014-8MB a.cpm
+> cpmls -f rc2014-8MB a.cpm
+> cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
 The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
-The default is for 16MByte drives, with up to 1024 files each. 8MByte drives are supported, but there's no point. 32MByte drives are supported by the BIOS, but would require a recompile, and adjusting the BIOS (and hence CCP/BDOS) origin to accommodate the increased allocation vector sizes.
-
-Just stick to the 16MByte default drive. There are up to 4 supported by CP/M-IDE, out of the box.
+The default is for 8MByte drives, with up to 2048 files each. There are up to 4 supported by CP/M-IDE, out of the box.
 
 ```
-diskdef rc2014-16MB
+diskdef rc2014-8MB
   seclen 512
-  tracks 1024
+  tracks 512
   sectrk 32
   blocksize 4096
-  maxdir 1024
+  maxdir 2048
   skew 0
   boottrk -
   os 2.2

@@ -52,7 +52,7 @@ DEFC    hstspt  =    32         ;host disk sectors/trk
 DEFC    hstblk  =    hstsiz/128 ;CP/M sects/host buff (4)
 
 DEFC    cpmbls  =    4096       ;CP/M allocation block size BLS
-DEFC    cpmdir  =    1024       ;CP/M number of directory blocks (each of 32 Bytes)
+DEFC    cpmdir  =    2048       ;CP/M number of directory blocks (each of 32 Bytes)
 DEFC    cpmspt  =    hstspt * hstblk    ;CP/M sectors/track (128 = 32 * 512 / 128)
 
 DEFC    secmsk  =    hstblk-1   ;sector mask
@@ -1445,7 +1445,7 @@ dpblk:
     defw    hstalb-1    ;DSM - Storage size (blocks - 1)
     defw    cpmdir-1    ;DRM - Number of directory entries - 1
     defb    $FF         ;AL0 - 1 bit set per directory block (ALLOC0)
-    defb    $00         ;AL1 - 1 bit set per directory block (ALLOC0)
+    defb    $FF         ;AL1 - 1 bit set per directory block (ALLOC0)
     defw    0           ;CKS - DIR check vector size (DRM+1)/4 (0=fixed disk) (ALLOC1)
     defw    0           ;OFF - Reserved tracks offset
 
