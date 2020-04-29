@@ -17,7 +17,7 @@ The IDE interface is optimised for performance and can achieve about 300kB/s thr
 
 The IDE interface supports both PATA hard drives and Compact Flash cards in native 16 bit PATA mode.
 
-The CP/M-IDE system supports up to 4 drives of nominally 8 MBytes each. There can be as many CP/M "drives" on the FAT32 formatted IDE drive as needed. And CP/M-IDE can be started with any 4 of them. Collections of CP/M "drives" can be stored in any sub-directories. Knock yourself out.
+The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. There can be as many CP/M "drives" stored on the FAT32 formatted IDE drive as needed, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M "drives" can be stored in any number of sub-directories. Knock yourself out.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -29,10 +29,16 @@ The CP/M-IDE system supports up to 4 drives of nominally 8 MBytes each. There ca
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with ACIA<center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1398.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1398.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO (front view)<center></th>
+</tr>
+<tr>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg"/></a></td>
+</tr>
+<tr>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO (back view)<center></th>
 </tr>
 </tbody>
 </table>
@@ -44,27 +50,27 @@ The CP/M-IDE system supports up to 4 drives of nominally 8 MBytes each. There ca
 In addition to the [RC2014 Plus](https://www.tindie.com/products/Semachthemonkey/rc2014-plus-homebrew-z80-computer-kit/) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary.
 An additional 32k RAM must be installed in the 64k RAM module.
 
-1. [IDE Interface](https://www.tindie.com/products/Semachthemonkey/8255-based-ide-disk-drive-interface-for-rc2014/).
-2. [64kB RAM](https://rc2014.co.uk/modules/64k-ram/).
+1. [IDE Hard Drive Module](https://rc2014.co.uk/modules/ide-hard-drive-module/).
+2. [64kB RAM Module](https://rc2014.co.uk/modules/64k-ram/).
 
 As noted above, the complete system must also include:
 
-3. [CPU](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
-4. [Clock](https://rc2014.co.uk/modules/clock/).
-5. [SIO Dual Serial](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
+3. [CPU Module](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
+4. [Clock Module](https://rc2014.co.uk/modules/clock/).
+5. [SIO Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
 6. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or Backplane Pro.
 
 Optionally, replacing 3. and 4. with below can save a slot and provides some improvements.
 
-- [Z80 CPU & Clock](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
+- [Z80 CPU & Clock Module](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
 
 Additionally, the ACIA serial card could be substituted for the SIO/2 dual serial interface.
 
-- [ACIA Serial](https://rc2014.co.uk/modules/serial-io/).
+- [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
 Also works with Grant Searle's [9 Chip CP/M](http://searle.hostei.com/grant/cpm/index.html) if a 32kB ROM is used, and with Steve Cousins' [SC108 (Z80, RAM, ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/), because Richard Deane cared enough to ask. Thanks Richard.
 
-As noted Compact Flash cards are supported in native 16 bit PATA mode, as demonstrated below.
+As noted Compact Flash cards are also supported in native 16 bit PATA mode, as demonstrated below.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -79,8 +85,6 @@ As noted Compact Flash cards are supported in native 16 bit PATA mode, as demons
 </table>
 </div>
 
-For interest, a version using the LUT (Multiply) Module together with the SIO Dual Serial Module has been provided. This version uses the LUT Module to calculate integer multiplies to optimise array and structure references.
-
 ## Configuration
 
 The cards are configured in their normal settings for CP/M. A jumper for the "Page" signal is shown on pin 39, although this can be done in any alternative way.
@@ -94,25 +98,31 @@ Rather than spend time on long descriptions, one picture is worth 2kByte.
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090691.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090691.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M Cards (excl. ACIA)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M Modules (excl. ACIA)<center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090692.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090692.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0536.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0536.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 64kByte RAM<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 64kByte RAM Module<center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090693.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090693.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0535.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0535.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 Pageable ROM<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 Pageable ROM Module<center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090694.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090694.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 82C55 IDE Adaptor<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 82C55 IDE Module<center></th>
+</tr>
+<tr>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg"/></a></td>
+</tr>
+<tr>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 82C55 IDE Module disk options<center></th>
 </tr>
 </tbody>
 </table>
@@ -126,7 +136,7 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 
 Using the correct HEX file for the hardware configuration (ACIA, Spencer SIO, or SMB SIO) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
-Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive.
+Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You can put the CP/M drive files into directories (to organise them based on workflow), or leave them all in the root directory.
 
 Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
 
