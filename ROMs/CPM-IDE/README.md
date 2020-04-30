@@ -202,13 +202,13 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
 The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
-The default is for 8MByte drives, with up to 2048 files each. There are up to 4 supported by CP/M-IDE, out of the box.
+This default is for 8MByte drives, with up to 2048 files each.
 
 ```
 diskdef rc2014-8MB
   seclen 512
-  tracks 512
-  sectrk 32
+  tracks 64
+  sectrk 256
   blocksize 4096
   maxdir 2048
   skew 0

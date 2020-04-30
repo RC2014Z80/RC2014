@@ -48,12 +48,12 @@ DEFC    _cpm_ccp_tbase  =   $0100   ;transient program storage area
 
 DEFC    hstalb  =    4096       ;host number of drive allocation blocks
 DEFC    hstsiz  =    512        ;host disk sector size
-DEFC    hstspt  =    32         ;host disk sectors/trk
+DEFC    hstspt  =    256        ;host disk sectors/trk
 DEFC    hstblk  =    hstsiz/128 ;CP/M sects/host buff (4)
 
 DEFC    cpmbls  =    4096       ;CP/M allocation block size BLS
 DEFC    cpmdir  =    2048       ;CP/M number of directory blocks (each of 32 Bytes)
-DEFC    cpmspt  =    hstspt * hstblk    ;CP/M sectors/track (128 = 32 * 512 / 128)
+DEFC    cpmspt  =    hstspt * hstblk    ;CP/M sectors/track (1024 = 256 * 512 / 128)
 
 DEFC    secmsk  =    hstblk-1   ;sector mask
 
@@ -333,13 +333,12 @@ home:       ;move to the track 00 position of current drive
 homed:
     ld      bc,$0000
 
-settrk:     ;set track passed from BDOS in register BC.
+settrk:     ;set track passed from BDOS in register BC
     ld      (sektrk),bc
     ret
 
-setsec:     ;set sector passed from BDOS given by register C
-    ld      a,c
-    ld      (seksec),a
+setsec:     ;set sector passed from BDOS given by register BC
+    ld      (seksec),bc
     ret
 
 sectran:    ;translate passed from BDOS sector number BC
@@ -442,10 +441,10 @@ write:
     ld      (unacnt),a
     ld      a,(sekdsk)      ;disk to seek
     ld      (unadsk),a      ;unadsk = sekdsk
-    ld      hl,(sektrk)
-    ld      (unatrk),hl     ;unatrk = sectrk
-    ld      a,(seksec)
-    ld      (unasec),a      ;unasec = seksec
+    ld      a,(sektrk)
+    ld      (unatrk),a      ;unatrk = sectrk
+    ld      hl,(seksec)
+    ld      (unasec),hl     ;unasec = seksec
 
 chkuna:
 ;           check for write to unallocated sector
@@ -462,27 +461,36 @@ chkuna:
     jr      NZ,alloc        ;skip if not
 
 ;           disks are the same
+    ld      a,(sektrk)      ;same track?
     ld      hl,unatrk
-    call    sektrkcmp       ;sektrk = unatrk?
+    cp      (hl)            ;low byte compare sektrk = unatrk?
     jr      NZ,alloc        ;skip if not
 
 ;           tracks are the same
-    ld      a,(seksec)      ;same sector?
+    ld      de,seksec       ;same sector?
     ld      hl,unasec
-    cp      (hl)            ;seksec = unasec?
+    ld      a,(de)          ;low byte compare seksec = unasec?
+    cp      (hl)            ;same?
+    jr      NZ,alloc        ;skip if not
+    inc     de
+    inc     hl
+    ld      a,(de)          ;high byte compare seksec = unasec?
+    cp      (hl)            ;same?
     jr      NZ,alloc        ;skip if not
 
 ;           match, move to next sector for future ref
-    inc     (hl)            ;unasec = unasec+1
-    ld      a,(hl)          ;end of track?
-    cp      cpmspt          ;count CP/M sectors
+    ld      hl,(unasec)
+    inc     hl              ;unasec = unasec+1
+    ld      (unasec),hl
+    ld      de,cpmspt       ;count CP/M sectors
+    sbc     hl,de           ;end of track?
     jr      C,noovf         ;skip if no overflow
 
 ;           overflow to next track
-    ld      (hl),0          ;unasec = 0
-    ld      hl,(unatrk)
-    inc     hl
-    ld      (unatrk),hl     ;unatrk = unatrk+1
+    ld      hl,0
+    ld      (unasec),hl     ;unasec = 0
+    ld      hl,unatrk
+    inc     (hl)            ;unatrk = unatrk+1
 
 noovf:
 ;           match found, mark as unnecessary read
@@ -508,10 +516,12 @@ rwoper:
 ;           enter here to perform the read/write
     xor     a               ;zero to accum
     ld      (erflag),a      ;no errors (yet)
-    ld      a,(seksec)      ;compute host sector
-                            ;assuming 4 CP/M sectors per host sector
-    srl     a               ;shift right
-    srl     a               ;shift right
+    ld      hl,(seksec)     ;compute host sector
+    ld      a,l             ;assuming 4 CP/M sectors per host sector
+    srl     h               ;shift right
+    rra
+    srl     h               ;shift right
+    rra
     ld      (sekhst),a      ;host sector to seek
 
 ;           active host sector?
@@ -528,8 +538,9 @@ rwoper:
     jr      NZ,nomatch
 
 ;           same disk, same track?
+    ld      a,(sektrk)
     ld      hl,hsttrk
-    call    sektrkcmp       ;sektrk = hsttrk?
+    cp      (hl)            ;sektrk = hsttrk?
     jr      NZ,nomatch
 
 ;           same disk, same track, same buffer?
@@ -548,8 +559,8 @@ filhst:
 ;           may have to fill the host buffer
     ld      a,(sekdsk)
     ld      (hstdsk),a
-    ld      hl,(sektrk)
-    ld      (hsttrk),hl
+    ld      a,(sektrk)
+    ld      (hsttrk),a
     ld      a,(sekhst)
     ld      (hstsec),a
     ld      a,(rsflag)      ;need to read?
@@ -560,7 +571,7 @@ filhst:
 
 match:
 ;           copy data to or from buffer
-    ld      a,(seksec)      ;mask buffer number
+    ld      a,(seksec)      ;mask buffer number LSB
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
     ld      h,0             ;double count    
     ld      l,a             ;ready to shift
@@ -609,27 +620,6 @@ rwmove:
 ;
 ;*****************************************************
 ;*                                                   *
-;*    Utility subroutine for 16-bit compare          *
-;*                                                   *
-;*****************************************************
-
-sektrkcmp:
-;           HL = unatrk or hsttrk, compare with sektrk
-    ex      de,hl
-    ld      hl,sektrk
-    ld      a,(de)          ;low byte compare
-    cp      (hl)            ;same?
-    ret     NZ              ;return if not
-;           low bytes equal, test high 1s
-    inc     de
-    inc     hl
-    ld      a,(de)
-    cp      (hl)            ;sets flags
-    ret
-
-;
-;*****************************************************
-;*                                                   *
 ;*    WRITEHST performs the physical write to        *
 ;*    the host disk, READHST reads the physical      *
 ;*    disk.                                          *
@@ -637,9 +627,9 @@ sektrkcmp:
 ;*****************************************************
 
 writehst:
-    ;hstdsk = host disk #,
-    ;hsttrk = host track #, maximum 2048 tracks = 11 bits
-    ;hstsec = host sect #. 32 sectors per track = 5 bits
+    ;hstdsk = host disk #, 0,1,2,3
+    ;hsttrk = host track #, 64 tracks = 6 bits
+    ;hstsec = host sect #, 256 sectors per track = 8 bits
     ;write "hstsiz" bytes
     ;from hstbuf and return error flag in erflag.
     ;return erflag non-zero if error
@@ -659,9 +649,9 @@ writehst:
     ret
 
 readhst:
-    ;hstdsk = host disk #,
-    ;hsttrk = host track #, maximum 2048 tracks = 11 bits
-    ;hstsec = host sect #. 32 sectors per track = 5 bits
+    ;hstdsk = host disk #, 0,1,2,3
+    ;hsttrk = host track #, 64 tracks = 6 bits
+    ;hstsec = host sect #, 256 sectors per track = 8 bits
     ;read "hstsiz" bytes
     ;into hstbuf and return error flag in erflag.
 
@@ -689,9 +679,8 @@ readhst:
 ; The translation activity is to set the LBA correctly, using the hstdsk, hstsec,
 ; and hsttrk information.
 ;
-; Since hstsec is 32 sectors per track, we need to use 5 bits for hstsec.
-; Also hsttrk can be any number of bits, but since we never have more than 32MB
-; of data then 11 bits is a sensible maximum.
+; Since hstsec is 256 sectors per track, we need to use 8 bits for hstsec.
+; Since we never have more than 8MB, hsttrk is 6 bits.
 ;
 ; This also matches nicely with the calculation, where a 16 bit addition of the
 ; translation can be added to the base LBA to get the sector.
@@ -700,38 +689,15 @@ readhst:
 setLBAaddr:
     ld      a,(hstdsk)      ;get disk number (0,1,2,3)
     call    getLBAbase      ;get the LBA base address
-    ex      de,hl           ;DE contains address of active disk (file) LBA LSB
+                            ;HL contains address of active disk (file) LBA LSB
 
-    ld      a,(hstsec)      ;prepare the hstsec (5 bits, 32 sectors per track)
-    add     a,a             ;shift hstsec left three bits to remove irrelevant MSBs
-    add     a,a
-    add     a,a
-
-    ld      hl,(hsttrk)     ;get both bytes of the hsttrk (maximum 11 bits)
-
-    srl     h               ;shift HL&A registers (24bits) down three bits
-    rr      l               ;to get the required 16 bits of CPM LBA
-    rra                     ;to add to the file base LBA 28 bits
-    srl     h
-    rr      l
-    rra
-    srl     h
-    rr      l
-    rra
-
-    ld      h,l             ;move LBA offset back to the 16 (11 + 5) bit pair
-    ld      l,a
-               
-    ex      de,hl           ;HL contains address of active disk (file) base LBA LSB
-                            ;DE contains the hsttrk:hstsec result
-
-    ld      a,(hl)          ;get disk LBA LSB
-    add     a,e             ;add hsttrk:hstsec LSB
+    ld      a,(hstsec)      ;prepare the hstsec (8 bits, 256 sectors per track)
+    add     a,(hl)          ;add hstsec + LBA LSB
     ld      e,a             ;write LBA LSB, put it in E
 
     inc     hl
-    ld      a,(hl)          ;get disk LBA 1SB
-    adc     a,d             ;add hsttrk:hstsec 1SB, with carry
+    ld      a,(hsttrk)      ;prepare the hsttrk (6 bits, 64 tracks per disk)
+    adc     a,(hl)          ;add hsttrk + LBA 1SB, with carry
     ld      d,a             ;write LBA 1SB, put it in D
 
     inc     hl
@@ -1744,10 +1710,10 @@ _cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 
 
 sekdsk:     defs    1       ;seek disk number
 sektrk:     defs    2       ;seek track number
-seksec:     defs    1       ;seek sector number
+seksec:     defs    2       ;seek sector number
 
 hstdsk:     defs    1       ;host disk number
-hsttrk:     defs    2       ;host track number
+hsttrk:     defs    1       ;host track number
 hstsec:     defs    1       ;host sector number
 
 sekhst:     defs    1       ;seek shr secshf
@@ -1755,9 +1721,10 @@ hstact:     defs    1       ;host active flag
 hstwrt:     defs    1       ;host written flag
 
 unacnt:     defs    1       ;unalloc rec cnt
+
 unadsk:     defs    1       ;last unalloc disk
 unatrk:     defs    2       ;last unalloc track
-unasec:     defs    1       ;last unalloc sector
+unasec:     defs    2       ;last unalloc sector
 
 erflag:     defs    1       ;error reporting
 rsflag:     defs    1       ;read sector flag
