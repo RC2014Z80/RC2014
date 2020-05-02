@@ -42,7 +42,7 @@ DEFC    _cpm_ccp_tbase  =   $0100   ;transient program storage area
 ;
 ;*****************************************************
 ;*                                                   *
-;*           CP/M to host disk constants             *
+;*          CP/M to host disk constants              *
 ;*                                                   *
 ;*****************************************************
 
@@ -60,7 +60,7 @@ DEFC    secmsk  =    hstblk-1   ;sector mask
 ;
 ;*****************************************************
 ;*                                                   *
-;*         BDOS constants on entry to write          *
+;*          BDOS constants on entry to write         *
 ;*                                                   *
 ;*****************************************************
 
@@ -68,10 +68,11 @@ DEFC    wrall   =    0          ;write to allocated
 DEFC    wrdir   =    1          ;write to directory
 DEFC    wrual   =    2          ;write to unallocated
 
-;==============================================================================
+;=============================================================================
 ;
-;           cbios for CP/M 2.2 alteration
+; CBIOS for CP/M 2.2 alteration
 ;
+;=============================================================================
 
 PUBLIC  _rodata_cpm_bios_head
 _rodata_cpm_bios_head:          ;origin of the cpm bios in rodata
@@ -225,7 +226,7 @@ diskchk:
     inc     hl
     or      a,(hl)
     jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
-    
+
     ld      (_cpm_bios_canary),a    ;kill the canary
 ;   xor     a                       ;A = $00 ROM
     out     (__IO_PROM_TOGGLE),a    ;latch ROM IN
@@ -357,8 +358,8 @@ seldsk:    ;select disk given by register c
     ld      a,c
     cp      _cpm_disks      ;must be between 0 and 3
     jr      C,chgdsk        ;if invalid drive will result in BDOS error
-    
- seldskreset:
+
+seldskreset:
     xor     a               ;reset default disk back to 0 (A:)
     ld      (_cpm_cdisk),a
     ld      (sekdsk),a      ;and set the seeked disk
@@ -407,7 +408,7 @@ chgdsk:
 ;read the selected CP/M sector
 read:
     xor     a
-    ld      (unacnt),a		;unacnt = 0
+    ld      (unacnt),a      ;unacnt = 0
     inc     a
     ld      (readop),a      ;read operation
     ld      (rsflag),a      ;must read data
@@ -576,7 +577,7 @@ match:
 ;           copy data to or from buffer
     ld      a,(seksec)      ;mask buffer number LSB
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
-    ld      h,0             ;double count    
+    ld      h,0             ;double count
     ld      l,a             ;ready to shift
 
     xor     a               ;shift left 7, for 128 bytes x seksec LSBs
@@ -589,10 +590,8 @@ match:
 ;           HL has relative host buffer address
     ld      de,hstbuf
     add     hl,de           ;HL = host address
-    ex      de,hl           ;now in DE
-    ld      hl,(dmaadr)     ;get/put CP/M data
-    ld      bc,128          ;length of move
-    ex      de,hl           ;source in HL, destination in DE
+    ld      de,(dmaadr)     ;get/put CP/M data in destination in DE
+;   ld      bc,128          ;length of move
     ld      a,(readop)      ;which way?
     or      a
     jr      NZ,rwmove       ;skip if read
@@ -603,7 +602,10 @@ match:
     ex      de,hl           ;source/dest swap
 
 rwmove:
-    ldir
+    call    ldi_32
+    call    ldi_32
+    call    ldi_32
+    call    ldi_32
 
 ;           data has been moved to/from host buffer
     ld      a,(wrtype)      ;write type
@@ -611,7 +613,7 @@ rwmove:
     ld      a,(erflag)      ;in case of errors
     ret     Z               ;no further processing
 
-;        clear host buffer for directory write
+;           clear host buffer for directory write
     or      a               ;errors?
     ret     NZ              ;skip if so
     xor     a               ;0 to accum
@@ -620,6 +622,44 @@ rwmove:
     ld      a,(erflag)
     ret
 
+ldi_32:
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ret
 ;
 ;*****************************************************
 ;*                                                   *
@@ -763,9 +803,9 @@ _acia_interrupt:
 
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
     and __IO_ACIA_SR_RDRF       ; check whether a byte has been received
-    jr Z,tx_check               ; if not, go check for bytes to transmit 
+    jr Z,tx_check               ; if not, go check for bytes to transmit
 
-    in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA 
+    in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
     ld l,a                      ; Move Rx byte to l
 
     ld a,(aciaRxCount)          ; Get the number of bytes in the Rx buffer
@@ -813,7 +853,7 @@ tx_tei_clear:
     out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
 
 tx_rts_check:
-    ld a,(aciaRxCount)          ; get the current Rx count    	
+    ld a,(aciaRxCount)          ; get the current Rx count
     cp __IO_ACIA_RX_FULLISH     ; compare the count with the preferred full size
     jr C,tx_end                 ; leave the RTS low, and end
 
@@ -870,7 +910,7 @@ _acia_flush_Tx_di:
 
 _acia_flush_Rx:
     xor a
-    ld (aciaRxCount),a          ; reset the Rx counter (set 0)  		
+    ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home
     ld (aciaRxIn),hl
     ld (aciaRxOut),hl
@@ -908,13 +948,13 @@ _acia_getc:
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
     or __IO_ACIA_CR_TDI_RTS0    ; set RTS low.
-    ld (aciaControl),a	        ; write the ACIA control echo byte back
+    ld (aciaControl),a          ; write the ACIA control echo byte back
     ei                          ; critical section end
     out (__IO_ACIA_CONTROL_REGISTER),a    ; set the ACIA CTRL register
 
 getc_clean_up_rx:
     ld hl,aciaRxCount
-    di      
+    di
     dec (hl)                    ; atomically decrement Rx count
     ld hl,(aciaRxOut)           ; get the pointer to place where we pop the Rx byte
     ei
@@ -943,11 +983,11 @@ _acia_pollc:
     ;
     ; modifies : af, hl
 
-    ld a,(aciaRxCount)	        ; load the Rx bytes in buffer
-    ld l,a	                    ; load result
+    ld a,(aciaRxCount)          ; load the Rx bytes in buffer
+    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
-    
+
     scf                         ; set carry to indicate char received
     ret
 
@@ -960,11 +1000,11 @@ _acia_putc:
     ld a,(aciaTxCount)          ; Get the number of bytes in the Tx buffer
     or a                        ; check whether the buffer is empty
     jr NZ,putc_buffer_tx        ; buffer not empty, so abandon immediate Tx
-    
+
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
     and __IO_ACIA_SR_TDRE       ; check whether a byte can be transmitted
     jr Z,putc_buffer_tx         ; if not, so abandon immediate Tx
-    
+
     ld a,l                      ; Retrieve Tx character
     out (__IO_ACIA_DATA_REGISTER),a ; immediately output the Tx byte to the ACIA
     ret                         ; and just complete
@@ -992,7 +1032,7 @@ putc_buffer_tx:
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and __IO_ACIA_CR_TEI_RTS0   ; test whether ACIA interrupt is set
     ret NZ                      ; if so then just return
-    
+
     di                          ; critical section begin
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
@@ -1057,7 +1097,7 @@ ide_read_block:
     push de
     ld bc,__IO_PIO_IDE_CTL  ;keep iterative count in b
     ld d,__IO_IDE_DATA
-    out (c),d               ;drive address onto control lines           
+    out (c),d               ;drive address onto control lines
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_rdblk2:
@@ -1134,7 +1174,7 @@ ide_write_block:
     out (c),d               ;drive address onto control lines
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
-ide_wrblk2: 
+ide_wrblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
     ld c,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
@@ -1147,7 +1187,7 @@ ide_wrblk2:
     djnz ide_wrblk2         ;keep iterative count in b
 
 ELSE
-ide_wrblk2: 
+ide_wrblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
     ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
@@ -1442,26 +1482,26 @@ PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
 PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
 PUBLIC  aciaControl
 
-aciaRxCount:    defb 0                  ; Space for Rx Buffer Management 
-aciaRxIn:       defw aciaRxBuffer       ; non-zero item in bss since it's initialized anyway
-aciaRxOut:      defw aciaRxBuffer       ; non-zero item in bss since it's initialized anyway
+aciaRxCount:    defb 0                  ;space for Rx Buffer Management
+aciaRxIn:       defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
+aciaRxOut:      defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
 
-aciaTxCount:    defb 0                  ; Space for Tx Buffer Management
-aciaTxIn:       defw aciaTxBuffer       ; non-zero item in bss since it's initialized anyway
-aciaTxOut:      defw aciaTxBuffer       ; non-zero item in bss since it's initialized anyway
+aciaTxCount:    defb 0                  ;space for Tx Buffer Management
+aciaTxIn:       defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
+aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
 
-aciaControl:    defb 0                  ; Local control echo of ACIA
+aciaControl:    defb 0                  ;local control echo of ACIA
 
 PUBLIC _cpm_bios_canary
-_cpm_bios_canary:   defw 0              ; if it matches $AA55, bios has been loaded, and CP/M is active
+_cpm_bios_canary:   defw 0              ;if it matches $AA55, bios has been loaded, and CP/M is active
 
 PUBLIC  _cpm_dsk0_base
-_cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 0 (A:) &
-                                        ; 3 additional LBA for host files (B:, C:, D:)
+_cpm_dsk0_base:     defs 16             ;base 32 bit LBA of host file for disk 0 (A:) &
+                                        ;3 additional LBA for host files (B:, C:, D:)
 ;
 ; IDE Status byte
 ; set bit 0 : User selects master (0) or slave (1) drive
-; bit 1 : Flag 0 = master not previously accessed 
+; bit 1 : Flag 0 = master not previously accessed
 ; bit 2 : Flag 0 = slave not previously accessed
 
 ;PUBLIC  _ideStatus
@@ -1512,14 +1552,14 @@ PUBLIC  aciaTxBuffer
 ALIGN       __IO_ACIA_TX_SIZE           ;ALIGN to __IO_ACIA_TX_SIZE byte boundary
                                         ;when finally locating
 
-aciaTxBuffer:   defs __IO_ACIA_TX_SIZE  ;Space for the Tx Buffer
+aciaTxBuffer:   defs __IO_ACIA_TX_SIZE  ;space for the Tx Buffer
 
 PUBLIC  aciaRxBuffer
 
 ALIGN       __IO_ACIA_RX_SIZE           ;ALIGN to __IO_ACIA_RX_SIZE byte boundary
                                         ;when finally locating
 
-aciaRxBuffer:   defs __IO_ACIA_RX_SIZE  ;Space for the Rx Buffer
+aciaRxBuffer:   defs __IO_ACIA_RX_SIZE  ;space for the Rx Buffer
 
 ;------------------------------------------------------------------------------
 ; end of bss tables

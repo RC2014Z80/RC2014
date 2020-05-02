@@ -42,7 +42,7 @@ DEFC    _cpm_ccp_tbase  =   $0100   ;transient program storage area
 ;
 ;*****************************************************
 ;*                                                   *
-;*           CP/M to host disk constants             *
+;*          CP/M to host disk constants              *
 ;*                                                   *
 ;*****************************************************
 
@@ -60,7 +60,7 @@ DEFC    secmsk  =    hstblk-1   ;sector mask
 ;
 ;*****************************************************
 ;*                                                   *
-;*         BDOS constants on entry to write          *
+;*          BDOS constants on entry to write         *
 ;*                                                   *
 ;*****************************************************
 
@@ -68,10 +68,11 @@ DEFC    wrall   =    0          ;write to allocated
 DEFC    wrdir   =    1          ;write to directory
 DEFC    wrual   =    2          ;write to unallocated
 
-;==============================================================================
+;=============================================================================
 ;
-;           cbios for CP/M 2.2 alteration
+; CBIOS for CP/M 2.2 alteration
 ;
+;=============================================================================
 
 PUBLIC  _rodata_cpm_bios_head
 _rodata_cpm_bios_head:          ;origin of the cpm bios in rodata
@@ -199,11 +200,6 @@ rboot:
     ld      bc,0x20-1
     ldir                    ;clear default FCB
 
-    di
-    call    _sioa_reset     ;flush the serial ports
-    call    _siob_reset
-    ei
-
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
     jr      C,diskchk       ;disk number valid, check existence via valid LBA
@@ -222,7 +218,7 @@ diskchk:
     inc     hl
     or      a,(hl)
     jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
-    
+
     ld      (_cpm_bios_canary),a    ;kill the canary
 ;   xor     a                       ;A = $00 ROM
     out     (__IO_PROM_TOGGLE),a    ;latch ROM IN
@@ -354,8 +350,8 @@ seldsk:    ;select disk given by register c
     ld      a,c
     cp      _cpm_disks      ;must be between 0 and 3
     jr      C,chgdsk        ;if invalid drive will result in BDOS error
-    
- seldskreset:
+
+seldskreset:
     xor     a               ;reset default disk back to 0 (A:)
     ld      (_cpm_cdisk),a
     ld      (sekdsk),a      ;and set the seeked disk
@@ -404,7 +400,7 @@ chgdsk:
 ;read the selected CP/M sector
 read:
     xor     a
-    ld      (unacnt),a		;unacnt = 0
+    ld      (unacnt),a      ;unacnt = 0
     inc     a
     ld      (readop),a      ;read operation
     ld      (rsflag),a      ;must read data
@@ -573,7 +569,7 @@ match:
 ;           copy data to or from buffer
     ld      a,(seksec)      ;mask buffer number LSB
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
-    ld      h,0             ;double count    
+    ld      h,0             ;double count
     ld      l,a             ;ready to shift
 
     xor     a               ;shift left 7, for 128 bytes x seksec LSBs
@@ -586,10 +582,8 @@ match:
 ;           HL has relative host buffer address
     ld      de,hstbuf
     add     hl,de           ;HL = host address
-    ex      de,hl           ;now in DE
-    ld      hl,(dmaadr)     ;get/put CP/M data
-    ld      bc,128          ;length of move
-    ex      de,hl           ;source in HL, destination in DE
+    ld      de,(dmaadr)     ;get/put CP/M data in destination in DE
+;   ld      bc,128          ;length of move
     ld      a,(readop)      ;which way?
     or      a
     jr      NZ,rwmove       ;skip if read
@@ -600,7 +594,10 @@ match:
     ex      de,hl           ;source/dest swap
 
 rwmove:
-    ldir
+    call    ldi_32
+    call    ldi_32
+    call    ldi_32
+    call    ldi_32
 
 ;           data has been moved to/from host buffer
     ld      a,(wrtype)      ;write type
@@ -608,7 +605,7 @@ rwmove:
     ld      a,(erflag)      ;in case of errors
     ret     Z               ;no further processing
 
-;        clear host buffer for directory write
+;           clear host buffer for directory write
     or      a               ;errors?
     ret     NZ              ;skip if so
     xor     a               ;0 to accum
@@ -617,6 +614,44 @@ rwmove:
     ld      a,(erflag)
     ret
 
+ldi_32:
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+    ldi
+
+    ret
 ;
 ;*****************************************************
 ;*                                                   *
@@ -752,7 +787,7 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
     ld hl,(siobTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
     out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
-    
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
     and l                       ; range check
@@ -784,7 +819,7 @@ __siob_interrupt_rx_char:
 siob_rx_get:
     in a,(__IO_SIOB_DATA_REGISTER)  ; move Rx byte from the SIOB to A
     ld l,a                      ; put it in L
-    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer      
+    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
     jr NC,siob_rx_check         ; buffer full, check whether we need to drain H/W FIFO
     ld a,l                      ; get Rx byte from l
@@ -806,7 +841,7 @@ siob_rx_get:
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
 ;   in a,(__IO_SIOB_CONTROL_REGISTER)   ; read from the SIOB R5 register
 ;   ld l,a                      ; put it in L
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
 
@@ -885,7 +920,7 @@ __sioa_interrupt_rx_char:
 sioa_rx_get:
     in a,(__IO_SIOA_DATA_REGISTER)  ; move Rx byte from the SIOA to A
     ld l,a                      ; put it in L
-    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer      
+    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
     jr NC,sioa_rx_check         ; buffer full, check whether we need to drain H/W FIFO
 
@@ -908,7 +943,7 @@ sioa_rx_get:
 ;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
 ;   in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
 ;   ld l,a                      ; put it in L
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
 ;   out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
 
@@ -949,7 +984,7 @@ sioa_interrupt_rx_exit:
 
 _sioa_flush_rx:
     xor a
-    ld (sioaRxCount),a          ; reset the Rx counter (set 0)  		
+    ld (sioaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,sioaRxBuffer          ; load Rx buffer pointer home
     ld (sioaRxIn),hl
     ld (sioaRxOut),hl
@@ -957,7 +992,7 @@ _sioa_flush_rx:
 
 _siob_flush_rx:
     xor a
-    ld (siobRxCount),a          ; reset the Rx counter (set 0)  		
+    ld (siobRxCount),a          ; reset the Rx counter (set 0)
     ld hl,siobRxBuffer          ; load Rx buffer pointer home
     ld (siobRxIn),hl
     ld (siobRxOut),hl
@@ -988,7 +1023,7 @@ _sioa_flush_rx_di:
     pop hl
     pop af
     ret
-    
+
 _siob_flush_rx_di:
     push af
     push hl
@@ -1026,19 +1061,19 @@ _sioa_getc:
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
 ;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
 ;   in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
 ;   ld l,a                      ; put it in L
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
 ;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
 
 ;   ld a,__IO_SIO_WR5_RTS       ; set the RTS
 ;   or l                        ; with previous contents of R5
 ;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
-    
+
 sioa_getc_clean_up:
     ld hl,sioaRxCount
     di
@@ -1067,19 +1102,19 @@ _siob_getc:
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
 ;   in a,(__IO_SIOB_CONTROL_REGISTER)   ; read from the SIOB R5 register
 ;   ld l,a                      ; put it in L
-    
+
 ;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
 
 ;   ld a,__IO_SIO_WR5_RTS       ; set the RTS
 ;   or l                        ; with previous contents of R5
 ;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
-    
+
 siob_getc_clean_up:
     ld hl,siobRxCount
     di
@@ -1134,10 +1169,10 @@ _siob_pollc:
     ;
     ; modifies : af, hl
     ld a,(siobRxCount)          ; load the Rx bytes in buffer
-    ld l,a	                    ; load result
+    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
-    
+
     scf                         ; set carry to indicate char received
     ret
 
@@ -1165,7 +1200,7 @@ sioa_putc_buffer_tx:
     ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
     jr NC,sioa_putc_buffer_tx_overflow   ; buffer full, so keep trying
-    
+
     ld a,l                      ; Tx byte
     ld hl,sioaTxCount
     di
@@ -1268,7 +1303,7 @@ ide_read_block:
     push de
     ld bc,__IO_PIO_IDE_CTL  ;keep iterative count in b
     ld d,__IO_IDE_DATA
-    out (c),d               ;drive address onto control lines           
+    out (c),d               ;drive address onto control lines
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
 ide_rdblk2:
@@ -1345,7 +1380,7 @@ ide_write_block:
     out (c),d               ;drive address onto control lines
 
 IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LSB+1)
-ide_wrblk2: 
+ide_wrblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
     ld c,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
@@ -1358,7 +1393,7 @@ ide_wrblk2:
     djnz ide_wrblk2         ;keep iterative count in b
 
 ELSE
-ide_wrblk2: 
+ide_wrblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
     ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
@@ -1671,35 +1706,35 @@ PUBLIC siobRxCount, siobRxIn, siobRxOut
 PUBLIC sioaTxCount, sioaTxIn, sioaTxOut
 PUBLIC siobTxCount, siobTxIn, siobTxOut
 
-sioaRxCount:    defb 0                  ; Space for Rx Buffer Management 
-sioaRxIn:       defw sioaRxBuffer       ; non-zero item in bss since it's initialized anyway
-sioaRxOut:      defw sioaRxBuffer       ; non-zero item in bss since it's initialized anyway
+sioaRxCount:    defb 0                  ;space for Rx Buffer Management
+sioaRxIn:       defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
+sioaRxOut:      defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
 
-siobRxCount:    defb 0                  ; Space for Rx Buffer Management 
-siobRxIn:       defw siobRxBuffer       ; non-zero item in bss since it's initialized anyway
-siobRxOut:      defw siobRxBuffer       ; non-zero item in bss since it's initialized anyway
+siobRxCount:    defb 0                  ;space for Rx Buffer Management
+siobRxIn:       defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
+siobRxOut:      defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
 
-sioaTxCount:    defb 0                  ; Space for Tx Buffer Management
-sioaTxIn:       defw sioaTxBuffer       ; non-zero item in bss since it's initialized anyway
-sioaTxOut:      defw sioaTxBuffer       ; non-zero item in bss since it's initialized anyway
+sioaTxCount:    defb 0                  ;space for Tx Buffer Management
+sioaTxIn:       defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
+sioaTxOut:      defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
 
-siobTxCount:    defb 0                  ; Space for Tx Buffer Management
-siobTxIn:       defw siobTxBuffer       ; non-zero item in bss since it's initialized anyway
-siobTxOut:      defw siobTxBuffer       ; non-zero item in bss since it's initialized anyway
+siobTxCount:    defb 0                  ;space for Tx Buffer Management
+siobTxIn:       defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
+siobTxOut:      defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
 
 PUBLIC _bios_iobyte
-_bios_iobyte:   defb 0                  ; transfer the IOBYTE from the bios to CP/M
+_bios_iobyte:   defb 0                  ;transfer the IOBYTE from the bios to CP/M
 
 PUBLIC _cpm_bios_canary
-_cpm_bios_canary:   defw 0              ; if it matches $AA55, bios has been loaded, and CP/M is active
+_cpm_bios_canary:   defw 0              ;if it matches $AA55, bios has been loaded, and CP/M is active
 
 PUBLIC  _cpm_dsk0_base
-_cpm_dsk0_base:     defs 16             ; base 32 bit LBA of host file for disk 0 (A:) &
-                                        ; 3 additional LBA for host files (B:, C:, D:)
+_cpm_dsk0_base:     defs 16             ;base 32 bit LBA of host file for disk 0 (A:) &
+                                        ;3 additional LBA for host files (B:, C:, D:)
 ;
 ; IDE Status byte
 ; set bit 0 : User selects master (0) or slave (1) drive
-; bit 1 : Flag 0 = master not previously accessed 
+; bit 1 : Flag 0 = master not previously accessed
 ; bit 2 : Flag 0 = slave not previously accessed
 
 ;PUBLIC  _ideStatus
@@ -1751,17 +1786,17 @@ PUBLIC siobTxBuffer
 ALIGN       __IO_SIO_TX_SIZE            ;ALIGN to __IO_SIO_TX_SIZE byte boundary
                                         ;when finally locating
 
-sioaTxBuffer:   defs __IO_SIO_TX_SIZE   ; Space for the Tx Buffer
-siobTxBuffer:   defs __IO_SIO_TX_SIZE   ; Space for the Tx Buffer
+sioaTxBuffer:   defs __IO_SIO_TX_SIZE   ;space for the Tx Buffer
+siobTxBuffer:   defs __IO_SIO_TX_SIZE   ;space for the Tx Buffer
 
 PUBLIC sioaRxBuffer
 PUBLIC siobRxBuffer
 
 ALIGN       __IO_SIO_RX_SIZE            ;ALIGN to next __IO_SIO_RX_SIZE byte boundary
                                         ;when finally locating
-                            
-sioaRxBuffer:   defs __IO_SIO_RX_SIZE   ; Space for the Rx Buffer
-siobRxBuffer:   defs __IO_SIO_RX_SIZE   ; Space for the Rx Buffer
+
+sioaRxBuffer:   defs __IO_SIO_RX_SIZE   ;space for the Rx Buffer
+siobRxBuffer:   defs __IO_SIO_RX_SIZE   ;space for the Rx Buffer
 
 ;------------------------------------------------------------------------------
 ; end of bss tables
