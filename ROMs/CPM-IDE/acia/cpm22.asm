@@ -1419,7 +1419,7 @@ NBYTES:     DEFW    0        ;byte counter used by TYPE.
 ;
 ;   Room for expansion, and prevent potential stack overflow.
 ;
-;           DEFS    12,0
+ALIGN       0x20
 
 ;
 ;   ccp stack area.
@@ -1988,12 +1988,10 @@ SELECT:
     LD    (XLATE),HL
     LD    HL,DIRBUF     ;put the next 8 bytes in DIRBUF.
     EX    DE,HL
-    LD    BC,8          ;they consist of the directory buffer
-    LDIR                ;pointer, parameter block pointer,
+    CALL  LDI_8         ;they consist of the directory buffer, pointer, parameter block pointer.
     LD    HL,(DISKPB)   ;check and allocation vectors.
     LD    DE,SECTORS    ;move parameter block into our ram.
-    LD    BC,15         ;it is 15 bytes long.
-    LDIR
+    CALL  LDI_15        ;it is 15 bytes long.
     LD    HL,(DSKSIZE)  ;check disk size.
     LD    A,H           ;more than 256 blocks on this?
     LD    HL,BIGDISK
@@ -2539,8 +2537,54 @@ DIRDMA1:
 MOVEDIR:
     LD    HL,(DIRBUF)   ;buffer is located here, and
     LD    DE,(USERDMA)  ;put it here.
-    LD    BC,128        ;this is its length.
-    LDIR                ;move it now and return.
+;
+;   Load (HL)->(DE) 128 times.
+;
+LDI_128:
+    LD    BC,LDI_32     ;do the LDI 32 times,
+    PUSH  BC            ;a total of 4 times,
+    PUSH  BC            ;for a total of 128.
+    PUSH  BC
+;
+;   Load (HL)->(DE) 32 times.
+;
+LDI_32:
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+;
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+;
+    LDI
+LDI_15:
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+LDI_8:
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
+    LDI
     RET
 ;
 ;   Check (FILEPOS) and set the zero flag if it equals 0ffffh.
@@ -3850,7 +3894,7 @@ GETFST1:
     CALL    FINDFST        ;find an entry and then move it into
     JP    MOVEDIR        ;the users dma space.
 ;
-;   Function to return the next occurence of a file name.
+;   Function to return the next occurrence of a file name.
 ;
 GETNXT:
     LD    HL,(SAVEFCB)    ;restore pointers. note that no
@@ -4041,10 +4085,9 @@ WTSPECL:
     CALL  POSITN1       ;position the file.
     CALL  Z,WTSEQ1      ;and write (if no errors).
     RET    
-
+;
 PUBLIC  _cpm_bdos_tail
 _cpm_bdos_tail:         ;tail of the cpm bdos
-
 ;
 ;**************************************************************
 ;*
@@ -4052,34 +4095,33 @@ _cpm_bdos_tail:         ;tail of the cpm bdos
 ;*
 ;**************************************************************
 ;
-
 PUBLIC  _cpm_bdos_data
 _cpm_bdos_data:             ;origin of the cpm bdos data
-
+;
 EMPTYFCB:   DEFB    $E5     ;empty directory segment indicator.
 USERDMA:    DEFW    $0080   ;user's dma address (defaults to 80h).
-
+;
 STARTING:   DEFB    2       ;starting position for cursor.
-
+;
 PUBLIC  _cpm_bdos_data_tail
 _cpm_bdos_data_tail:        ;tail of the cpm bios data
-
+;
 PUBLIC  _cpm_bdos_bss_bridge
 _cpm_bdos_bss_bridge:
-
+;
 DEPHASE
-
+;
 ;------------------------------------------------------------------------------
 ; end of data tables - non aligned data
 ;------------------------------------------------------------------------------
-
+;
 SECTION bss_user
-
+;
 PHASE _cpm_bdos_bss_bridge
-
+;
 PUBLIC  _cpm_bdos_bss_head
 _cpm_bdos_bss_head:         ;head of the cpm bdos bss
-
+;
 OUTFLAG:    DEFB    0       ;output flag (non zero means no output).
 CURPOS:     DEFB    0       ;cursor position (0=start of line).
 PRTFLAG:    DEFB    0       ;printer flag (control-p toggle). List if non zero.
@@ -4139,23 +4181,23 @@ BLKNMBR:    DEFW    0       ;block number (physical sector) used within a file o
 LOGSECT:    DEFW    0       ;starting logical (128 byte) sector of block (physical sector).
 FCBPOS:     DEFB    0       ;relative position within buffer for fcb of file of interest.
 FILEPOS:    DEFW    0       ;files position within directory (0 to max entries -1).
+USRSTACK:   DEFW    0       ;save users stack pointer here.
 ;
 ;   Disk directory buffer checksum bytes. One for each of the
-;   16 possible drives.
+;   16 possible drives. Maximum 4 drives configured in BIOS.
 ;
 CKSUMTBL:   DEFS    16,0
 ;
 ;   Stack area for BDOS calls.
 ;
-            DEFS    48,0
+ALIGN       0x100
+;
 STKAREA:                    ;top of stack area.
-USRSTACK:   DEFW    0       ;save users stack pointer here.
 ;
 PUBLIC  _cpm_bdos_bss_tail
-_cpm_bdos_bss_tail:        ;tail of the cpm bdos bss
-
+_cpm_bdos_bss_tail:         ;tail of the cpm bdos bss
+;
 DEPHASE
-
 ;
 ;**************************************************************
 ;*
@@ -4163,7 +4205,6 @@ DEPHASE
 ;*
 ;**************************************************************
 ;
-
 EXTERN    cboot     ;cold start
 EXTERN    wboot     ;warm start
 EXTERN    const     ;console status
@@ -4181,8 +4222,7 @@ EXTERN    read      ;read disk
 EXTERN    write     ;write disk
 EXTERN    listst    ;return list status
 EXTERN    sectran   ;sector translate
-
-
+;
 DEFC    BOOT    =   cboot
 DEFC    WBOOT   =   wboot
 DEFC    CONST   =   const
@@ -4200,7 +4240,6 @@ DEFC    READ    =   read
 DEFC    WRITE   =   write
 DEFC    PRSTAT  =   listst
 DEFC    SECTRN  =   sectran
-
 ;
 ;*
 ;******************   E N D   O F   C P / M   *****************
