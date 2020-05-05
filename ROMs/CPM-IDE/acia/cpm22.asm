@@ -1893,10 +1893,10 @@ DIRCIO:
 
 DIRC1:
     CALL    CONST           ;this is an input request.
-    OR    A
-    JP    Z,GOBACK1         ;not ready? Just return (directly).
+    OR      A
+    JP      Z,GOBACK1       ;not ready? Just return (directly).
     CALL    CONIN           ;yes, get character.
-    JP    SETSTAT           ;set status and return.
+    JP      SETSTAT         ;set status and return.
 ;
 ;   Function to return the i/o byte.
 ;
