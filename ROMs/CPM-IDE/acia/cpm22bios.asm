@@ -577,12 +577,10 @@ match:
 ;           copy data to or from buffer
     ld      a,(seksec)      ;mask buffer number LSB
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
-    ld      h,0             ;double count
     ld      l,a             ;ready to shift
 
     xor     a               ;shift left 7, for 128 bytes x seksec LSBs
-    srl     h
-    rr      l
+    srl     l
     rra
     ld      h,l
     ld      l,a
