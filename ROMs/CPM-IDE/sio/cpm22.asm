@@ -23,7 +23,7 @@ SECTION rodata_lib           ;read only library (code)
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_CCP_BDOS    ;base of ccp
-defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xD600
+defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDA00
 
 ;------------------------------------------------------------------------------
 ; start of definitions

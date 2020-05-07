@@ -14,7 +14,7 @@ INCLUDE "config_rc2014_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xEC00
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF000
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -46,7 +46,7 @@ DEFC    _cpm_ccp_tbase  =   $0100   ;transient program storage area
 ;*                                                   *
 ;*****************************************************
 
-DEFC    hstalb  =    4096       ;host number of drive allocation blocks
+DEFC    hstalb  =    2048       ;host number of drive allocation blocks
 DEFC    hstsiz  =    512        ;host disk sector size
 DEFC    hstspt  =    256        ;host disk sectors/trk
 DEFC    hstblk  =    hstsiz/128 ;CP/M sects/host buff (4)
