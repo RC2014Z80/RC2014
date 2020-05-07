@@ -13,7 +13,7 @@ The ACIA receive interface has a 255 byte buffer, together with highly optimised
 
 The SIO/2 has both ports enabled. Both ports have a 255 byte receive buffer, and a 63 byte transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 vector steering is implemented.
 
-The IDE interface is optimised for performance and can achieve about 300kB/s throughput. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
+The IDE interface is optimised for performance and can achieve about 100kB/s throughput using FatFS libraries in C. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
 The IDE interface supports both PATA hard drives and Compact Flash cards in native 16 bit PATA mode.
 
