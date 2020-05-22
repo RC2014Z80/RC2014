@@ -10,10 +10,10 @@ Let row = 1
 Let col = 1
 Gosub 1100
 
-Let xo = 10
-Let xi = 10
-Let y0 = 20
-let yi = 20
-Gosub 2000
-
 Gosub 3000   (Resets to default)
+
+Gosub 4000    (Clears the screen)
+
+Gosub 5000    (Hide cursor)
+
+Gosub 6000    (Show cursor)
