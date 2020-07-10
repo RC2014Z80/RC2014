@@ -600,10 +600,7 @@ match:
     ex      de,hl           ;source/dest swap
 
 rwmove:
-    call    ldi_32
-    call    ldi_32
-    call    ldi_32
-    call    ldi_32
+    call    ldi_128
 
 ;           data has been moved to/from host buffer
     ld      a,(wrtype)      ;write type
@@ -620,6 +617,11 @@ rwmove:
     ld      a,(erflag)
     ret
 
+ldi_128:
+    ld bc,ldi_32
+    push bc
+    push bc
+    push bc
 ldi_32:
     ldi
     ldi
