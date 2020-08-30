@@ -8,4 +8,4 @@ for line in sys.stdin:
 
     sys.stdout.write('\r\n');
     sys.stdout.flush();
-    sleep(0.5);
+    sleep(0.2);
