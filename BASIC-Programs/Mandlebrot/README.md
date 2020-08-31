@@ -13,5 +13,5 @@ Play around with the variables to change the appearance.
 Benchmarking
 
 Searle  Std 11'44"
-feilipu Std 11'27"
-feilipu APU 10'46"
+feilipu Std 11'16"
+feilipu APU 10'37"
