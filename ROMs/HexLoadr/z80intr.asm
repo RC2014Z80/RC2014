@@ -12,12 +12,8 @@
 ;==============================================================================
 ;
 ; REQUIRES
-;
-; INCLUDE       "yaz180.h"              ; OR
-; INCLUDE       "rc2014.h"
 
-; INCLUDE       "yaz180.h"
-INCLUDE       "rc2014.h"
+INCLUDE         "rc2014.inc"
 
 ;==============================================================================
 ;
@@ -29,44 +25,44 @@ EXTERN          INIT
 
 ;------------------------------------------------------------------------------
 ; RST 00 - RESET / TRAP
-                DEFS    0x0000 - ASMPC  ; ORG     0000H
+;               ALIGN    0x0000         ; ORG     0000H
                 DI                      ; Disable interrupts
                 JP      INIT            ; Initialize Hardware and go
 
 ;------------------------------------------------------------------------------
 ; RST 08
-                DEFS    0x0008 - ASMPC  ; ORG     0008H
+                ALIGN   0x0008          ; ORG     0008H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_08_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 10
-                DEFS    0x0010 - ASMPC  ; ORG     0010H
+                ALIGN   0x0010          ; ORG     0010H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_10_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 18
-                DEFS    0x0018 - ASMPC  ; ORG     0018H
+                ALIGN   0x0018          ; ORG     0018H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_18_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 20
-                DEFS    0x0020 - ASMPC  ; ORG     0020H
+                ALIGN   0x0020          ; ORG     0020H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_20_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 28
-                DEFS    0x0028 - ASMPC  ; ORG     0028H
+                ALIGN   0x0028          ; ORG     0028H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_28_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 30
-                DEFS    0x0030 - ASMPC  ; ORG     0030H
+                ALIGN   0x0030          ; ORG     0030H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+RST_30_LBL
 
 ;------------------------------------------------------------------------------
 ; RST 38 - INTERRUPT VECTOR INT0 [ with IM 1 ]
 
-                DEFS    0x0038 - ASMPC  ; ORG     0038H
+                ALIGN   0x0038          ; ORG     0038H
                 JP      Z80_VECTOR_BASE-Z80_VECTOR_PROTO+INT_INT0_LBL
 
 ;==============================================================================
@@ -92,9 +88,9 @@ RST_08_LBL:
 RST_10_LBL:
                 JP      RST_10
                 NOP
-RST_18_LBL:
-                JP      RST_18
-                NOP
+RST_18_LBL:       
+                LD      A,(serRxBufUsed)    ; this is called each token,
+                RET                         ; so optimise it to here
 RST_20_LBL:
                 JP      RST_20
                 NOP

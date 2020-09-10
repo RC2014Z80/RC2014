@@ -10,8 +10,10 @@ Colour version uses escape characters to change colour to represent the density 
 
 Play around with the variables to change the appearance.
 
-Benchmarking - MS Basic 4.7
+Omitting blank space makes it run faster.
 
-Searle  Std 11'44"  - 100%
-feilipu Std 10'46"  -  92%
-feilipu APU 10'08"  -  86%
+Benchmarking - MS Basic 4.7 - omitted spaces
+
+Searle  Std 11'46"  - 100%
+feilipu Std 10'43"  -  91%
+feilipu APU 10'05"  -  86%

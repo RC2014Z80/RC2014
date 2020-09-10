@@ -30,7 +30,7 @@
 ; INCLUDES SECTION
 ;
 
-INCLUDE "rc2014_config.h"
+INCLUDE "rc2014_config.inc"
 
 ;==============================================================================
 ;
@@ -46,7 +46,7 @@ DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $08
                                     ; Fullness of the Rx Buffer, when not_RTS is signalled
 DEFC    SER_RX_EMPTYSIZE =  $08     ; Fullness of the Rx Buffer, when RTS is signalled
 
-DEFC    SER_TX_BUFSIZE  =   $10     ; Size of the Tx Buffer, 2^n Bytes, n = 4 here
+DEFC    SER_TX_BUFSIZE  =   $40     ; Size of the Tx Buffer, 2^n Bytes, n = 6 here
 
 ;==============================================================================
 ;
@@ -158,11 +158,14 @@ DEFC    serControl      =     serTxBufUsed+1
 
 DEFC    basicStarted    =     serControl+1
 
-; I/O Buffers must start on 0xnn00 because we increment low byte to roll-over
-DEFC    BUFSTART_IO     =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+; I/O Tx Buffer must start on 0xnnn0 because we increment low byte to roll-over
+DEFC    BUFSTART_TX_IO  =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $80
 
-DEFC    serRxBuf        =     BUFSTART_IO
-DEFC    serTxBuf        =     serRxBuf+SER_RX_BUFSIZE
+; I/O Rx Buffer must start on 0xnn00 because we increment low byte to roll-over
+DEFC    BUFSTART_RX_IO  =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+
+DEFC    serTxBuf        =     BUFSTART_TX_IO
+DEFC    serRxBuf        =     BUFSTART_RX_IO
 
 ;==============================================================================
 

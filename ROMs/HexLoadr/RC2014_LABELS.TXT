@@ -3,25 +3,23 @@ Label        Value      Label        Value      Label        Value
 
     FUNCTIONS
 
-RXA           0100      RXA_CHK       00F0      TXA           0130
-HEXLOADR      0190      DEINT         0C47      ABPASS        13BD
+RXA           0100      TXA           0130
+DEINT         0AF7      ABPASS        12C8
 
     Z80 VECTOR ADDRESS TABLE
 
-NULL_NMI_ADDR 0060      NULL_INT_ADDR 0062      NULL_RET_ADDR 0065
-
-RST_08_ADDR   8001      RST_10_ADDR   8005      RST_18_ADDR   8009
-RST_20_ADDR   800D      RST_28_ADDR   8011      RST_30_ADDR   8015
-INT_INT0_ADDR 8019      INT_NMI_ADDR  801D
+RST_08_ADDR   8005      RST_10_ADDR   8009      RST_18_ADDR   800D
+RST_20_ADDR   8011      RST_28_ADDR   8015      RST_30_ADDR   8019
+INT_INT0_ADDR 801D      INT_NMI_ADDR  8021
 
     VARIABLES
 
-serRxInPtr    8020      serRxOutPtr   8022      serTxInPtr    8024
-serTxOutPtr   8026      serRxBufUsed  8028      serTxBufUsed  8029
+serRxInPtr    8024      serRxOutPtr   8026      serTxInPtr    8028
+serTxOutPtr   802A      serRxBufUsed  802C      serTxBufUsed  802D
 
-basicStarted  802B
+basicStarted  802F
 
     BUFFERS
 
-serRxBuf      8100      serTxBuf      8200
+serRxBuf      8100      serTxBuf      8080
 
