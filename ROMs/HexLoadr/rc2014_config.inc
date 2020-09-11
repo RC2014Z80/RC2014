@@ -26,7 +26,7 @@ DEFC    RAMSTART        =   RAM_32_START
 ; so it is "free ram" when BASIC resets
 ; set BASIC Work space WRKSPC $8000, in RAM
 
-DEFC    WRKSPC      =   RAMSTART+$0220  ; set BASIC Work space WRKSPC
+DEFC    WRKSPC      =   RAMSTART+$0200  ; set BASIC Work space WRKSPC
                                         ; beyond the end of ACIA stuff
 
 DEFC    TEMPSTACK   =   WRKSPC+$0A2     ; Top of BASIC line input buffer

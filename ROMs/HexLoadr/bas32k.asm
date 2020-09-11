@@ -1295,7 +1295,7 @@ STALL:  RST     10H             ; Wait for key
         JR      Z,STOP          ; Break during hold exits prog
         JR      STALL           ; Loop until <Ctrl-Q> or <brk>
 
-BRK     LD      A,$FF           ; Set BRKFLG
+BRK:    LD      A,$FF           ; Set BRKFLG
         LD      (BRKFLG),A      ; Store it
 
 
