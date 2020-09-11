@@ -1,34 +1,8 @@
+# RC2014 MS BASIC v4.7 including `HLOAD`
 
-# NASCOM ROM BASIC Ver 4.7, (C) 1978 Microsoft
+This ROM works with the most basic versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic.
 
-Scanned from source published in 80-BUS NEWS from Vol 2, Issue 3 (May-June 1983) to Vol 3, Issue 3 (May-June 1984).
-
-Adapted for the freeware Zilog Macro Assembler 2.10 to produce the original ROM code (checksum A934H). PA
-
-http://www.nascomhomepage.com/
----
-
-The updates to the original BASIC within this file are copyright (C) Grant Searle
-
-You have permission to use this for NON COMMERCIAL USE ONLY.
-If you wish to use it elsewhere, please include an acknowledgement to myself.
-
-http://searle.wales/
----
-
-The rework to support MS Basic HLOAD, RESET, and the Z80 instruction tuning are copyright (C) 2020 Phillip Stevens
-
-This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-https://github.com/feilipu/NASCOM_BASIC_4.7
-
-@feilipu, August 2020
-
-# RC2014 Mini, Micro, Classic
-
-This ROM works with the most basic versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload C or assembly programs from within Basic.
-
-__NOTE__ The Intel HEX program loader has been integrated inside MS Basic as the `HLOAD` keyword.
+__NOTE__ The `HexLoadr` Intel HEX program loader has been integrated inside MS Basic as the `HLOAD` keyword.
 
 ACIA 6850 interrupt driven serial I/O to run modified NASCOM Basic 4.7. Full input and output buffering with incoming data hardware handshaking. Handshake shows full before the buffer is totally filled to allow run-on from the sender. Transmit and receive are interrupt driven, and are fast.
 
@@ -63,18 +37,20 @@ There are are several stages to this process.
 
 The `HLOAD` program can be exited without uploading a valid file by typing `:` followed by `CR CR CR CR CR CR`, or any other character.
 
-The top of Basic memory can be readjusted by using the `RESET` function, when required.
+The top of Basic memory can be readjusted by using the `RESET` function, when required. `RESET` is functionally equivalent to a cold start.
 
 ## RST locations
 
 For convenience, because we can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx routines are reachable from your assembly program by calling the `RST` instructions from your program.
 
-* Tx: `RST 08H` expects a byte to transmit in the `a` register.
-* Rx: `RST 10H` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
-* Rx Check: `RST 18H` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
-* ACIA Interrupt: `RST 38H` is used by the ACIA 68B50 Serial Device.
+* Tx: `RST 08` expects a byte to transmit in the `a` register.
+* Rx: `RST 10` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
+* Rx Check: `RST 18` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
+* Unused: `RST 20`, `RST 28`, `RST 30` are available to the user.
+* INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
+* NMI: `NMI` is unused and is available to the user.
 
-All `RST xxH` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed.
+All `RST xx` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed.
 
 ## USR Jump Address & Parameter Access
 
@@ -113,16 +89,41 @@ The `RC2014_LABELS.TXT` file is provided to advise of the relevant RAM and ROM l
 
 5. Profit.
 
-## Notes
+Note that your C or assembly program will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used. Any Basic programs loaded will also remain in place during a Warm Reset.
 
-Note that your program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USR(x)` jump.
-
-Any Basic programs loaded will also remain in place during a Warm Reset.
-
-Issuing the `RESET` keyword will clear the RC2014 RAM, and return the original memory contents.
+Issuing the `RESET` keyword will clear the RC2014 RAM, and provide an option to return the original memory size. `RESET` is functionally equivalent to a cold start.
 
 # Credits
 
 Derived from the work of @fbergama and @foxweb at RC2014.
 
 https://github.com/RC2014Z80/RC2014/blob/master/ROMs/hexload/hexload.asm
+
+# Copyright
+
+NASCOM ROM BASIC Ver 4.7, (C) 1978 Microsoft
+
+Scanned from source published in 80-BUS NEWS from Vol 2, Issue 3 (May-June 1983) to Vol 3, Issue 3 (May-June 1984).
+
+Adapted for the freeware Zilog Macro Assembler 2.10 to produce the original ROM code (checksum A934H). PA
+
+http://www.nascomhomepage.com/
+
+--
+
+The updates to the original BASIC within this file are copyright (C) Grant Searle
+
+You have permission to use this for NON COMMERCIAL USE ONLY.
+If you wish to use it elsewhere, please include an acknowledgement to myself.
+
+http://searle.wales/
+
+--
+
+The rework to support MS Basic HLOAD, RESET, and the Z80 instruction tuning are copyright (C) 2020 Phillip Stevens
+
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+Source files maintained at https://github.com/feilipu/NASCOM_BASIC_4.7
+
+@feilipu, August 2020
