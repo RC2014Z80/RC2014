@@ -52,6 +52,8 @@ Now insert the 7 capacitors, and located them as indicated. They are 100nF and t
 
 Now solder the Address jumper pins, as indicated. The bridge can be inserted into the default address of `0x42`. If you intend to use only 1 APU Module per RC2014 system, the jumper pins can be omitted and a simple solder bridge can be used instead.
 
+![APU Address Pins](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_addresses.png)
+
 Now insert either a 40x pin RC2014 Standard Bus pin header, or an Enhanced Bus pin header, depending on your planned use. The header should be soldered neatly. If using the Enhanced Bus ensure that a minimum of solder is used so that it does not unintentionally bridge to the Standard Bus pins.
 
 If you are using the RC2014 Standard Bus the __WAIT__ jumper needs to be closed to connect __USER1__ pin. A similar connection needs to be completed on your CPU Module, for [example here](http://blog.tynemouthsoftware.co.uk/2017/08/z80-cpu-clock-and-reset-module-for-RC2014.html).
@@ -64,7 +66,9 @@ When complete the __WAIT__ bridge looks like this.
 
 ## Active Devices
 
-The Pololu U3V12F12 boost converter PCB can be laid directly onto the APU Module PCB. The mounting pins form a connection between the two PCBs. There is no need to "stand-off" the boost converter PCB from the APU Module PCB. The boost converter can only be installed one way. When the pins have been soldered on both sides, they can be trimmed short back and front.
+The [Pololu U3V12F12](https://www.pololu.com/product/2117) boost converter PCB can be laid directly onto the APU Module PCB. The mounting pins form a connection between the two PCBs. There is no need to "stand-off" the boost converter PCB from the APU Module PCB. The boost converter can only be installed one way. When the pins have been soldered on both sides, they can be trimmed short back and front.
+
+![Pololu U3V12F12](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/0J4328.600x480.jpg)
 
 Depending on your level of confidence and competence you can choose to assemble the APU Module with or without device sockets. Either way, ensure that the device numbers are identical to the numbers printed on each device outline. Ensure that the device orientation is the same as on the PCB. Double check orientation by reading the text on the devices and matching to what you can see on this completed APU Module, below.
 
