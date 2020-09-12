@@ -14,6 +14,6 @@ Omitting blank space makes it run faster.
 
 Benchmarking - MS Basic 4.7 - omitted spaces
 
-Searle  Std 11'46"  - 100%
-feilipu Std 10'43"  -  91%
+Searle  Std 11'46"  - 100%<br>
+feilipu Std 10'43"  -  91%<br>
 feilipu APU 10'05"  -  86%
