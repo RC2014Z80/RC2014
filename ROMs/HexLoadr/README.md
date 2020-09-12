@@ -1,6 +1,6 @@
 # RC2014 MS BASIC v4.7 including `HLOAD`
 
-This ROM works with the most basic versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic.
+This ROM works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic.
 
 __NOTE__ The `HexLoadr` Intel HEX program loader has been integrated inside MS Basic as the `HLOAD` keyword.
 
@@ -18,7 +18,7 @@ z88dk - feilipu
 
 Cold | Warm start (C|W) ? C
 
-Memory top? 
+Memory top?
 Z80 BASIC Ver 4.7c
 Copyright (C) 1978 by Microsoft
 31948 Bytes free
