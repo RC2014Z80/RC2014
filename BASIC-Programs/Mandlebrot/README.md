@@ -12,8 +12,8 @@ Play around with the variables to change the appearance.
 
 Omitting blank space makes it run faster.
 
-Benchmarking - MS Basic 4.7 - omitted spaces
+_Benchmarking - MS Basic 4.7 - omitted spaces_
 
-Searle  Std 11'46"  - 100%<br>
-feilipu Std 10'43"  -  91%<br>
-feilipu APU 10'05"  -  86%
+- Searle  Std 11'46"  - 100%<br>
+- feilipu Std 10'43"  -  91%<br>
+- feilipu APU 10'05"  -  86%
