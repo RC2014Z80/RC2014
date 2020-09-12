@@ -1,10 +1,14 @@
 # Am9511A APU Module
 
-The Am9511 APU is a complete, high performance, complex arithmetic processor contained within a single chip. It is designed to enhance the number manipulation capability of a wide variety of processor systems. It includes not only floating-point operas but fixed-point as well; not only basic add, subtract, multiply, and divide operations, but a group of transcendental derived functions plus control and conversion commands as well.
+The Am9511 APU is a complete, high performance, complex arithmetic processor contained within a single Large Scale Integration device. It is designed to enhance the number manipulation capability of a wide variety of processor systems. It includes not only floating-point operations but fixed-point as well; not only basic add, subtract, multiply, and divide operations, but a group of transcendental derived functions plus control and format conversion commands as well.
+
+The first Large Scale Integrated single-chip floating point processors available commercially were introduced by Advanced Micro Devices. AMD introduced the Am9511 Arithmetic Processor in 1977, and the Am9512 Floating Point Processor in 1979. Intel licensed the Am9511A and released it to the market as the 8231A.
 
 ![Am9511A APU Module](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu.jpg)
 
 All transfers, including operand, result, status, and command information, take place over an 8-bit bidirectional data bus. Operands are pushed onto an internal stack and a command is issued to perform operations on the data in the stack. Results are then available to be retrieved from the stack, or additional commands may be entered operating on the intermediate results.
+
+Although the external data interface is 8-bits wide, the Am9511A internally is a 16-bit micro-programmed, stack-orientated floating point machine. The Am9511A stack can hold 4 32-bit floating point or long numbers, or 8 16-bit integer numbers. Single operand functions are performed on the Top of Stack. Two operand functions are performed with the Top of Stack acting upon the Next on Stack.
 
 # Description
 
@@ -58,11 +62,11 @@ Now insert either a 40x pin RC2014 Standard Bus pin header, or an Enhanced Bus p
 
 If you are using the RC2014 Standard Bus the __WAIT__ jumper needs to be closed to connect __USER1__ pin. A similar connection needs to be completed on your CPU Module, for [example here](http://blog.tynemouthsoftware.co.uk/2017/08/z80-cpu-clock-and-reset-module-for-RC2014.html).
 
-![APU Module Std Bus WAIT](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_wait.png)
+![APU Module WAIT](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_wait.png)
 
 When complete the __WAIT__ bridge looks like this.
 
-![APU Module Std Bus WAIT Bridge](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_wait.jpg)
+![APU Module WAIT Bridge](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_wait.jpg)
 
 ## Active Devices
 
