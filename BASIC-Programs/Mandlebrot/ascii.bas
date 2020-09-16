@@ -1,3 +1,4 @@
+05 WIDTH 255
 10 MAXITER = 20
 20 LET C$ = " .,'~!^:;[/<&?oxOX#  "
 30 FOR Y = -39 TO 39
