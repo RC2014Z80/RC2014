@@ -1,6 +1,6 @@
-Simple Mandlebrot program
+## Simple Mandlebrot program
 
-Ascii version uses different characters to represent the density of the mandlebrot image.
+ASCII version uses different characters to represent the density of the mandlebrot image.
 
 `python ../slowprint.py > /dev/ttyUSB0 < ascii.bas`
 
@@ -12,8 +12,22 @@ Play around with the variables to change the appearance.
 
 Omitting blank space makes it run faster.
 
-_Benchmarking - MS Basic 4.7 - omitted spaces_
+### Benchmarking
+
+_MS Basic 4.7_
 
 - Searle  Std 11'46"  - 100%<br>
 - feilipu Std 10'43"  -  91%<br>
 - feilipu APU 10'05"  -  86%
+
+_MS Basic 5.21_
+
+- Microsoft  10'51"
+
+_MS Basic 5.29_
+
+- Microsoft  10'51"
+
+_MS BASCOM 5.3a_
+
+- Microsoft  3'40"
