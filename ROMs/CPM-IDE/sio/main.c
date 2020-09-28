@@ -52,7 +52,7 @@ extern uint8_t  bios_iobyte;
  */
 
 // CP/M related functions
-int8_t ya_mkcpmb(char **args);  // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char **args);   // initialise CP/M with up to 4 drives
 
 // system related functions
 int8_t ya_md(char **args);      // memory dump
@@ -95,7 +95,7 @@ struct Builtin {
 
 struct Builtin builtins[] = {
   // CP/M related functions
-    { "cpm", &ya_mkcpmb, "[file][][][] - initiate CP/M with up to 4 drive files"},
+    { "cpm", &ya_mkcpm, "[file][][][] - initiate CP/M with up to 4 drive files"},
 
 // system related functions
     { "md", &ya_md, "- [origin] - memory dump"},
@@ -130,7 +130,7 @@ uint8_t ya_num_builtins() {
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mkcpmb(char **args)   // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char **args)    // initialise CP/M with up to 4 drives
 {
     FRESULT res;
     uint8_t i = 0;

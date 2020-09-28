@@ -201,12 +201,9 @@ rboot:
     ld      d,h
     ld      e,l
     inc     de
-    ld      bc,0x20-1
-    ldir                    ;clear default FCB
+    call    ldi_31          ;clear default FCB
 
-    di
-    call    _acia_reset     ;flush the serial port
-    ei
+    call    _acia_init      ;(re)initialise the serial port
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -624,6 +621,7 @@ ldi_128:
     push bc
 ldi_32:
     ldi
+ldi_31:
     ldi
     ldi
     ldi
@@ -1233,10 +1231,6 @@ ide_setup_lba:
     ld a,b
     and 00001111b           ;lowest 4 bits used only
     or  11100000b           ;to enable LBA address mode, Master only
-;   ld hl,_ideStatus        ;set bit 4 accordingly
-;   bit 0,(hl)
-;   jr Z,ide_setup_master
-;   or $10                  ;if it is a slave, set that bit
 ide_setup_master:
     ld e,a
     ld a,__IO_IDE_LBA3
@@ -1459,8 +1453,10 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
+ALIGN $08                   ;align for bss head
+
 PUBLIC  _cpm_bios_rodata_tail
-_cpm_bios_rodata_tail:        ;tail of the cpm bios read only data
+_cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
 
 PUBLIC  _cpm_bios_bss_bridge
 _cpm_bios_bss_bridge:
@@ -1476,37 +1472,22 @@ SECTION bss_driver
 PHASE _cpm_bios_bss_bridge
 
 PUBLIC  _cpm_bios_bss_head
+
+PUBLIC _cpm_dsk0_base
+PUBLIC _cpm_bios_canary
+
+PUBLIC _bios_iobyte
+
 _cpm_bios_bss_head:         ;head of the cpm bios bss
 
-PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
-PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
-PUBLIC  aciaControl
+_cpm_dsk0_base:     defs 16 ;base 32 bit LBA of host file for disk 0 (A:) &
+                            ;3 additional LBA for host files (B:, C:, D:)
 
-aciaRxCount:    defb 0                  ;space for Rx Buffer Management
-aciaRxIn:       defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
-aciaRxOut:      defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
+_cpm_bios_canary:   defw 0  ;if it matches $AA55, bios has been loaded, and CP/M is active
 
-aciaTxCount:    defb 0                  ;space for Tx Buffer Management
-aciaTxIn:       defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
-aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
+_bios_iobyte:       defb 0  ;transfer the IOBYTE from the bios to CP/M
 
-aciaControl:    defb 0                  ;local control echo of ACIA
-
-PUBLIC _cpm_bios_canary
-_cpm_bios_canary:   defw 0              ;if it matches $AA55, bios has been loaded, and CP/M is active
-
-PUBLIC  _cpm_dsk0_base
-_cpm_dsk0_base:     defs 16             ;base 32 bit LBA of host file for disk 0 (A:) &
-                                        ;3 additional LBA for host files (B:, C:, D:)
 ;
-; IDE Status byte
-; set bit 0 : User selects master (0) or slave (1) drive
-; bit 1 : Flag 0 = master not previously accessed
-; bit 2 : Flag 0 = slave not previously accessed
-
-;PUBLIC  _ideStatus
-;_ideStatus: defb   0
-
 ;    scratch ram area for bios use
 ;
 
@@ -1542,6 +1523,20 @@ alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 dirbf:      defs    128     ;scratch directory area
 hstbuf:     defs    hstsiz  ;buffer for host disk sector
 bios_stack:                 ;temporary bios stack origin
+
+PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
+PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
+PUBLIC  aciaControl
+
+aciaRxCount:    defb 0                  ;space for Rx Buffer Management
+aciaRxIn:       defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
+aciaRxOut:      defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
+
+aciaTxCount:    defb 0                  ;space for Tx Buffer Management
+aciaTxIn:       defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
+aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
+
+aciaControl:    defb 0                  ;local control echo of ACIA
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data

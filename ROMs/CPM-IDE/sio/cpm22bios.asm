@@ -197,8 +197,7 @@ rboot:
     ld      d,h
     ld      e,l
     inc     de
-    ld      bc,0x20-1
-    ldir                    ;clear default FCB
+    call    ldi_31          ;clear default FCB
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -616,6 +615,7 @@ ldi_128:
     push bc
 ldi_32:
     ldi
+ldi_31:
     ldi
     ldi
     ldi
@@ -1439,10 +1439,6 @@ ide_setup_lba:
     ld a,b
     and 00001111b           ;lowest 4 bits used only
     or  11100000b           ;to enable LBA address mode, Master only
-;   ld hl,_ideStatus        ;set bit 4 accordingly
-;   bit 0,(hl)
-;   jr Z,ide_setup_master
-;   or $10                  ;if it is a slave, set that bit
 ide_setup_master:
     ld e,a
     ld a,__IO_IDE_LBA3
@@ -1622,7 +1618,7 @@ _cpm_bios_rodata_head:      ;origin of the cpm bios rodata
 ; start of fixed tables - aligned rodata
 ;------------------------------------------------------------------------------
 
-ALIGN 0x10
+ALIGN $10                   ;align for sio interrupt vectors
 
 PUBLIC  _cpm_sio_interrupt_vectors
 _cpm_sio_interrupt_vectors:     ;origin of the SIO/2 IM2 interrupt vectors
@@ -1682,8 +1678,10 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
+ALIGN $10                   ;align for bss head
+
 PUBLIC  _cpm_bios_rodata_tail
-_cpm_bios_rodata_tail:        ;tail of the cpm bios read only data
+_cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
 
 PUBLIC  _cpm_bios_bss_bridge
 _cpm_bios_bss_bridge:
@@ -1699,47 +1697,22 @@ SECTION bss_driver
 PHASE _cpm_bios_bss_bridge
 
 PUBLIC  _cpm_bios_bss_head
-_cpm_bios_bss_head:         ;head of the cpm bios bss
 
-PUBLIC sioaRxCount, sioaRxIn, sioaRxOut
-PUBLIC siobRxCount, siobRxIn, siobRxOut
-PUBLIC sioaTxCount, sioaTxIn, sioaTxOut
-PUBLIC siobTxCount, siobTxIn, siobTxOut
-
-sioaRxCount:    defb 0                  ;space for Rx Buffer Management
-sioaRxIn:       defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
-sioaRxOut:      defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
-
-siobRxCount:    defb 0                  ;space for Rx Buffer Management
-siobRxIn:       defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
-siobRxOut:      defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
-
-sioaTxCount:    defb 0                  ;space for Tx Buffer Management
-sioaTxIn:       defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
-sioaTxOut:      defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
-
-siobTxCount:    defb 0                  ;space for Tx Buffer Management
-siobTxIn:       defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
-siobTxOut:      defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
+PUBLIC _cpm_dsk0_base
+PUBLIC _cpm_bios_canary
 
 PUBLIC _bios_iobyte
-_bios_iobyte:   defb 0                  ;transfer the IOBYTE from the bios to CP/M
 
-PUBLIC _cpm_bios_canary
-_cpm_bios_canary:   defw 0              ;if it matches $AA55, bios has been loaded, and CP/M is active
+_cpm_bios_bss_head:         ;head of the cpm bios bss
 
-PUBLIC  _cpm_dsk0_base
-_cpm_dsk0_base:     defs 16             ;base 32 bit LBA of host file for disk 0 (A:) &
-                                        ;3 additional LBA for host files (B:, C:, D:)
+_cpm_dsk0_base:     defs 16 ;base 32 bit LBA of host file for disk 0 (A:) &
+                            ;3 additional LBA for host files (B:, C:, D:)
+
+_cpm_bios_canary:   defw 0  ;if it matches $AA55, bios has been loaded, and CP/M is active
+
+_bios_iobyte:       defb 0  ;transfer the IOBYTE from the bios to CP/M
+
 ;
-; IDE Status byte
-; set bit 0 : User selects master (0) or slave (1) drive
-; bit 1 : Flag 0 = master not previously accessed
-; bit 2 : Flag 0 = slave not previously accessed
-
-;PUBLIC  _ideStatus
-;_ideStatus: defb   0
-
 ;    scratch ram area for bios use
 ;
 
@@ -1775,6 +1748,28 @@ alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 dirbf:      defs    128     ;scratch directory area
 hstbuf:     defs    hstsiz  ;buffer for host disk sector
 bios_stack:                 ;temporary bios stack origin
+
+
+PUBLIC sioaRxCount, sioaRxIn, sioaRxOut
+PUBLIC siobRxCount, siobRxIn, siobRxOut
+PUBLIC sioaTxCount, sioaTxIn, sioaTxOut
+PUBLIC siobTxCount, siobTxIn, siobTxOut
+
+sioaRxCount:    defb 0                  ;space for Rx Buffer Management
+sioaRxIn:       defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
+sioaRxOut:      defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
+
+siobRxCount:    defb 0                  ;space for Rx Buffer Management
+siobRxIn:       defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
+siobRxOut:      defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
+
+sioaTxCount:    defb 0                  ;space for Tx Buffer Management
+sioaTxIn:       defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
+sioaTxOut:      defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
+
+siobTxCount:    defb 0                  ;space for Tx Buffer Management
+siobTxIn:       defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
+siobTxOut:      defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data

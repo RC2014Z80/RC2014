@@ -319,8 +319,8 @@ GETINP:
 ;
     LD    DE,INBUFF+1
     LD    HL,TBUFF      ;data was read into buffer here.
-    LD    BC,128        ;all 128 characters may be used.
-    LDIR                ;(HL++)->(DE++), BC times.
+                        ;all 128 characters may be used.
+    CALL    LDI_128     ;(HL++)->(DE++), 128 times.
     LD    HL,BATCHFCB+14
     LD    (HL),0        ;zero out the 's2' byte.
     INC    HL           ;and decrement the record count.
@@ -1149,8 +1149,7 @@ RENAME:
     JP    NZ,RENAME6    ;yes, print error message.
     LD    HL,FCB        ;yes, move this name into second slot.
     LD    DE,FCB+16
-    LD    BC,16
-    LDIR
+    CALL    LDI_16
     LD    HL,(INPOINT)    ;get input pointer.
     EX    DE,HL
     CALL    NONBLANK    ;get next non blank character.
@@ -1274,8 +1273,7 @@ UNKWN2:
     CALL    DSELECT        ;select specified drive.
     POP    DE
     LD    HL,COMFILE    ;set the extension to 'COM'.
-    LD    BC,3
-    LDIR
+    CALL    LDI_3
     CALL    OPENFCB        ;and open this file.
     JP    Z,UNKWN9    ;not present?
 ;
@@ -1321,8 +1319,8 @@ UNKWN4:
     LD    (FCB+32),A
     LD    DE,TFCB        ;move it into place at(005Ch).
     LD    HL,FCB
-    LD    BC,33
-    LDIR
+    CALL    LDI_32
+    LDI
     LD    HL,INBUFF+2    ;now move the remainder of the input
 UNKWN5:
     LD    A,(HL)        ;line down to (0080h). Look for a non blank.
@@ -2373,7 +2371,7 @@ CHKWPRT:
 ;
 FCB2HL:
     LD      HL,(DIRBUF)     ;get address of buffer.
-    LD      A,(FCBPOS)      ;relative position of file. 
+    LD      A,(FCBPOS)      ;relative position of file.
     ADD     A,L
     LD      L,A
     RET     NC
@@ -2431,7 +2429,7 @@ CHKNMBR:
     LD      (HL),D
     DEC     HL
     LD      (HL),E
-    RET 
+    RET
 ;
 ;   Set the directory checksum byte.
 ;
@@ -2509,17 +2507,12 @@ MOVEDIR:
     LD      HL,(DIRBUF)     ;buffer is located here, and
     LD      DE,(USERDMA)    ;put it here.
 ;
-;   Load (HL++)->(DE++), 128 times.
-;
-LDI_128:
+LDI_128:                    ;(HL++)->(DE++), 128 times.
     LD      BC,LDI_32       ;do the LDI 32 times,
     PUSH    BC              ;a total of 4 times,
-    PUSH    BC              ;for a total of 128.
+    PUSH    BC              ;for a total of 128 times.
     PUSH    BC
-;
-;   Load (HL++)->(DE++), 32 times.
-;
-LDI_32:
+LDI_32:                     ;(HL++)->(DE++), 32 times.
     LDI
     LDI
     LDI
@@ -2528,7 +2521,6 @@ LDI_32:
     LDI
     LDI
     LDI
-;
     LDI
     LDI
     LDI
@@ -2537,7 +2529,7 @@ LDI_32:
     LDI
     LDI
     LDI
-;
+LDI_16:                     ;(HL++)->(DE++), 16 times.
     LDI
 LDI_15:                     ;(HL++)->(DE++), 15 times.
     LDI
@@ -2553,6 +2545,7 @@ LDI_8:                     ;(HL++)->(DE++), 8 times.
     LDI
     LDI
     LDI
+LDI_3:                     ;(HL++)->(DE++), 3 times.
     LDI
     LDI
     LDI
