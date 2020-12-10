@@ -18,7 +18,7 @@ _MS Basic 4.7_
 
 - Searle  Std 11'46"  - 100%<br>
 - feilipu Std 10'43"  -  91%<br>
-- feilipu APU 10'05"  -  86%
+- feilipu APU  9'44"  -  83%
 
 _MS Basic 5.21_
 
