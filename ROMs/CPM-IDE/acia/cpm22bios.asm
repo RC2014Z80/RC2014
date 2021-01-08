@@ -799,10 +799,12 @@ _acia_interrupt:
 
 ; start doing the Rx stuff
 
+rx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
-    and __IO_ACIA_SR_RDRF       ; check whether a byte has been received
-    jr Z,tx_check               ; if not, go check for bytes to transmit
+    rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
+    jr NC,tx_send               ; if not, go check for bytes to transmit
 
+rx_get:
     in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
     ld l,a                      ; Move Rx byte to l
 
@@ -823,8 +825,12 @@ _acia_interrupt:
 
 tx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
-    and __IO_ACIA_SR_TDRE       ; check whether a byte can be transmitted
-    jr Z,tx_rts_check           ; if not, go check for the receive RTS selection
+    rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
+    jr C,rx_get                 ; another byte received, go get it
+
+tx_send:
+    rrca                        ; check whether a byte can be transmitted, via __IO_ACIA_SR_TDRE
+    jr NC,tx_rts_check          ; if not, go check for the receive RTS selection
 
     ld a,(aciaTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether it is zero
