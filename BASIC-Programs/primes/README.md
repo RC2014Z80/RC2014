@@ -19,13 +19,9 @@ _MS Basic 4.7_
 - Searle  4.7b  1'57"  - 100%<br>
 - feilipu 4.7c  1'48"  -  92%<br>
 
-_MS Basic 5.21_
-
-- Microsoft  
-
 _MS Basic 5.29_
 
-- Microsoft  
+- Microsoft     2'08"
 
 _MS BASCOM 5.3a_
 
