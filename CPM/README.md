@@ -8,4 +8,4 @@ The monitorload.hex is a very simple program that copies itself and the monitor 
 
 To get CP/M on to compact flash, you may be able to copy the image file directly on to CF card - however, read all the caveats in the Compact Flash Image file first.
 
-The harder, but more reliable method is to follow Grant Searle's instructions and files found at [searle.hostei.com/grant/cpm/](http://searle.hostei.com/grant/cpm/). However, because this was written with the Z80 SIO/2 keep in mind you will need to substitute the modified files in the 68B50 ACIA folder.
+The harder, but more reliable method is to follow Grant Searle's instructions and files found at [searle.x10host.com/cpm](http://searle.x10host.com/cpm/index.html). However, because this was written with the Z80 SIO/2 keep in mind you will need to substitute the modified files in the 68B50 ACIA folder.
