@@ -5,7 +5,7 @@ for line in sys.stdin:
 
     for ch in line:
         sys.stdout.write( ch );
-
-    sys.stdout.write('\r\n');
+        sleep(0.01);
+    sys.stdout.write('\n');
     sys.stdout.flush();
-    sleep(0.2);
+    sleep(0.1);

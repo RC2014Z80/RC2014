@@ -1,7 +1,8 @@
 # RC2014-BASIC-Programs
 A collection of BASIC programs that run on RC2014, using Microsoft BASIC.
 
-Both MBASIC 4.7 as modified to suit the Classic RC2014 and MBASIC 5.21 / 5.29 for CP/M are suitable to use these programs.
+Both MBASIC 4.7, as modified to suit the Classic RC2014, and MBASIC 5.21 / 5.29, for CP/M, are suitable to run these programs.
+Also under CP/M the MS BASCOM compiler can be used, which produces 3x faster code.
 
 More to follow soon...
 
