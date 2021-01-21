@@ -22,7 +22,7 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xD600    // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDA00    // below the CP/M CCP
 #pragma output CRT_ORG_VECTOR_TABLE = 0// we place our own IM2 Vector Table
 #pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
 
@@ -572,8 +572,8 @@ int main(int argc, char **argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2020\n\n> :?");
-    fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2020\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
  
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)

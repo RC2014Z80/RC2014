@@ -22,7 +22,7 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xD800
+#pragma output REGISTER_SP = 0xDC00
 #pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
 
 // DEFINES
