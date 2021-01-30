@@ -50,11 +50,13 @@ SECTION z80_acia_interrupt
 serialInt:
         push af
         push hl
-                                    ; start doing the Rx stuff
-        in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
-        and SER_RDRF                ; check whether a byte has been received
-        jr Z,im1_tx_check           ; if not, go check for bytes to transmit 
 
+im1_rx_check:
+        in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
+        rrca                        ; check whether a byte has been received, via SER_RDRF
+        jr NC,im1_tx_send           ; if not, go check for bytes to transmit
+
+im1_rx_get:
         in a,(SER_DATA_ADDR)        ; Get the received byte from the ACIA 
         ld l,a                      ; Move Rx byte to l
 
@@ -71,10 +73,14 @@ serialInt:
         inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr),hl          ; write where the next byte should be poked
 
-im1_tx_check:                       ; now start doing the Tx stuff
+im1_tx_check:
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
-        and SER_TDRE                ; check whether a byte can be transmitted
-        jr Z,im1_rts_check          ; if not, go check for the receive RTS selection
+        rrca                        ; check whether a byte has been received, via SER_RDRF
+        jr C,im1_rx_get             ; another byte received, go get it
+
+im1_tx_send:
+        rrca                        ; check whether a byte can be transmitted, via SER_TDRE
+        jr NC,im1_rts_check         ; if not, go check for the receive RTS selection
 
         ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
