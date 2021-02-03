@@ -44,6 +44,8 @@ To assemble the Am9511A APU Module, start with the two resistors. They will be 1
 
 Then assemble the __4__ diodes. Note that the diodes are polarised. The black band should be at the top of the board. Locate the diodes in the positions indicated.
 
+__OPTIONAL__ Connecting a 220pF capacitor across the `/WAIT` line diode speeds up recovery of this line which, in turn, speeds up resumption of the CPU processing as soon as the APU releases `/WAIT`. Adding this capacitance positively impacts benchmarking, so it is a recommended optional addition.
+
 ![APU Module Diodes](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_diode.png)
 
 __Do not__ place a diode in the NMI diode location at this stage (or perhaps ever). _Advanced use only_.
@@ -141,7 +143,7 @@ Basic is interpreted from tokens derived from the program text entered on the Ba
 _Benchmark Mandelbrot `colour.bas` - MS Basic 4.7 - omitted program spaces_
 
 - Searle Std 11'46"  - 100%<br>
-- feilipu APU 10'05"  -  86%
+- feilipu APU  9'44"  -  83% (with 220pF `/WAIT` capacitor).
 
 
 ## Z88DK Am9511 Floating Point Library
