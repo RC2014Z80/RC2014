@@ -9,9 +9,9 @@ This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
-The ACIA receive interface has a 255 byte buffer, together with highly optimised buffer management, to minimise potential data loss through buffer overrun. Software control of the 68C50 ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the ACIA build, the receive interface has a 255 byte buffer, together with highly optimised buffer management, to minimise potential data loss through buffer overrun. Software control of the 68C50 ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-The SIO/2 has both ports enabled. Both ports have a 255 byte receive buffer, and a 63 byte transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 vector steering is implemented.
+In the SIO/2 build, both ports enabled. Both ports have a 255 byte receive buffer, and a 63 byte transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 vector steering is implemented.
 
 The IDE interface is optimised for performance and can achieve about 100kB/s throughput using FatFS libraries in C. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
@@ -134,7 +134,7 @@ The CP/M-IDE is based on the z88dk implementation for the RC2014, together with 
 
 ### Installation
 
-Using the correct HEX file for the hardware configuration (ACIA, Spencer SIO, or SMB SIO) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
+Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
 Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You can put the CP/M drive files into directories (to organise them based on workflow), or leave them all in the root directory.
 
