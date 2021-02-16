@@ -572,9 +572,13 @@ int main(int argc, char **argv)
 
     // Load config files, if any.
 
+    // Reference shadow RAM functions, to ensure they are linked into ROM and therefore loaded to RAM.
+    shadowwrite(0,0,0);
+    shadowread(0,0,0);
+
     fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
     fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
- 
+
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)
         ya_loop();
