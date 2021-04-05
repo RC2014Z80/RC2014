@@ -11,7 +11,7 @@ EXTERN  __sio_init_async_rodata
 _sio_init:
     di
     ; initialise the SIO
-    ld hl,__sio_init_async_rodata    
+    ld hl,__sio_init_async_rodata
                                 ; load the default SIO configuration
                                 ; ASYNC operation
                                 ; BAUD = 115200 8n1
@@ -26,16 +26,16 @@ _sio_init:
     ei
     ret
 
-; Initialise the I/O ports from an array of addresses and values
-; Entry HL = base address of array
-; Exit none
-; The array consists of byte-length elements in the following order:
-; - number of bytes to be sent to the I/O port
-; - port device address (one byte only)
-; - data values destined for the I/O port
-; This sequence if repeated for any number of I/O ports
-; The array is terminated by a NULL in the number of bytes field.
-; Z80 ALS - Leventhal (1983)
+    ; Initialise the I/O ports from an array of addresses and values
+    ; Entry HL = base address of array
+    ; Exit none
+    ; The array consists of byte-length elements in the following order:
+    ; - number of bytes to be sent to the I/O port
+    ; - port device address (one byte only)
+    ; - data values destined for the I/O port
+    ; This sequence if repeated for any number of I/O ports
+    ; The array is terminated by a NULL in the number of bytes field.
+    ; Z80 ALS - Leventhal (1983)
 
 PUBLIC _sio_io_ports
 

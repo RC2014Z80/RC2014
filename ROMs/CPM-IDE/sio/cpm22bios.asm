@@ -1383,7 +1383,7 @@ IF (__IO_PIO_IDE_CTL = __IO_PIO_IDE_MSB+1) & (__IO_PIO_IDE_MSB = __IO_PIO_IDE_LS
 ide_wrblk2:
     ld d,__IO_IDE_DATA|__IO_IDE_WR_LINE
     out (c),d               ;and assert write pin
-    ld c,__IO_PIO_IDE_LSB  ;drive lower lines with lsb
+    ld c,__IO_PIO_IDE_LSB   ;drive lower lines with lsb
     outi                    ;write the lower byte (HL++)
     inc c                   ;drive upper lines with msb
     outi                    ;write the upper byte (HL++)
@@ -1621,7 +1621,7 @@ _cpm_bios_rodata_head:      ;origin of the cpm bios rodata
 ALIGN $10                   ;align for sio interrupt vectors
 
 PUBLIC  _cpm_sio_interrupt_vectors
-_cpm_sio_interrupt_vectors:     ;origin of the SIO/2 IM2 interrupt vectors
+_cpm_sio_interrupt_vectors: ;origin of the SIO/2 IM2 interrupt vectors
     defw        __siob_interrupt_tx_empty
     defw        __siob_interrupt_ext_status
     defw        __siob_interrupt_rx_char
@@ -1639,22 +1639,22 @@ _cpm_sio_interrupt_vectors:     ;origin of the SIO/2 IM2 interrupt vectors
 ;    no translations
 ;
 dpbase:
-;    disk Parameter header for disk 00
+;   disk Parameter header for disk 00
     defw    0000h, 0000h
     defw    0000h, 0000h
     defw    dirbf, dpblk
     defw    0000h, alv00
-;    disk parameter header for disk 01
+;   disk parameter header for disk 01
     defw    0000h, 0000h
     defw    0000h, 0000h
     defw    dirbf, dpblk
     defw    0000h, alv01
-;    disk parameter header for disk 02
+;   disk parameter header for disk 02
     defw    0000h, 0000h
     defw    0000h, 0000h
     defw    dirbf, dpblk
     defw    0000h, alv02
-;    disk parameter header for disk 03
+;   disk parameter header for disk 03
     defw    0000h, 0000h
     defw    0000h, 0000h
     defw    dirbf, dpblk
