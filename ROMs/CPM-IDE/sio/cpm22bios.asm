@@ -811,7 +811,6 @@ __siob_interrupt_ext_status:
     ei
     reti
 
-
 __siob_interrupt_rx_char:
     push af
     push hl
@@ -911,7 +910,6 @@ sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for
 __sioa_interrupt_ext_status:
     ei
     reti
-
 
 __sioa_interrupt_rx_char:
     push af

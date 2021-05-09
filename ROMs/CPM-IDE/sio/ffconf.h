@@ -2,7 +2,7 @@
 /  FatFs Functional Configurations
 /---------------------------------------------------------------------------*/
 
-#define FFCONF_DEF    86606    /* Revision ID */
+#define FFCONF_DEF      86631   /* Revision ID */
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -27,14 +27,6 @@
 /      are removed.
 /   2: f_opendir(), f_readdir() and f_closedir() are removed in addition to 1.
 /   3: f_lseek() function is removed in addition to 2. */
-
-
-#define FF_USE_STRFUNC  0
-/* This option switches string functions, f_gets(), f_putc(), f_puts() and f_printf().
-/
-/  0: Disable string functions.
-/  1: Enable without LF-CRLF conversion.
-/  2: Enable with LF-CRLF conversion. */
 
 
 #define FF_USE_FIND     0
@@ -66,6 +58,30 @@
 
 #define FF_USE_FORWARD  0
 /* This option switches f_forward() function. (0:Disable or 1:Enable) */
+
+
+#define FF_USE_STRFUNC	0
+#define FF_PRINT_LLI	0
+#define FF_PRINT_FLOAT	0
+#define FF_STRF_ENCODE	0
+/* FF_USE_STRFUNC switches string functions, f_gets(), f_putc(), f_puts() and
+/  f_printf().
+/
+/   0: Disable. FF_PRINT_LLI, FF_PRINT_FLOAT and FF_STRF_ENCODE have no effect.
+/   1: Enable without LF-CRLF conversion.
+/   2: Enable with LF-CRLF conversion.
+/
+/  FF_PRINT_LLI = 1 makes f_printf() support long long argument and FF_PRINT_FLOAT = 1/2
+   makes f_printf() support floating point argument. These features want C99 or later.
+/  When FF_LFN_UNICODE >= 1 with LFN enabled, string functions convert the character
+/  encoding in it. FF_STRF_ENCODE selects assumption of character encoding ON THE FILE
+/  to be read/written via those functions.
+/
+/   0: ANSI/OEM in current CP
+/   1: Unicode in UTF-16LE
+/   2: Unicode in UTF-16BE
+/   3: Unicode in UTF-8
+*/
 
 
 /*---------------------------------------------------------------------------/
@@ -212,8 +228,8 @@
 /  To enable the 64-bit LBA, also exFAT needs to be enabled. (FF_FS_EXFAT == 1) */
 
 
-#define FF_MIN_GPT        0x100000000
-/* Minimum number of sectors to switch GPT format to create partition in f_mkfs and
+#define FF_MIN_GPT        0x10000000
+/* Minimum number of sectors to switch GPT as partitioning format in f_mkfs and
 /  f_fdisk function. 0x100000000 max. This option has no effect when FF_LBA64 == 0. */
 
 
@@ -284,7 +300,7 @@
 /      lock control is independent of re-entrancy. */
 
 
-/* #include <somertos.h>	// O/S specific definitions */
+/* #include <somertos.h>	// O/S definitions */
 #define FF_FS_REENTRANT 0
 #define FF_FS_TIMEOUT   1000
 #define FF_SYNC_t       HANDLE
@@ -304,6 +320,7 @@
 /  The FF_SYNC_t defines O/S dependent sync object type. e.g. HANDLE, ID, OS_EVENT*,
 /  SemaphoreHandle_t and etc. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
+
 
 
 /*--- End of configuration options ---*/

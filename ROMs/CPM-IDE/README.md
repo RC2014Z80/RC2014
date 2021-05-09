@@ -9,15 +9,15 @@ This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
-In the ACIA build, the receive interface has a 255 byte buffer, together with highly optimised buffer management, to minimise potential data loss through buffer overrun. Software control of the 68C50 ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the ACIA build, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA double receive buffer, to minimise potential data loss through buffer overrun. Software flow control of the ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-In the SIO/2 build, both ports enabled. Both ports have a 255 byte receive buffer, and a 63 byte transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 vector steering is implemented.
+In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 quad receive buffer, and a 63 byte software transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 interrupt vector steering is implemented.
 
 The IDE interface is optimised for performance and can achieve about 100kB/s throughput using FatFS libraries in C. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
-The IDE interface supports both PATA hard drives and Compact Flash cards in native 16 bit PATA mode.
+The IDE interface supports both PATA hard drives (including SSD IDE and DOM storage) and Compact Flash cards in native 16 bit PATA mode with buffered I/O provided by the 82C55 device.
 
-The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. There can be as many CP/M "drives" stored on the FAT32 formatted IDE drive as needed, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M "drives" can be stored in any number of sub-directories. Knock yourself out.
+The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. There can be as many CP/M "drives" stored on the FAT32 formatted disk as needed, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M "drives" can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -32,13 +32,13 @@ The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. T
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO (front view)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO/2 (front view)<center></th>
 </tr>
 <tr>
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO (back view)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with SIO/2 (back view)<center></th>
 </tr>
 </tbody>
 </table>
@@ -57,12 +57,17 @@ As noted above, the complete system must also include:
 
 3. [CPU Module](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
 4. [Clock Module](https://rc2014.co.uk/modules/clock/).
-5. [SIO Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
-6. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or Backplane Pro.
+5. [Pageable ROM Module](https://rc2014.co.uk/modules/pageable-rom/).
+6. [SIO/2 Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
+7. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or Backplane Pro.
 
 Optionally, replacing 3. and 4. with below can save a slot and provides some improvements.
 
 - [Z80 CPU & Clock Module](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
+
+Optionally, replacing 2. and 5. with below avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
+
+- [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
 Additionally, the ACIA serial card could be substituted for the SIO/2 dual serial interface.
 
@@ -87,7 +92,7 @@ As noted Compact Flash cards are also supported in native 16 bit PATA mode, as d
 
 ## Configuration
 
-The cards are configured in their normal settings for CP/M. A jumper for the "Page" signal is shown on pin 39, although this can be done in any alternative way.
+The cards are configured in their normal settings for CP/M. A jumper for the `PAGE` signal is shown on pin 39, although this can be done in any alternative way.
 
 Rather than spend time on long descriptions, one picture is worth 2kByte.
 
@@ -130,13 +135,13 @@ Rather than spend time on long descriptions, one picture is worth 2kByte.
 
 ## Software
 
-The CP/M-IDE is based on the z88dk implementation for the RC2014, together with the DRI CP/M CCP/BDOS, and a shell and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration.
+The CP/M-IDE is based on the z88dk with a simple command shell for the RC2014, together with the DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions. Z80 `LDI` instructions (for example) have been used to improve buffer copy performance.
 
 ### Installation
 
-Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
+Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO/2 Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
-Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You can put the CP/M drive files into directories (to organise them based on workflow), or leave them all in the root directory.
+Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
 
 Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
 
@@ -145,12 +150,12 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
 
 ```bash
-zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node2000000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
+zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node4000000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 
-zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node2000000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
+zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node4000000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 ```
 
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to flash space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
+Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
 
 ### Boot up
 
@@ -160,15 +165,15 @@ The preamble code copies the CCP/BDOS to the correct location, and then checks f
 
 If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS, the ACIA or SIO drivers, and the IDE drivers necessary for operation of the shell and CP/M.
 
-Control is then passed to the shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
+Control is then passed to the command shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
-Where the SIO dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
+Where the SIO/2 dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
 
 CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
 The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
 
-Once the CP/M BIOS has established that it has a valid CP/M drive, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
+Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
 ### CP/M System Disk
 
@@ -176,9 +181,9 @@ The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DIS
 
 Also, the [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to return to the shell.
 
-As the CP/M-IDE shell doesn't (currently) have a way to format its own CP/M drives, some example drives are provided as zip files. These zip files can be expanded into the directory structure of the IDE drive and used or augmented by the CP/M Tools noted below.
+As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), some template and example drives are provided as zip files. These zip files can be expanded into the directory structure of the IDE drive and used or augmented by the CP/M Tools noted below.
 
-Because the CCP/BDOS and BIOS are stored in ROM, there is no "system disk". Cold and warm boot is from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive files are in which drive letter. Except that the `A:` drive will always be the default drive, where you try to select a non-existent drive letter.
+Because the CCP/BDOS and BIOS are stored in ROM, there is no IDE "system disk". Cold and warm boot are from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a non-existent drive letter.
 
 ### CP/M Application Disks
 
@@ -218,9 +223,9 @@ end
 
 ```
 
-## Shell Command Line Interface
+## Shell Command Interface
 
-The command line interface is implemented in C, with the underlying functions either in C or in assembly.
+The shell command line interface is implemented in C, with the underlying functions either in C or in assembly.
 
 Again, here is a view of what success looks like.
 
@@ -231,7 +236,7 @@ Again, here is a view of what success looks like.
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev3.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev3.png"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE CLI<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE Shell CLI<center></th>
 </tr>
 </tbody>
 </table>
@@ -255,7 +260,6 @@ Again, here is a view of what success looks like.
 - `ds` - disk status
 - `dd [sector]` - disk dump, sector in decimal
 
-## CP/M Command Line Interface
+## CP/M CCP Extension
 
-An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the CP/M disks.
-`EXIT` initialises a clean reboot of the RC2014.
+An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the CP/M drives. `EXIT` initialises a clean reboot of the RC2014, and returns to the command shell.

@@ -1,7 +1,6 @@
 
 IF (__crt_org_code = 0)
 
-EXTERN _acia0_init
 EXTERN qboot
 
 EXTERN _rodata_cpm_ccp_head

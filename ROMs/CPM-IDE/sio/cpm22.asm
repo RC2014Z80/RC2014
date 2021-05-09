@@ -1273,7 +1273,9 @@ UNKWN2:
     CALL    DSELECT        ;select specified drive.
     POP    DE
     LD    HL,COMFILE    ;set the extension to 'COM'.
-    CALL    LDI_3
+    LDI
+    LDI
+    LDI
     CALL    OPENFCB        ;and open this file.
     JP    Z,UNKWN9    ;not present?
 ;
@@ -2545,7 +2547,6 @@ LDI_8:                     ;(HL++)->(DE++), 8 times.
     LDI
     LDI
     LDI
-LDI_3:                     ;(HL++)->(DE++), 3 times.
     LDI
     LDI
     LDI
