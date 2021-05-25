@@ -42,11 +42,11 @@ pboot:                      ; preamble code also used by wboot
     ldir
 
     ld hl,_cpm_bios_canary  ; check that the CP/M BIOS is active
-    ld a, (hl)              ; grab first byte $AA
+    ld a,(hl)               ; grab first byte $AA
     rrca                    ; rotate it to $55
     inc hl                  ; point to second byte $55
     xor (hl)                ; if correct, zero result
-    call Z, qboot           ; so continue to reboot CP/M as normal
+    call Z,qboot            ; so continue to reboot CP/M as normal
                             ; but ret if there is no disk configured
 
     ; set up COMMON_AREA BIOS

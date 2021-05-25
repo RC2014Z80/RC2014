@@ -166,6 +166,7 @@ cboot:
     jr      rboot
 
 wboot:                              ;from a normal restart
+    di
     ld      sp,bios_stack           ;temporary stack
     xor     a                       ;A = $00 ROM
     out     (__IO_ROM_TOGGLE),a     ;latch ROM IN
@@ -203,7 +204,8 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
-    call    _acia_init      ;(re)initialise the serial port
+    call    _acia_reset     ; reset and empty the ACIA Tx & Rx buffers
+    ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -770,23 +772,19 @@ getLBAbase:
 ;------------------------------------------------------------------------------
 
 PUBLIC _acia_interrupt
-PUBLIC _acia_init
+
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_peekc
 PUBLIC _acia_putc
 PUBLIC _acia_pollc
 
-PUBLIC _acia0_interrupt
-PUBLIC _acia0_init
 PUBLIC _acia0_reset
 PUBLIC _acia0_getc
 PUBLIC _acia0_peekc
 PUBLIC _acia0_putc
 PUBLIC _acia0_pollc
 
-PUBLIC _acia1_interrupt
-PUBLIC _acia1_init
 PUBLIC _acia1_reset
 PUBLIC _acia1_getc
 PUBLIC _acia1_peekc
@@ -797,9 +795,6 @@ _acia_interrupt:
     push af
     push hl
 
-; start doing the Rx stuff
-
-rx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
     rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
     jr NC,tx_send               ; if not, go check for bytes to transmit
@@ -809,7 +804,7 @@ rx_get:
     ld l,a                      ; Move Rx byte to l
 
     ld a,(aciaRxCount)          ; Get the number of bytes in the Rx buffer
-    cp __IO_ACIA_RX_SIZE - 1    ; check whether there is space in the buffer
+    cp __IO_ACIA_RX_SIZE-1      ; check whether there is space in the buffer
     jr NC,tx_check              ; buffer full, check if we can send something
 
     ld a,l                      ; get Rx byte from l
@@ -821,7 +816,15 @@ rx_get:
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (aciaRxIn),hl            ; write where the next byte should be poked
 
-; now start doing the Tx stuff
+    ld a,(aciaRxCount)          ; get the current Rx count
+    cp __IO_ACIA_RX_FULLISH     ; compare the count with the preferred full size
+    jr C,tx_check               ; leave the RTS low, and check for Rx/Tx possibility
+
+    ld a,(aciaControl)          ; get the ACIA control echo byte
+    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
+    or __IO_ACIA_CR_TDI_RTS1    ; Set RTS high, and disable Tx Interrupt
+    ld (aciaControl),a          ; write the ACIA control echo byte back
+    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
 
 tx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
@@ -830,7 +833,7 @@ tx_check:
 
 tx_send:
     rrca                        ; check whether a byte can be transmitted, via __IO_ACIA_SR_TDRE
-    jr NC,tx_rts_check          ; if not, go check for the receive RTS selection
+    jr NC,tx_end                ; if not, we're done for now
 
     ld a,(aciaTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether it is zero
@@ -839,32 +842,22 @@ tx_send:
     ld hl,(aciaTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
     out (__IO_ACIA_DATA_REGISTER),a     ; output the Tx byte to the ACIA
+
     inc l                       ; move the Tx pointer, just low byte along
     ld a,__IO_ACIA_TX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or aciaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (aciaTxOut),hl           ; write where the next byte should be popped
+
     ld hl,aciaTxCount
     dec (hl)                    ; atomically decrement current Tx count
     jr NZ,tx_end                ; if we've more Tx bytes to send, we're done for now
 
 tx_tei_clear:
     ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS0    ; mask out (disable) the Tx Interrupt, keep RTS low
+    and ~__IO_ACIA_CR_TEI_RTS0  ; mask out (disable) the Tx Interrupt, keep RTS low
     ld (aciaControl),a          ; write the ACIA control byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
-
-tx_rts_check:
-    ld a,(aciaRxCount)          ; get the current Rx count
-    cp __IO_ACIA_RX_FULLISH     ; compare the count with the preferred full size
-    jr C,tx_end                 ; leave the RTS low, and end
-
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS1    ; Set RTS high, and disable Tx Interrupt
-    ld (aciaControl),a          ; write the ACIA control echo byte back
     out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
 
 tx_end:
@@ -873,23 +866,10 @@ tx_end:
     ei
     reti
 
-_acia_init:
-    di
-    ; initialise the ACIA
-    ld a,__IO_ACIA_CR_RESET     ; Master Reset the ACIA
-    out (__IO_ACIA_CONTROL_REGISTER),a
-
-    ld a,__IO_ACIA_CR_REI|__IO_ACIA_CR_TDI_RTS0|__IO_ACIA_CR_8N1|__IO_ACIA_CR_CLK_DIV_64
-                                ; load the default ACIA configuration
-                                ; 8n1 at 115200 baud
-                                ; receive interrupt enabled
-                                ; transmit interrupt disabled
-    ld (aciaControl),a          ; write the ACIA control byte echo
-    out (__IO_ACIA_CONTROL_REGISTER),a    ; output to the ACIA control
-
-    call _acia_reset            ; reset empties the Tx & Rx buffers
-    im 1                        ; interrupt mode 1
-    ei
+_acia_reset:
+    ; interrupts should be disabled
+    call _acia_flush_Rx
+    call _acia_flush_Tx
     ret
 
 _acia_flush_Rx_di:
@@ -926,12 +906,6 @@ _acia_flush_Tx:
     ld hl,aciaTxBuffer          ; load Tx buffer pointer home
     ld (aciaTxIn),hl
     ld (aciaTxOut),hl
-    ret
-
-_acia_reset:
-    ; interrupts should be disabled
-    call _acia_flush_Rx
-    call _acia_flush_Tx
     ret
 
 _acia_getc:
@@ -1046,19 +1020,13 @@ putc_buffer_tx:
     ei                          ; critical section end
     ret
 
-    defc _acia0_interrupt = _acia_interrupt
-    defc _acia0_init = _acia_init
     defc _acia0_reset = _acia_reset
-
     defc _acia0_getc = _acia_getc
     defc _acia0_peekc = _acia_peekc
     defc _acia0_putc = _acia_putc
     defc _acia0_pollc = _acia_pollc
 
-    defc _acia1_interrupt = _acia_interrupt
-    defc _acia1_init = _acia_init
     defc _acia1_reset = _acia_reset
-
     defc _acia1_getc = _acia_getc
     defc _acia1_peekc = _acia_peekc
     defc _acia1_putc = _acia_putc
@@ -1459,7 +1427,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $08                   ;align for bss head
+ALIGN $10                   ;align for bss head
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
