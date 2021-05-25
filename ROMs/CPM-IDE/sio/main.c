@@ -198,7 +198,7 @@ int8_t ya_help(char **args)
     uint8_t i;
     (void *)args;
 
-    fprintf(output,"RC2014 - CP/M IDE Monitor v2.0\n");
+    fprintf(output,"RC2014 - CP/M IDE Monitor v2.1\n");
     fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -507,9 +507,6 @@ void ya_loop(void)
 
     line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
     if (line == NULL) return;
-
-    sioa_flush_rx_di();
-    siob_flush_rx_di();
 
     while (1){                                          /* look for ":" to select the valid serial port */
         if (sioa_pollc() != 0) {

@@ -1,6 +1,5 @@
 cpm22preamble
 cpm22
 cpm22bios
-sio_init
 sio_init_async_rodata
 main.c

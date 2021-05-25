@@ -3,7 +3,7 @@ INCLUDE "config_rc2014_private.inc"
 
 SECTION rodata_driver
 
-EXTERN  _cpm_sio_interrupt_vectors
+EXTERN  _cpm_sio_interrupt_vector_table
 
 PUBLIC  __sio_init_async_rodata
 
@@ -14,11 +14,11 @@ __sio_init_async_rodata:
 __siob_init_async_rodata_begin:
     defb    __IO_SIO_WR0_CHANNEL_RESET
     defb    __IO_SIO_WR0_R2
-    defb    _cpm_sio_interrupt_vectors&$F0
+    defb    _cpm_sio_interrupt_vector_table&$F0
     defb    __IO_SIO_WR0_R4|__IO_SIO_WR0_EXT_INT_RESET
     defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_1|__IO_SIO_WR4_PARITY_NONE
     defb    __IO_SIO_WR0_R3
-    defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_AUTO_ENABLES|__IO_SIO_WR3_RX_ENABLE
+    defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_RX_ENABLE
     defb    __IO_SIO_WR0_R5
     defb    __IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS
     defb    __IO_SIO_WR0_R1|__IO_SIO_WR0_EXT_INT_RESET
@@ -32,7 +32,7 @@ __sioa_init_async_rodata_begin:
     defb    __IO_SIO_WR0_R4|__IO_SIO_WR0_EXT_INT_RESET
     defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_1|__IO_SIO_WR4_PARITY_NONE
     defb    __IO_SIO_WR0_R3
-    defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_AUTO_ENABLES|__IO_SIO_WR3_RX_ENABLE
+    defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_RX_ENABLE
     defb    __IO_SIO_WR0_R5
     defb    __IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS
     defb    __IO_SIO_WR0_R1|__IO_SIO_WR0_EXT_INT_RESET

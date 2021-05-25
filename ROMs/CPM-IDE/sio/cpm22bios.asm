@@ -162,6 +162,7 @@ cboot:
     jr      rboot
 
 wboot:                              ;from a normal restart
+    di
     ld      sp,bios_stack           ;temporary stack
     xor     a                       ;A = $00 ROM
     out     (__IO_ROM_TOGGLE),a     ;latch ROM IN
@@ -198,6 +199,10 @@ rboot:
     ld      e,l
     inc     de
     call    ldi_31          ;clear default FCB
+
+    call    _sioa_reset     ; reset and empty the SIOA Tx & Rx buffers
+    call    _siob_reset     ; reset and empty the SIOB Tx & Rx buffers
+    ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
@@ -779,11 +784,11 @@ PUBLIC _siob_pollc
 
 __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
     push af
-    push hl
     ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether it is zero
     jr Z,siob_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
 
+    push hl
     ld hl,(siobTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
     out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
@@ -797,14 +802,14 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
 
     ld hl,siobTxCount
     dec (hl)                    ; atomically decrement current Tx count
+    pop hl
     jr NZ,siob_tx_end
 
 siob_tx_int_pend:
     ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
     out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
 
-siob_tx_end:                    ; if we've more Tx bytes to send, we're done for now
-    pop hl
+siob_tx_end:                        ; if we've more Tx bytes to send, we're done for now
     pop af
 
 __siob_interrupt_ext_status:
@@ -860,7 +865,6 @@ siob_rx_check:                      ; SIO has 4 byte Rx H/W FIFO
 
 __siob_interrupt_rx_error:
     push af
-    push hl
     ld a,__IO_SIO_WR0_R1                ; set request for SIOB Read Register 1
     out (__IO_SIOB_CONTROL_REGISTER),a  ; into the SIOB control register
     in a,(__IO_SIOB_CONTROL_REGISTER)   ; load Read Register 1
@@ -872,18 +876,17 @@ __siob_interrupt_rx_error:
 siob_interrupt_rx_exit:
     ld a,__IO_SIO_WR0_ERROR_RESET       ; otherwise reset the Error flags
     out (__IO_SIOB_CONTROL_REGISTER),a  ; in the SIOB Write Register 0
-    pop hl                              ; and clean up
-    pop af
+    pop af                              ; and clean up
     ei
     reti
 
 __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
     push af
-    push hl
     ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether it is zero
     jr Z,sioa_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
 
+    push hl
     ld hl,(sioaTxOut)           ; get the pointer to place where we pop the Tx byte
     ld a,(hl)                   ; get the Tx byte
     out (__IO_SIOA_DATA_REGISTER),a ; output the Tx byte to the SIOA
@@ -897,14 +900,14 @@ __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
 
     ld hl,sioaTxCount
     dec (hl)                    ; atomically decrement current Tx count
+    pop hl
     jr NZ,sioa_tx_end
 
 sioa_tx_int_pend:
     ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
     out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
 
-sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for now
-    pop hl
+sioa_tx_end:                        ; if we've more Tx bytes to send, we're done for now
     pop af
 
 __sioa_interrupt_ext_status:
@@ -961,7 +964,6 @@ sioa_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
 
 __sioa_interrupt_rx_error:
     push af
-    push hl
     ld a,__IO_SIO_WR0_R1                ; set request for SIOA Read Register 1
     out (__IO_SIOA_CONTROL_REGISTER),a  ; into the SIOA control register
     in a,(__IO_SIOA_CONTROL_REGISTER)   ; load Read Register 1
@@ -974,9 +976,7 @@ __sioa_interrupt_rx_error:
 sioa_interrupt_rx_exit:
     ld a,__IO_SIO_WR0_ERROR_RESET       ; otherwise reset the Error flags
     out (__IO_SIOA_CONTROL_REGISTER),a  ; in the SIOA Write Register 0
-
-    pop hl                              ; and clean up
-    pop af
+    pop af                              ; and clean up
     ei
     reti
 
@@ -1616,18 +1616,22 @@ _cpm_bios_rodata_head:      ;origin of the cpm bios rodata
 ; start of fixed tables - aligned rodata
 ;------------------------------------------------------------------------------
 
-ALIGN $10                   ;align for sio interrupt vectors
+ALIGN $10                   ;align for sio interrupt vector table
 
-PUBLIC  _cpm_sio_interrupt_vectors
-_cpm_sio_interrupt_vectors: ;origin of the SIO/2 IM2 interrupt vectors
-    defw        __siob_interrupt_tx_empty
-    defw        __siob_interrupt_ext_status
-    defw        __siob_interrupt_rx_char
-    defw        __siob_interrupt_rx_error
-    defw        __sioa_interrupt_tx_empty
-    defw        __sioa_interrupt_ext_status
-    defw        __sioa_interrupt_rx_char
-    defw        __sioa_interrupt_rx_error
+
+PUBLIC  _cpm_sio_interrupt_vector_table
+
+; origin of the SIO/2 IM2 interrupt vector table
+
+_cpm_sio_interrupt_vector_table:
+    defw    __siob_interrupt_tx_empty
+    defw    __siob_interrupt_ext_status
+    defw    __siob_interrupt_rx_char
+    defw    __siob_interrupt_rx_error
+    defw    __sioa_interrupt_tx_empty
+    defw    __sioa_interrupt_ext_status
+    defw    __sioa_interrupt_rx_char
+    defw    __sioa_interrupt_rx_error
 
 ;------------------------------------------------------------------------------
 ; start of fixed tables - non aligned rodata
