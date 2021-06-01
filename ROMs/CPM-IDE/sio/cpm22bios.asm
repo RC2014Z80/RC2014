@@ -834,24 +834,17 @@ siob_rx_get:
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (siobRxIn),hl            ; write where the next byte should be poked
 
-;   ld a,(siobRxCount)          ; get the current Rx count
-;   cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-;   jr C,siob_rx_check          ; if the buffer is fullish reset the RTS line
+    ld a,(siobRxCount)          ; get the current Rx count
+    cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
+    jr C,siob_rx_check          ; if the buffer is fullish reset the RTS line
                                 ; this means getting characters will be slower
                                 ; when the buffer is fullish,
                                 ; but we stop the lemmings.
 
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-;   in a,(__IO_SIOB_CONTROL_REGISTER)   ; read from the SIOB R5 register
-;   ld l,a                      ; put it in L
-
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-
-;   ld a,~__IO_SIO_WR5_RTS      ; clear RTS
-;   and l                       ; with previous contents of R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
+    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
+    out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
+    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE    ; clear RTS
+    out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
 
 siob_rx_check:                      ; SIO has 4 byte Rx H/W FIFO
     in a,(__IO_SIOB_CONTROL_REGISTER)   ; get the SIOB register R0
@@ -933,24 +926,17 @@ sioa_rx_get:
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (sioaRxIn),hl            ; write where the next byte should be poked
 
-;   ld a,(sioaRxCount)          ; get the current Rx count
-;   cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-;   jr C,sioa_rx_check          ; if the buffer is fullish reset the RTS line
+    ld a,(sioaRxCount)          ; get the current Rx count
+    cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
+    jr C,sioa_rx_check          ; if the buffer is fullish reset the RTS line
                                 ; this means getting characters will be slower
                                 ; when the buffer is fullish,
                                 ; but we stop the lemmings.
 
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
-;   in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
-;   ld l,a                      ; put it in L
-
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
-
-;   ld a,~__IO_SIO_WR5_RTS      ; clear RTS
-;   and l                       ; with previous contents of R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
+    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
+    out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
+    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE    ; clear RTS
+    out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
 
 sioa_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
     in a,(__IO_SIOA_CONTROL_REGISTER)   ; get the SIOA register R0
@@ -1054,23 +1040,16 @@ _sioa_getc:
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
-;   cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-;   jr NC,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
+    jr NC,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
 
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
-;   in a,(__IO_SIOA_CONTROL_REGISTER)   ; read from the SIOA R5 register
-;   ld l,a                      ; put it in L
-
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
-
-;   ld a,__IO_SIO_WR5_RTS       ; set the RTS
-;   or l                        ; with previous contents of R5
-;   out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
+    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
+    out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
+    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS   ; set the RTS
+    out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
 
 sioa_getc_clean_up:
     ld hl,sioaRxCount
@@ -1095,23 +1074,16 @@ _siob_getc:
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
-;   cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-;   jr NC,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
+    jr NC,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
                                 ; this means retrieving characters will be slower
                                 ; when the buffer is emptyish.
                                 ; Better than the reverse case.
 
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a read from R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-;   in a,(__IO_SIOB_CONTROL_REGISTER)   ; read from the SIOB R5 register
-;   ld l,a                      ; put it in L
-
-;   ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-
-;   ld a,__IO_SIO_WR5_RTS       ; set the RTS
-;   or l                        ; with previous contents of R5
-;   out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
+    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
+    out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
+    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS   ; set the RTS
+    out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
 
 siob_getc_clean_up:
     ld hl,siobRxCount

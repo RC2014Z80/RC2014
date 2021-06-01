@@ -9,9 +9,9 @@ This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
-In the ACIA build, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA double receive buffer, to minimise potential data loss through buffer overrun. Software flow control of the ACIA is provided, but the normal FTDI USB interface is not connected to the correct ACIA signal lines to enable hardware flow control. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the ACIA build, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 quad receive buffer, and a 63 byte software transmit buffer. The transmit function has direct cut-through when the buffer is empty. Full IM2 interrupt vector steering is implemented.
+In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 31 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
 The IDE interface is optimised for performance and can achieve about 100kB/s throughput using FatFS libraries in C. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
@@ -156,6 +156,8 @@ zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-no
 ```
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
+
+The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
 
 ### Boot up
 
