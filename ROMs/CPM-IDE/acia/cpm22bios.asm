@@ -797,7 +797,7 @@ _acia_interrupt:
 
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
     rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
-    jr NC,tx_send               ; if not, go check for bytes to transmit
+    jr NC,tx_check              ; if not, go check for bytes to transmit
 
 rx_get:
     in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
@@ -805,7 +805,7 @@ rx_get:
 
     ld a,(aciaRxCount)          ; Get the number of bytes in the Rx buffer
     cp __IO_ACIA_RX_SIZE-1      ; check whether there is space in the buffer
-    jr NC,tx_check              ; buffer full, check if we can send something
+    jr NC,rx_check              ; buffer full, check if we can send something
 
     ld a,l                      ; get Rx byte from l
     ld hl,aciaRxCount
@@ -818,7 +818,7 @@ rx_get:
 
     ld a,(aciaRxCount)          ; get the current Rx count
     cp __IO_ACIA_RX_FULLISH     ; compare the count with the preferred full size
-    jr C,tx_check               ; leave the RTS low, and check for Rx/Tx possibility
+    jr NZ,rx_check              ; leave the RTS low, and check for Rx/Tx possibility
 
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
@@ -826,12 +826,12 @@ rx_get:
     ld (aciaControl),a          ; write the ACIA control echo byte back
     out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
 
-tx_check:
+rx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
     rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
     jr C,rx_get                 ; another byte received, go get it
 
-tx_send:
+tx_check:
     rrca                        ; check whether a byte can be transmitted, via __IO_ACIA_SR_TDRE
     jr NC,tx_end                ; if not, we're done for now
 
@@ -920,7 +920,7 @@ _acia_getc:
     ret Z                       ; if the count is zero, then return
 
     cp __IO_ACIA_RX_EMPTYISH    ; compare the count with the preferred empty size
-    jr NC,getc_clean_up_rx      ; if the buffer not emptyish, don't change the RTS
+    jr NZ,getc_clean_up_rx      ; if the buffer not emptyish, don't change the RTS
 
     di                          ; critical section begin
     ld a,(aciaControl)          ; get the ACIA control echo byte
