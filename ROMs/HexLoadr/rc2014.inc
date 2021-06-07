@@ -42,7 +42,7 @@ DEFC    ROMSTART        =   $0000   ; Bottom of ROM
 DEFC    RAMSTOP         =   $FFFF   ; Top of RAM
 
 DEFC    SER_RX_BUFSIZE  =   $100    ; FIXED Rx buffer size, 256 Bytes, no range checking
-DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $08
+DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $10
                                     ; Fullness of the Rx Buffer, when not_RTS is signalled
 DEFC    SER_RX_EMPTYSIZE =  $08     ; Fullness of the Rx Buffer, when RTS is signalled
 
@@ -114,7 +114,7 @@ DEFC    SER_TDI_RTS1    =   $40    ; _RTS high, Transmitting Interrupt Disabled
 DEFC    SER_TEI_RTS0    =   $20    ; _RTS low,  Transmitting Interrupt Enabled
 DEFC    SER_TDI_RTS0    =   $00    ; _RTS low,  Transmitting Interrupt Disabled
 
-DEFC    SER_TEI_MASK    =   $60    ; Mask for the Tx Interrupt & RTS bits   
+DEFC    SER_TEI_MASK    =   $60    ; Mask for the Tx Interrupt & RTS bits
 
 DEFC    SER_REI         =   $80    ; Receive Interrupt Enabled
 

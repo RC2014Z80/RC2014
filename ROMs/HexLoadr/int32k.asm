@@ -51,7 +51,6 @@ serialInt:
         push af
         push hl
 
-im1_rx_check:
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
         jr NC,im1_tx_send           ; if not, go check for bytes to transmit
@@ -73,6 +72,16 @@ im1_rx_get:
         inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr),hl          ; write where the next byte should be poked
 
+        ld a,(serRxBufUsed)         ; get the current Rx count
+        cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
+        jr NZ,im1_tx_check          ; leave the RTS low, and check for Rx/Tx possibility
+
+        ld a,(serControl)           ; get the ACIA control echo byte
+        and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
+        or SER_TDI_RTS1             ; Set RTS high, and disable Tx Interrupt
+        ld (serControl),a           ; write the ACIA control echo byte back
+        out (SER_CTRL_ADDR),a       ; Set the ACIA CTRL register
+
 im1_tx_check:
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
@@ -80,7 +89,7 @@ im1_tx_check:
 
 im1_tx_send:
         rrca                        ; check whether a byte can be transmitted, via SER_TDRE
-        jr NC,im1_rts_check         ; if not, go check for the receive RTS selection
+        jr NC,im1_txa_end           ; if not, we're done for now
 
         ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
@@ -104,20 +113,8 @@ im1_tx_send:
 
 im1_tei_clear:
         ld a,(serControl)           ; get the ACIA control echo byte
-        and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
-        or SER_TDI_RTS0             ; mask out (disable) the Tx Interrupt, keep RTS low
+        and ~SER_TEI_RTS0           ; mask out (disable) the Tx Interrupt
         ld (serControl),a           ; write the ACIA control byte back
-        out (SER_CTRL_ADDR),a       ; Set the ACIA CTRL register
-
-im1_rts_check:
-        ld a,(serRxBufUsed)         ; get the current Rx count
-        cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
-        jr C,im1_txa_end            ; leave the RTS low, and end
-
-        ld a,(serControl)           ; get the ACIA control echo byte
-        and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
-        or SER_TDI_RTS1             ; Set RTS high, and disable Tx Interrupt
-        ld (serControl),a           ; write the ACIA control echo byte back
         out (SER_CTRL_ADDR),a       ; Set the ACIA CTRL register
 
 im1_txa_end:
@@ -141,7 +138,7 @@ RXA:
         jr Z,RXA                    ; wait, if there are no bytes available
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
-        jr NC,rxa_clean_up          ; if the buffer is too full, don't change the RTS
+        jr NZ,rxa_clean_up          ; if the buffer is too full, don't change the RTS
 
         di                          ; critical section begin
         ld a,(serControl)           ; get the ACIA control echo byte
