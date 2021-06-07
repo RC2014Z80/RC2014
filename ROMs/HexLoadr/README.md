@@ -4,9 +4,7 @@ This ROM works with the __Mini__, __Micro__, and __Classic__ versions of the RC2
 
 __NOTE__ The `HexLoadr` Intel HEX program loader has been integrated inside MS Basic as the `HLOAD` keyword.
 
-ACIA 6850 interrupt driven serial I/O to run modified NASCOM Basic 4.7. Full input and output buffering with incoming data hardware handshaking. Handshake shows full before the buffer is totally filled to allow run-on from the sender. Transmit and receive are interrupt driven, and are fast.
-
-The receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Receive hardware (RTS) flow control is provided. The transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+ACIA 6850 interrupt driven serial I/O to run modified NASCOM Basic 4.7. The receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Receive hardware (RTS) flow control is provided. The transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
 Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM JumP Table, starting at `0x8000`.
 
