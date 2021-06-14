@@ -150,9 +150,9 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
 
 ```bash
-zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node4000000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
+zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 
-zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node4000000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
+zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 ```
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
@@ -197,7 +197,7 @@ FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is po
 
 ### CP/M TOOLS Usage
 
-CP/M drive files can be read and written using a host computer with any operating system, by using the [`cpmtools`](http://www.moria.de/~michael/cpmtools/) utilities, simply by inserting the PATA IDE drive in a USB drive caddy.
+CP/M drive files can be read and written using a host computer with any operating system, by using the [`cpmtools`](http://www.moria.de/~michael/cpmtools/) utilities, simply by inserting the PATA IDE drive into a USB drive caddy.
 
 The CP/M TOOLS package v2.20 is available from debian repositories.
 

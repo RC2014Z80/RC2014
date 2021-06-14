@@ -87,6 +87,7 @@ extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise
 /*
   List of builtin commands.
  */
+
 struct Builtin {
   const char *name;
   int8_t (*func) (char** args);
@@ -179,11 +180,12 @@ int8_t ya_md(char **args)       // dump RAM contents from nominated bank from no
 
     memcpy(buffer, (void *)origin, 0x100); // grab a page
     fprintf(output, "\nOrigin: %04X\n", (uint16_t)origin);
-    origin += 0x100;                       // go to next page (next time)
 
     for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x100; ptr += 16, ofs += 16) {
         put_dump(ptr, ofs, 16);
     }
+
+    origin += 0x100;                       // go to next page (next time)
     return 1;
 }
 
