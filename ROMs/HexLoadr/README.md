@@ -48,7 +48,7 @@ For convenience, because we can't easily change the ROM code interrupt routines 
 * INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
 * NMI: `NMI` is unused and is available to the user.
 
-All `RST xx` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed.
+All `RST xx` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. For more information on configuring and using the `RST xx` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
 
 ## USR Jump Address & Parameter Access
 
@@ -122,6 +122,7 @@ The rework to support MS Basic HLOAD, RESET, and the Z80 instruction tuning are 
 
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-Source files maintained at https://github.com/feilipu/NASCOM_BASIC_4.7
+Source files archived at https://github.com/feilipu/NASCOM_BASIC_4.7
+Further maintenance at https://gitlab.com/feilipu/NASCOM_BASIC
 
-@feilipu, August 2020
+@feilipu, August 2021
