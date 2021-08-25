@@ -516,7 +516,7 @@ INITAB: JP      WARMST          ; Warm start jump
         .BYTE   0               ; Break not by NMI
         .BYTE   0               ; Break flag
 
-        JP      TTYLIN          ; Input reflection (set to TTY)
+         JP     TTYLIN          ; Input reflection (set to TTY)
 
         .WORD   STLOOK          ; Temp string space
         .WORD   -2              ; Current line number (cold)
@@ -3728,7 +3728,7 @@ MLDEBC: LD      HL,0            ; Clear partial product
         RET     Z               ; Return zero if zero
         LD      A,B
         LD      B,16            ; 16 bits (iterations)
-MLDBLP: ADD     HL,HL           ; Shift P.P left
+MLDBLP: ADD     HL,HL           ; Shift partial product left
         JP      C,BSERR         ; ?BS Error if overflow
         RL      C
         RLA

@@ -53,36 +53,36 @@ DEFC    SER_TX_BUFSIZE  =   $40     ; Size of the Tx Buffer, 2^n Bytes, n = 6 he
 ; Interrupt vectors (offsets) for Z80 RST, INT0, and NMI interrupts
 ;
 
-DEFC    Z80_VECTOR_BASE =   RAMSTART   ; RAM vector address for Z80 RST Table
+DEFC    VECTOR_BASE         =   RAMSTART    ; RAM vector address for Z80 RST Table
 
 ; Squeezed between INT0 0x0038 and NMI 0x0066
 
-DEFC    Z80_VECTOR_PROTO    =   $003C
-DEFC    Z80_VECTOR_SIZE     =   $24
+DEFC    VECTOR_PROTO        =   $003C
+DEFC    VECTOR_SIZE         =   $24
 
 ;   Prototype Interrupt Service Routines - complete in main program
 ;
-;DEFC       Z180_TRAP       =    Z180_INIT   Reboot
-;DEFC       RST_08          =    TX0         TX a character over ASCI0
-;DEFC       RST_10          =    RX0         RX a character over ASCI0, block no bytes available
-;DEFC       RST_18          =    RX0_CHK     Check ASCI0 status, return # bytes available
-;DEFC       RST_20          =    NULL_INT
-;DEFC       RST_28          =    NULL_INT
-;DEFC       RST_30          =    NULL_INT
-;DEFC       INT_INT0        =    NULL_INT
+;DEFC       RST_00          =    INIT        Reboot
+;DEFC       RST_08          =    TXA         TX a character over ACIA
+;DEFC       RST_10          =    RXA         RX a character over ACIA, block no bytes available
+;DEFC       RST_18          =    RXA_CHK     Check ACIA status, return # bytes available
+;DEFC       RST_20          =    NULL_RET
+;DEFC       RST_28          =    NULL_RET
+;DEFC       RST_30          =    NULL_RET
+;DEFC       INT_INT         =    NULL_INT
 ;DEFC       INT_NMI         =    NULL_NMI
 
 ;   Z80 Interrupt Service Routine Addresses - rewrite as needed
 
-DEFC    Z180_TRAP_ADDR      =   Z80_VECTOR_BASE+$01
-DEFC    RST_08_ADDR         =   Z80_VECTOR_BASE+$05
-DEFC    RST_10_ADDR         =   Z80_VECTOR_BASE+$09
-DEFC    RST_18_ADDR         =   Z80_VECTOR_BASE+$0D
-DEFC    RST_20_ADDR         =   Z80_VECTOR_BASE+$11
-DEFC    RST_28_ADDR         =   Z80_VECTOR_BASE+$15
-DEFC    RST_30_ADDR         =   Z80_VECTOR_BASE+$19
-DEFC    INT_INT0_ADDR       =   Z80_VECTOR_BASE+$1D
-DEFC    INT_NMI_ADDR        =   Z80_VECTOR_BASE+$21
+DEFC    RST_00_ADDR         =   VECTOR_BASE+$01
+DEFC    RST_08_ADDR         =   VECTOR_BASE+$05
+DEFC    RST_10_ADDR         =   VECTOR_BASE+$09
+DEFC    RST_18_ADDR         =   VECTOR_BASE+$0D
+DEFC    RST_20_ADDR         =   VECTOR_BASE+$11
+DEFC    RST_28_ADDR         =   VECTOR_BASE+$15
+DEFC    RST_30_ADDR         =   VECTOR_BASE+$19
+DEFC    INT_INT0_ADDR       =   VECTOR_BASE+$1D
+DEFC    INT_NMI_ADDR        =   VECTOR_BASE+$21
 
 ;==============================================================================
 ;
@@ -148,7 +148,7 @@ DEFC    DEL             =    7FH     ; Delete
 ; VARIABLES
 ;
 
-DEFC    serRxInPtr      =     Z80_VECTOR_BASE+Z80_VECTOR_SIZE
+DEFC    serRxInPtr      =     VECTOR_BASE+VECTOR_SIZE
 DEFC    serRxOutPtr     =     serRxInPtr+2
 DEFC    serTxInPtr      =     serRxOutPtr+2
 DEFC    serTxOutPtr     =     serTxInPtr+2
@@ -159,10 +159,10 @@ DEFC    serControl      =     serTxBufUsed+1
 DEFC    basicStarted    =     serControl+1
 
 ; I/O Tx Buffer must start on 0xnnn0 because we increment low byte to roll-over
-DEFC    BUFSTART_TX_IO  =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $80
+DEFC    BUFSTART_TX_IO  =     VECTOR_BASE-(VECTOR_BASE%$100) + $80
 
 ; I/O Rx Buffer must start on 0xnn00 because we increment low byte to roll-over
-DEFC    BUFSTART_RX_IO  =     Z80_VECTOR_BASE-(Z80_VECTOR_BASE%$100) + $100
+DEFC    BUFSTART_RX_IO  =     VECTOR_BASE-(VECTOR_BASE%$100) + $100
 
 DEFC    serTxBuf        =     BUFSTART_TX_IO
 DEFC    serRxBuf        =     BUFSTART_RX_IO

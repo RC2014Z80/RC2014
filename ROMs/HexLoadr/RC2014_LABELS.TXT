@@ -12,14 +12,3 @@ RST_08_ADDR   8005      RST_10_ADDR   8009      RST_18_ADDR   800D
 RST_20_ADDR   8011      RST_28_ADDR   8015      RST_30_ADDR   8019
 INT_INT0_ADDR 801D      INT_NMI_ADDR  8021
 
-    VARIABLES
-
-serRxInPtr    8024      serRxOutPtr   8026      serTxInPtr    8028
-serTxOutPtr   802A      serRxBufUsed  802C      serTxBufUsed  802D
-
-basicStarted  802F
-
-    BUFFERS
-
-serRxBuf      8100      serTxBuf      8080
-

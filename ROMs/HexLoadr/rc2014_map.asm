@@ -11,34 +11,34 @@
 
 INCLUDE     "rc2014.inc"
 
-SECTION     z80_vector_rst
-ORG         0x0000
+SECTION     vector_rst
+ORG         $0000
 
-SECTION     z80_vector_table_prototype
-ORG         Z80_VECTOR_PROTO
+SECTION     vector_table_prototype
+ORG         VECTOR_PROTO
 
-SECTION     z80_vector_null_ret
-ORG         Z80_VECTOR_PROTO+Z80_VECTOR_SIZE
+SECTION     vector_null_ret
+ORG         VECTOR_PROTO+VECTOR_SIZE
 
-SECTION     z80_vector_nmi
-ORG         0x0066
+SECTION     vector_nmi
+ORG         $0066
 
-SECTION     z80_acia_interrupt
-ORG         0x0080
+SECTION     acia_interrupt
+ORG         $0080
 
-SECTION     z80_acia_rxa
-ORG         0x00F0
+SECTION     acia_rxa
+ORG         $00F0
 
-SECTION     z80_acia_txa
-ORG         0x0120
+SECTION     acia_txa
+ORG         $0120
 
-SECTION     z80_acia_print
-ORG         0x0170
+SECTION     acia_print
+ORG         $0170
 
-SECTION     z80_init
-ORG         0x0180
+SECTION     init
+ORG         $0180
 
-SECTION     z80_init_strings
-ORG         0x01F0
+SECTION     init_strings
+ORG         $01F0
 
 ;==============================================================================
