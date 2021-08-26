@@ -65,17 +65,17 @@ SECTION acia_interrupt
         jr NC,acia_tx_check         ; buffer full, check if we can send something
 
         ld a,l                      ; get Rx byte from l
-        ld hl,serRxBufUsed
-        inc (hl)                    ; atomically increment Rx buffer count
         ld hl,(serRxInPtr)          ; get the pointer to where we poke
         ld (hl),a                   ; write the Rx byte to the serRxInPtr address
-
         inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr),hl          ; write where the next byte should be poked
 
+        ld hl,serRxBufUsed
+        inc (hl)                    ; atomically increment Rx buffer count
+
         ld a,(serRxBufUsed)         ; get the current Rx count
         cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
-        jr NZ,acia_tx_check         ; leave the RTS low, and check for Rx/Tx possibility
+        jp NZ,acia_tx_check         ; leave the RTS low, and check for Rx/Tx possibility
 
         ld a,(serControl)           ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
@@ -90,11 +90,11 @@ SECTION acia_interrupt
 
 .acia_tx_send
         rrca                        ; check whether a byte can be transmitted, via SER_TDRE
-        jr NC,acia_txa_end          ; if not, we're done for now
+        jp NC,acia_txa_end          ; if not, we're done for now
 
         ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
-        jr Z,acia_tei_clear         ; if the count is zero, then disable the Tx Interrupt
+        jp Z,acia_tei_clear         ; if the count is zero, then disable the Tx Interrupt
 
         ld hl,(serTxOutPtr)         ; get the pointer to place where we pop the Tx byte
         ld a,(hl)                   ; get the Tx byte
