@@ -1044,8 +1044,7 @@ INCLEN: INC     A               ; Move on one character
         LD      (CURPOS),A      ; Save new position
 DINPOS: POP     AF              ; Restore character
         POP     BC              ; Restore buffer length
-        RST     08H             ; Send it
-        RET
+        JP      $0008           ; Send it via RST 08
 
 OUTNCR: CALL    OUTC            ; Output character in A
         JP      PRNTCRLF        ; Output CRLF
