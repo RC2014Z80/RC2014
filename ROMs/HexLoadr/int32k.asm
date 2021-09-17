@@ -62,7 +62,7 @@ SECTION acia_interrupt
 
         ld a,(serRxBufUsed)         ; Get the number of bytes in the Rx buffer
         cp SER_RX_BUFSIZE-1         ; check whether there is space in the buffer
-        jr NC,acia_tx_check         ; buffer full, check if we can send something
+        jp NC,acia_tx_check         ; buffer full, check if we can send something
 
         ld a,l                      ; get Rx byte from l
         ld hl,(serRxInPtr)          ; get the pointer to where we poke
@@ -79,14 +79,14 @@ SECTION acia_interrupt
 
         ld a,(serControl)           ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
-        or SER_TDI_RTS1             ; Set RTS high, and disable Tx Interrupt
+        or SER_TDI_RTS1             ; set RTS high, and disable Tx Interrupt
         ld (serControl),a           ; write the ACIA control echo byte back
-        out (SER_CTRL_ADDR),a       ; Set the ACIA CTRL register
+        out (SER_CTRL_ADDR),a       ; set the ACIA CTRL register
 
 .acia_tx_check
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
-        jr C,acia_rx_get            ; another byte received, go get it
+        jp C,acia_rx_get            ; another byte received, go get it
 
 .acia_tx_send
         rrca                        ; check whether a byte can be transmitted, via SER_TDRE
@@ -110,13 +110,13 @@ SECTION acia_interrupt
         ld hl,serTxBufUsed
         dec (hl)                    ; atomically decrement current Tx count
 
-        jr NZ,acia_txa_end          ; if we've more Tx bytes to send, we're done for now
+        jp NZ,acia_txa_end          ; if we've more Tx bytes to send, we're done for now
 
 .acia_tei_clear
         ld a,(serControl)           ; get the ACIA control echo byte
         and ~SER_TEI_RTS0           ; mask out (disable) the Tx Interrupt
         ld (serControl),a           ; write the ACIA control byte back
-        out (SER_CTRL_ADDR),a       ; Set the ACIA CTRL register
+        out (SER_CTRL_ADDR),a       ; set the ACIA CTRL register
 
 .acia_txa_end
         pop hl
@@ -136,7 +136,7 @@ SECTION acia_rxa                    ; ORG $00F0
 .RXA
         ld a,(serRxBufUsed)         ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
-        jr Z,RXA                    ; wait, if there are no bytes available
+        jp Z,RXA                    ; wait, if there are no bytes available
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
         jp NZ,rxa_get_byte          ; if the buffer is too full, don't change the RTS
@@ -171,11 +171,11 @@ SECTION acia_txa                ; ORG $0120
 
         ld a,(serTxBufUsed)         ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
-        jr NZ,txa_buffer_out        ; buffer not empty, so abandon immediate Tx
+        jp NZ,txa_buffer_out        ; buffer not empty, so abandon immediate Tx
 
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
-        jr Z,txa_buffer_out         ; if not, so abandon immediate Tx
+        jp Z,txa_buffer_out         ; if not, so abandon immediate Tx
 
         ld a,l                      ; Retrieve Tx character for immediate Tx
         out (SER_DATA_ADDR),a       ; immediately output the Tx byte to the ACIA
@@ -184,11 +184,11 @@ SECTION acia_txa                ; ORG $0120
         ret                         ; and just complete
 
 .txa_buffer_out
-        ld a,(serTxBufUsed)         ; Get the number of bytes in the Tx buffer
+        ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         cp SER_TX_BUFSIZE-1         ; check whether there is space in the buffer
-        jr NC,txa_buffer_out        ; buffer full, so wait till it has space
+        jp NC,txa_buffer_out        ; buffer full, so wait till it has space
 
-        ld a,l                      ; Retrieve Tx character
+        ld a,l                      ; retrieve Tx character
 
         ld hl,(serTxInPtr)          ; get the pointer to where we poke
         ld (hl),a                   ; write the Tx byte to the serTxInPtr
@@ -221,12 +221,12 @@ SECTION acia_txa                ; ORG $0120
 ;------------------------------------------------------------------------------
 SECTION acia_print                  ; ORG $0170
 .PRINT
-        LD        A,(HL)            ; get character
-        OR        A                 ; is it $00 ?
-        RET       Z                 ; then RETurn on terminator
-        CALL      TXA               ; print it
-        INC       HL                ; next Character
-        JR        PRINT             ; continue until $00
+        LD A,(HL)                   ; get character
+        OR A                        ; is it $00 ?
+        RET Z                       ; then RETurn on terminator
+        CALL TXA                    ; output character in A
+        INC HL                      ; next Character
+        JP PRINT                    ; continue until $00
 
 ;------------------------------------------------------------------------------
 SECTION init                    ; ORG $0180
@@ -234,26 +234,26 @@ SECTION init                    ; ORG $0180
 PUBLIC  INIT
 
 .INIT
-        LD SP,TEMPSTACK             ; Set up a temporary stack
+        LD SP,TEMPSTACK             ; set up a temporary stack
 
-        LD HL,VECTOR_PROTO      ; Establish Z80 RST Vector Table
+        LD HL,VECTOR_PROTO          ; establish Z80 RST Vector Table
         LD DE,VECTOR_BASE
         LD BC,VECTOR_SIZE
         LDIR
 
-        LD HL,serRxBuf              ; Initialise Rx Buffer
+        LD HL,serRxBuf              ; initialise Rx Buffer
         LD (serRxInPtr),HL
         LD (serRxOutPtr),HL
 
-        LD HL,serTxBuf              ; Initialise Tx Buffer
+        LD HL,serTxBuf              ; initialise Tx Buffer
         LD (serTxInPtr),HL
         LD (serTxOutPtr),HL
 
-        XOR A                       ; 0 the RXA & TXA Buffer Counts
+        XOR A                       ; zero the RXA & TXA Buffer Counts
         LD (serRxBufUsed),A
         LD (serTxBufUsed),A
 
-        LD A,SER_RESET              ; Master Reset the ACIA
+        LD A,SER_RESET              ; master RESET the ACIA
         OUT (SER_CTRL_ADDR),A
 
         LD A,SER_REI|SER_TDI_RTS0|SER_8N2|SER_CLK_DIV_64
@@ -266,40 +266,41 @@ PUBLIC  INIT
         OUT (SER_CTRL_ADDR),A       ; output to the ACIA control byte
 
         IM 1                        ; interrupt mode 1
-        EI
+        EI                          ; enable interrupts
 
 .START
-        LD HL,SIGNON1               ; Sign-on message
-        CALL PRINT                  ; Output string
-        LD A,(basicStarted)         ; Check the BASIC STARTED flag
+        LD HL,SIGNON1               ; sign-on message
+        CALL PRINT                  ; output string
+        LD A,(basicStarted)         ; check the BASIC STARTED flag
         CP 'Y'                      ; to see if this is power-up
-        JR NZ,COLDSTART             ; If not BASIC started then always do cold start
-        LD HL,SIGNON2               ; Cold/warm message
-        CALL PRINT                  ; Output string
+        JP NZ,COLDSTART             ; if not BASIC started then always do cold start
+        LD HL,SIGNON2               ; cold/warm message
+        CALL PRINT                  ; output string
 .CORW
         RST 10H
         AND 11011111B               ; lower to uppercase
         CP 'C'
-        JR NZ,CHECKWARM
+        JP NZ,CHECKWARM
         RST 08H
         LD A,CR
         RST 08H
         LD A,LF
         RST 08H
 .COLDSTART
-        LD A,'Y'                    ; Set the BASIC STARTED flag
+        LD A,'Y'                    ; set the BASIC STARTED flag
         LD (basicStarted),A
-        JP $0250                    ; <<<< Start Basic COLD:
+        JP $0240                    ; <<<< Start Basic COLD
+
 .CHECKWARM
         CP 'W'
-        JR NZ,CORW
+        JP NZ,CORW
         RST 08H
         LD A,CR
         RST 08H
         LD A,LF
         RST 08H
 .WARMSTART
-        JP $0253                    ; <<<< Start Basic WARM:
+        JP $0243                    ; <<<< Start Basic WARM
 
 ;==============================================================================
 ;

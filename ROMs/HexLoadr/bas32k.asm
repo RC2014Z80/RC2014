@@ -139,15 +139,15 @@ MO      .EQU    24H             ; Missing operand
 HX      .EQU    26H             ; HEX error
 BN      .EQU    28H             ; BIN error
 
-        .ORG    0250H           ; <<<< Modified to allow for ACIA Tx/Rx IM1
+        .ORG    0240H           ; <<<< Modified to allow for ACIA Tx/Rx IM1
 
-COLD:   JP      CSTART          ; Jump in for cold start (0x0250)
-WARM:   JP      WARMST          ; Jump in for warm start (0x0253)
+COLD:   JP      CSTART          ; Jump in for cold start (0x0240)
+WARM:   JP      WARMST          ; Jump in for warm start (0x0243)
 
-        .FILL   5               ; pad so DEINT is 0x025B, ABPASS is 0x025D
+        .FILL   5               ; pad so DEINT is 0x025B, ABPASS is 0x024D
 
-        .WORD   DEINT           ; 0x025B Get integer -32768 to 32767
-        .WORD   ABPASS          ; 0x025D Return integer in AB
+        .WORD   DEINT           ; 0x024B Get integer -32768 to 32767
+        .WORD   ABPASS          ; 0x024D Return integer in AB
 
 RESET:  RET     NZ              ; Return if any more on line
 CSTART: LD      HL,WRKSPC       ; Start of workspace RAM
@@ -201,7 +201,7 @@ SETTOP: DEC     HL              ; Back one byte
         LD      DE,STLOOK-1     ; See if enough RAM
         LD      A,H             ; Compare DE with HL
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      C,MSIZE         ; Ask again if not enough RAM
@@ -543,8 +543,7 @@ LOKFOR: LD      A,(HL)          ; Get block ID
         LD      B,(HL)
         INC     HL              ; Point to sign of STEP
         PUSH    HL              ; Save pointer to sign
-        LD      L,C             ; HL = address of "FOR" index
-        LD      H,B
+        LD      HL,BC           ; HL = address of "FOR" index
         LD      A,D             ; See if an index was specified
         OR      E               ; DE = 0 if no index specified
         EX      DE,HL           ; Specified index into HL
@@ -552,7 +551,7 @@ LOKFOR: LD      A,(HL)          ; Get block ID
         EX      DE,HL           ; Index back into DE
         LD      A,H             ; Compare index with one given
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
 INDFND: LD      BC,16-3         ; Offset to next block
@@ -567,7 +566,7 @@ MOVSTR: PUSH    BC              ; Save end of source
         POP     BC              ; Get end of destination
 MOVLP:  LD      A,H             ; See if list moved
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         LD      A,(HL)          ; Get byte
@@ -631,7 +630,7 @@ ERRIN:  CALL    PRS             ; Output message
         LD      DE,-2           ; Cold start error if -2
         LD      A,H             ; See if cold start error
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      Z,CSTART        ; Cold start error - Restart
@@ -686,12 +685,11 @@ SFTPRG: LD      A,(DE)          ; Shift rest of program down
         INC     DE              ; Next source
         LD      A,H             ; All done?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,SFTPRG       ; More to do
-        LD      H,B             ; HL - New end of program
-        LD      L,C
+        LD      HL,BC           ; HL - New end of program
         LD      (PROGND),HL     ; Update end of program
 
 INEWLN: POP     DE              ; Get address of line,
@@ -724,8 +722,7 @@ MOVBUF: LD      A,(DE)          ; Get source
 SETPTR: CALL    RUNFST          ; Set line pointers
         INC     HL              ; To LSB of pointer
         EX      DE,HL           ; Address to DE
-PTRLP:  LD      H,D             ; Address to HL
-        LD      L,E
+PTRLP:  LD      HL,DE           ; Address to HL
         LD      A,(HL)          ; Get LSB of pointer
         INC     HL              ; To MSB of pointer
         OR      (HL)            ; Compare with MSB pointer
@@ -744,8 +741,7 @@ FNDEND: CP      (HL)            ; Found end of line?
         JP      PTRLP           ; Do next line
 
 SRCHLN: LD      HL,(BASTXT)     ; Start of program text
-SRCHLP: LD      B,H             ; BC = Address to look at
-        LD      C,L
+SRCHLP: LD      BC,HL           ; BC = Address to look at
         LD      A,(HL)          ; Get address of next line
         INC     HL
         OR      (HL)            ; End of program found?
@@ -759,11 +755,10 @@ SRCHLP: LD      B,H             ; BC = Address to look at
         LD      L,A
         LD      A,H             ; Compare with line in DE
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
-        LD      H,B             ; HL = Start of this line
-        LD      L,C
+        LD      HL,BC           ; HL = Start of this line
         LD      A,(HL)          ; Get LSB of next line address
         INC     HL
         LD      H,(HL)          ; Get MSB of next line address
@@ -1116,12 +1111,12 @@ SETLIN: PUSH    HL              ; Set up LINES counter
         RET
 
 COUNT:  PUSH    HL              ; Save code string address
-        PUSH    DE
+        PUSH    BC
         LD      HL,(LINESC)     ; Get LINES counter
-        LD      DE,-1
-        ADC     HL,DE           ; Decrement
+        LD      BC,1
+        SBC     HL,BC           ; Decrement
         LD      (LINESC),HL     ; Put it back
-        POP     DE
+        POP     BC
         POP     HL              ; Restore code string address
         RET     P               ; Return if more lines to go
         PUSH    HL              ; Save code string address
@@ -1251,7 +1246,7 @@ GETCHR: INC     HL              ; Point to next character
         CP      ':'             ; Z if ':'
         RET     NC              ; NC if > "9"
         CP      ' '
-        JR      Z,GETCHR        ; Skip over spaces
+        JP      Z,GETCHR        ; Skip over spaces
         CP      '0'
         CCF                     ; NC if < '0'
         INC     A               ; Test for zero - Leave carry
@@ -1265,8 +1260,7 @@ RESTOR: EX      DE,HL           ; Save code string address
         CALL    ATOH            ; Get line number to DE
         PUSH    HL              ; Save code string address
         CALL    SRCHLN          ; Search for line number in DE
-        LD      H,B             ; HL = Address of line
-        LD      L,C
+        LD      HL,BC           ; HL = Address of line
         POP     DE              ; Restore code string address
         JP      NC,ULERR        ; ?UL Error if not found
 RESTNL: DEC     HL              ; Byte before DATA statement
@@ -1280,9 +1274,9 @@ TSTBRK: RST     18H             ; Check input status
         RET     Z               ; No key, go back
         RST     10H             ; Get the key into A
         CP      ESC             ; Escape key?
-        JR      Z,BRK           ; Yes, break
+        JP      Z,BRK           ; Yes, break
         CP      CTRLC           ; <Ctrl-C>
-        JR      Z,BRK           ; Yes, break
+        JP      Z,BRK           ; Yes, break
         CP      CTRLS           ; Stop scrolling?
         RET     NZ              ; Other key, ignore
 
@@ -1291,8 +1285,8 @@ STALL:  RST     10H             ; Wait for key
         CP      CTRLQ           ; Resume scrolling?
         RET      Z              ; Release the chokehold
         CP      CTRLC           ; Second break?
-        JR      Z,STOP          ; Break during hold exits prog
-        JR      STALL           ; Loop until <Ctrl-Q> or <brk>
+        JP      Z,STOP          ; Break during hold exits prog
+        JP      STALL           ; Loop until <Ctrl-Q> or <brk>
 
 BRK:    LD      A,$FF           ; Set BRKFLG
         LD      (BRKFLG),A      ; Store it
@@ -1384,8 +1378,7 @@ GTLNLP: CALL    GETCHR          ; Get next character
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      C,SNERR         ; No - ?SN Error
-        LD      H,D             ; HL = Number
-        LD      L,E
+        LD      HL,DE           ; HL = Number
         ADD     HL,DE           ; Times 2
         ADD     HL,HL           ; Times 4
         ADD     HL,DE           ; Times 5
@@ -1429,7 +1422,7 @@ STORED: LD      A,L             ; Get LSB of new RAM top
         ADD     HL,BC           ; Get lowest address
         LD      A,H             ; Enough memory?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NC,OMERR        ; No - ?OM Error
@@ -1463,15 +1456,14 @@ GOTO:   CALL    ATOH            ; ASCII number to DE binary
         LD      HL,(LINEAT)     ; Get current line
         LD      A,H             ; Line after current?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         POP     HL              ; Restore end of line
         INC     HL              ; Start of next line
         CALL    C,SRCHLP        ; Line is after current line
         CALL    NC,SRCHLN       ; Line is before current line
-        LD      H,B             ; Set up code string address
-        LD      L,C
+        LD      HL,BC           ; Set up code string address
         DEC     HL              ; Incremented after
         RET     C               ; Line found
 ULERR:  LD      E,UL            ; ?UL Error
@@ -1538,14 +1530,14 @@ LETSTR: PUSH    HL              ; Save address of string var
         LD      HL,(BASTXT)     ; Point to start of program
         LD      A,H             ; Is string before program?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NC,CRESTR       ; Yes - Create string entry
         LD      HL,(STRSPC)     ; Point to string space
         LD      A,H             ; Is string literal in program?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         POP     DE              ; Restore address of string
@@ -1553,7 +1545,7 @@ LETSTR: PUSH    HL              ; Save address of string var
         LD      HL,TMPSTR       ; Temporary string pool
         LD      A,H             ; Is string in temporary pool?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NC,MVSTPT       ; No - Set up pointer
@@ -1888,8 +1880,7 @@ NEXT1:  CALL    NZ,GETVAR       ; Get index address
         JP      Z,KILFOR        ; Loop finished - Terminate it
         EX      DE,HL           ; Loop statement line number
         LD      (LINEAT),HL     ; Set loop line number
-        LD      L,C             ; Set code string to loop
-        LD      H,B
+        LD      HL,BC           ; Set code string to loop
         JP      PUTFID          ; Put back "FOR" and continue
 
 KILFOR: LD      SP,HL           ; Remove "FOR" block
@@ -2281,7 +2272,7 @@ CFEVAL: POP     HL              ; Restore code string address
         LD      DE,FRMEVL       ; Return address in EVAL
         LD      A,H             ; Called from EVAL ?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         POP     DE              ; Restore address of variable
@@ -2298,15 +2289,14 @@ CFEVAL: POP     HL              ; Restore code string address
         CALL    MOVUP           ; Move arrays up
         POP     HL              ; Restore new end address
         LD      (ARREND),HL     ; Set new end address
-        LD      H,B             ; End of variables to HL
-        LD      L,C
+        LD      HL,BC           ; End of variables to HL
         LD      (VAREND),HL     ; Set new end address
 
 ZEROLP: DEC     HL              ; Back through to zero variable
         LD      (HL),0          ; Zero byte in variable
         LD      A,H             ; Done them all?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,ZEROLP       ; No - Keep on going
@@ -2380,8 +2370,7 @@ NXTARY: INC     HL              ; Move on
         OR      A
         JP      NZ,DDERR        ; Create - ?DD Error
         POP     AF              ; Locate - Get number of dim'ns
-        LD      B,H             ; BC Points to array dim'ns
-        LD      C,L
+        LD      BC,HL           ; BC Points to array dim'ns
         JP      Z,POPHRT        ; Jump if array load/save
         SUB     (HL)            ; Same number of dimensions?
         JP      Z,FINDEL        ; Yes - Find element
@@ -2434,7 +2423,7 @@ ZERARY: DEC     HL              ; Back through array data
         LD      (HL),0          ; Set array element to zero
         LD      A,H             ; All elements zeroed?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,ZERARY       ; No - Keep on going
@@ -2478,8 +2467,7 @@ FNDELP: POP     HL              ; Address of next dim' size
         ADD     HL,DE           ; Add index to pointer
         POP     AF              ; Number of dimensions
         DEC     A               ; Count them
-        LD      B,H             ; MSB of pointer
-        LD      C,L             ; LSB of pointer
+        LD      BC,HL           ; MSB,LSB of pointer
         JP      NZ,FNDELP       ; More - Keep going
         ADD     HL,HL           ; 4 Bytes per element
         ADD     HL,HL
@@ -2539,8 +2527,7 @@ DEF:    CALL    CHEKFN          ; Get "FN" and name
         .BYTE   ")"
         CALL    CHKSYN          ; Make sure "=" follows
         .BYTE   ZEQUAL          ; "=" token
-        LD      B,H             ; Code string address to BC
-        LD      C,L
+        LD      BC,HL           ; Code string address to BC
         EX      (SP),HL         ; Save code str , Get FN ptr
         LD      (HL),C          ; Save LSB of FN code string
         INC     HL
@@ -2680,7 +2667,7 @@ TSTOPL: LD      DE,TMPSTR       ; Temporary string
         EX      DE,HL           ; Swap source destination
         LD      A,H             ; Out of string pool?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         LD      (TMSTPT),HL     ; Save new pointer
@@ -2718,7 +2705,7 @@ GRBDON: POP     AF              ; Garbage collection done
         INC     HL              ; Plus one for 2's complement
         LD      A,H             ; Below string RAM area?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      C,TESTOS        ; Tidy up if not done else err
@@ -2745,7 +2732,7 @@ GARBLP: LD      (STRBOT),HL     ; Reset string pointer
 GRBLP:  LD      DE,(TMSTPT)     ; Temporary string pool pointer
         LD      A,H             ; Temporary string pool done?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         LD      BC,GRBLP        ; Loop until string pool done
@@ -2754,7 +2741,7 @@ GRBLP:  LD      DE,(TMSTPT)     ; Temporary string pool pointer
 SMPVAR: LD      DE,(VAREND)     ; End of simple variables
         LD      A,H             ; All simple strings done?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      Z,ARRLP         ; Yes - Do string arrays
@@ -2769,7 +2756,7 @@ GNXARY: POP     BC              ; Scrap address of this array
 ARRLP:  LD      DE,(ARREND)     ; End of string arrays
         LD      A,H             ; All string arrays done?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      Z,SCNEND        ; Yes - Move string if found
@@ -2789,7 +2776,7 @@ ARRLP:  LD      DE,(ARREND)     ; End of string arrays
 GRBARY: LD      DE,(CUROPR)     ; Get address of next array
         LD      A,H             ; Is this array finished?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      Z,ARRLP         ; Yes - Get next one
@@ -2806,28 +2793,25 @@ STRADD: LD      A,(HL)          ; Get string length
         RET     P               ; Not a string - Return
         OR      A               ; Set flags on string length
         RET     Z               ; Null string - Return
-        LD      B,H             ; Save variable pointer
-        LD      C,L
+        LD      BC,HL           ; Save variable pointer
         LD      HL,(STRBOT)     ; Bottom of new area
         LD      A,H             ; String been done?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
-        LD      H,B             ; Restore variable pointer
-        LD      L,C
+        LD      HL,BC           ; Restore variable pointer
         RET     C               ; String done - Ignore
         POP     HL              ; Return address
         EX      (SP),HL         ; Lowest available string area
         LD      A,H             ; String within string area?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         EX      (SP),HL         ; Lowest available string area
         PUSH    HL              ; Re-save return address
-        LD      H,B             ; Restore variable pointer
-        LD      L,C
+        LD      HL,BC           ; Restore variable pointer
         RET     NC              ; Outside string area - Ignore
         POP     BC              ; Get return , Throw 2 away
         POP     AF              ; 
@@ -2855,16 +2839,14 @@ SCNEND: POP     DE              ; Addresses of strings
         LD      D,B             ; String address to DE
         LD      E,C
         DEC     HL              ; Last byte in string
-        LD      B,H             ; Address to BC
-        LD      C,L
+        LD      BC,HL           ; Address to BC
         LD      HL,(STRBOT)     ; Current bottom of string area
         CALL    MOVSTR          ; Move string to new address
         POP     HL              ; Restore variable address
         LD      (HL),C          ; Save new LSB of address
         INC     HL
         LD      (HL),B          ; Save new MSB of address
-        LD      L,C             ; Next string area+1 to HL
-        LD      H,B
+        LD      HL,BC           ; Next string area+1 to HL
         DEC     HL              ; Next string area address
         JP      GARBLP          ; Look for more strings
 
@@ -2929,7 +2911,7 @@ GSTRDE: CALL    BAKTMP          ; Was it last tmp-str?
         LD      HL,(STRBOT)     ; Current bottom of string area
         LD      A,H             ; Last one in string area?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,POPHL        ; No - Return
@@ -2949,7 +2931,7 @@ BAKTMP: LD      HL,(TMSTPT)     ; Get temporary string pool top
         DEC     HL              ; Back
         LD      A,H             ; String last in string pool?
         SUB     D               ; Compare with D
-        JR      NZ,$+4          ; Different - Exit
+        JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         RET     NZ              ; Yes - Leave it
@@ -3010,8 +2992,7 @@ ALLFOL: LD      C,0             ; First byte of string
         LD      L,B             ; HL = address of string
         LD      B,0             ; BC = starting address
         ADD     HL,BC           ; Point to that byte
-        LD      B,H             ; BC = source string
-        LD      C,L
+        LD      BC,HL           ; BC = source string
         CALL    CRTMST          ; Create a string entry
         LD      L,A             ; Length of new string
         CALL    TOSTRA          ; Move string to string area
@@ -3077,11 +3058,11 @@ VAL:    CALL    GETLEN          ; Get length of string
         CP      '$'             ; Hex number indicated? [Searle function added]
         JP      NZ,VAL1
         CALL    HEXTFP          ; Convert Hex to FPREG
-        JR      VAL3
+        JP      VAL3
 VAL1:   CP      '%'             ; Binary number indicated? [Searle function added]
         JP      NZ,VAL2
         CALL    BINTFP          ; Convert Bin to FPREG
-        JR      VAL3
+        JP      VAL3
 VAL2:   CALL    ASCTFP          ; Convert ASCII string to FP
 VAL3:   POP     BC              ; Restore end+1 byte
         POP     HL              ; Restore end+1 address
@@ -3386,8 +3367,7 @@ FPMULT: CALL    TSTSGN          ; Test sign of FPREG
         EX      DE,HL
         LD      (MULVAL+1),HL   ; Save rest of multiplier
         LD      BC,0            ; Partial product (BCDE) = zero
-        LD      D,B
-        LD      E,B
+        LD      DE,BC
         LD      HL,BNORM        ; Address of normalise
         PUSH    HL              ; Save for return
         LD      HL,MULT8        ; Address of 8 bit multiply
@@ -3721,7 +3701,8 @@ INT:    LD      HL,FPEXP        ; Point to exponent
         POP     AF              ; Restore LSB of number
         RET
 
-MLDEBC: LD      HL,0            ; Clear partial product
+MLDEBC:                         ; Multiply DE by BC to HL
+        LD      HL,0            ; Clear partial product
         LD      A,B             ; Test multiplier
         OR      C
         RET     Z               ; Return zero if zero
@@ -3977,7 +3958,7 @@ POWERS: .BYTE   0A0H,086H,001H  ; 100000
         .BYTE   00AH,000H,000H  ;     10
         .BYTE   001H,000H,000H  ;      1
 
-NEGAFT: LD  HL,INVSGN           ; Negate result
+NEGAFT: LD      HL,INVSGN       ; Negate result
         EX      (SP),HL         ; To be done after caller
         JP      (HL)            ; Return to caller
 
@@ -4309,7 +4290,7 @@ HLOAD:
         ld hl,(LSTRAM)          ; get last ram address       
         xor a                   ; clear carry flag
         sbc hl,de
-        jr C,HLD_HIGH_RAM       ; if last ram lower leave it, otherwise
+        jp C,HLD_HIGH_RAM       ; if last ram lower leave it, otherwise
         ld (LSTRAM),de          ; store new last ram location
         ld hl,-50               ; reserve 50 bytes for string space
         add hl,de               ; allocate string space
@@ -4317,12 +4298,12 @@ HLOAD:
 HLD_HIGH_RAM:
         inc de
         ld (USR+1),de           ; store first address as "USR(x)" location
-        jr HLD_READ_DATA        ; now get the first data
+        jp HLD_READ_DATA        ; now get the first data
         
 HLD_WAIT_COLON:
         rst 10h                 ; Rx byte in A
         cp ':'                  ; wait for ':'
-        jr NZ,HLD_WAIT_COLON
+        jp NZ,HLD_WAIT_COLON
         ld c,0                  ; reset C to compute checksum
         call HLD_READ_BYTE      ; read byte count
         ld b,a                  ; store it in B
@@ -4332,7 +4313,7 @@ HLD_WAIT_COLON:
         ld e,a                  ; store in E
         call HLD_READ_BYTE      ; read record type
         dec a                   ; check if record type is 01 (end of file)
-        jr Z,HLD_END_LOAD
+        jp Z,HLD_END_LOAD
         inc a                   ; check if record type is 00 (data)
         jp NZ,TMERR             ; if not, type mismatch error
         ret
@@ -4391,11 +4372,11 @@ HEX:    CALL    TSTNUM          ; Verify it's a number
         LD      HL,PBUFF
         LD      A,D             ; Get high order into A
         CP      $0
-        JR      Z,HEX2          ; Skip output if both high digits are zero
+        JP      Z,HEX2          ; Skip output if both high digits are zero
         CALL    BYT2ASC         ; Convert D to ASCII
         LD      A,B
         CP      '0'
-        JR      Z,HEX1          ; Don't store high digit if zero
+        JP      Z,HEX1          ; Don't store high digit if zero
         LD      (HL),B          ; Store it to PBUFF
         INC     HL              ; Next location
 HEX1:   LD      (HL),C          ; Store C to PBUFF+1
@@ -4404,10 +4385,10 @@ HEX2:   LD      A,E             ; Get lower byte
         CALL    BYT2ASC         ; Convert E to ASCII
         LD      A,D
         CP      $0
-        JR      NZ,HEX3         ; If upper byte was not zero then always print lower byte
+        JP      NZ,HEX3         ; If upper byte was not zero then always print lower byte
         LD      A,B
         CP      '0'             ; If high digit of lower byte is zero then don't print
-        JR      Z,HEX4
+        JP      Z,HEX4
 HEX3:   LD      (HL),B          ; to PBUFF+2
         INC     HL              ; Next location
 HEX4:   LD      (HL),C          ; to PBUFF+3
@@ -4423,7 +4404,7 @@ HEX4:   LD      (HL),C          ; to PBUFF+3
 BYT2ASC:LD      B,A             ; Save original value
         AND     $0F             ; Strip off upper nybble
         CP      $0A             ; 0-9?
-        JR      C,ADD30         ; If A-F, add 7 more
+        JP      C,ADD30         ; If A-F, add 7 more
         ADD     A,$07           ; Bring value up to ASCII A-F
 ADD30:  ADD     A,$30           ; And make ASCII
         LD      C,A             ; Save converted char to C
@@ -4434,7 +4415,7 @@ ADD30:  ADD     A,$30           ; And make ASCII
         RRCA
         AND     $0F             ; Mask off upper nybble
         CP      $0A             ; 0-9? < A hex?
-        JR      C,ADD301        ; Skip Add 7
+        JP      C,ADD301        ; Skip Add 7
         ADD     A,$07           ; Bring it up to ASCII A-F
 ADD301: ADD     A,$30           ; And make it full ASCII
         LD      B,A             ; Store high order byte
@@ -4449,16 +4430,16 @@ HEXTFP: EX      DE,HL           ; Move code string pointer to DE
         LD      HL,$0000        ; Zero out the value
         CALL    GETHEX          ; Check the number for valid hex
         JP      C,HXERR         ; First value wasn't hex, HX error
-        JR      HEXLP1          ; Convert first character
+        JP      HEXLP1          ; Convert first character
 HEXLP:  CALL    GETHEX          ; Get second and addtional characters
-        JR      C,HEXIT         ; Exit if not a hex character
+        JP      C,HEXIT         ; Exit if not a hex character
 HEXLP1: ADD     HL,HL           ; Rotate 4 bits to the left
         ADD     HL,HL
         ADD     HL,HL
         ADD     HL,HL
         OR      L               ; Add in D0-D3 into L
         LD      L,A             ; Save new value
-        JR      HEXLP           ; And continue until all hex characters are in
+        JP      HEXLP           ; And continue until all hex characters are in
 
 GETHEX: INC     DE              ; Next location
         LD      A,(DE)          ; Load character at pointer
@@ -4467,7 +4448,7 @@ GETHEX: INC     DE              ; Next location
         SUB     $30             ; Get absolute value
         RET     C               ; < "0", error
         CP      $0A
-        JR      C,NOSUB7        ; Is already in the range 0-9
+        JP      C,NOSUB7        ; Is already in the range 0-9
         SUB     $07             ; Reduce to A-F
         CP      $0A             ; Value should be $0A-$0F at this point
         RET     C               ; CY set if was :            ; < = > ? @
@@ -4498,11 +4479,11 @@ ZEROSUP:                        ; Suppress leading zeros
         DEC     B               ; Max 16 chars
         LD      A,B
         CP      $01
-        JR      Z,BITOUT        ; Always output at least one character
+        JP      Z,BITOUT        ; Always output at least one character
         RL      E
         RL      D
-        JR      NC,ZEROSUP
-        JR      BITOUT2
+        JP      NC,ZEROSUP
+        JP      BITOUT2
 BITOUT:      
         RL      E
         RL      D               ; Top bit now in carry
@@ -4512,7 +4493,7 @@ BITOUT2:
         LD      (HL),A
         INC     HL
         DEC     B
-        JR      NZ,BITOUT
+        JP      NZ,BITOUT
         XOR     A               ; Terminating character
         LD      (HL),A          ; Store zero to terminate
         INC     HL              ; Make sure PBUFF is terminated
@@ -4534,7 +4515,7 @@ BINIT:  SUB     '0'
         OR      L
         LD      L,A
         CALL    CHKBIN          ; Get second and addtional characters
-        JR      NC,BINIT        ; Process if a bin character
+        JP      NC,BINIT        ; Process if a bin character
         EX      DE,HL           ; Value into DE, Code string into HL
         LD      A,D             ; Load DE into AC
         LD      C,E             ; For prep to 

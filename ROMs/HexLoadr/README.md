@@ -54,16 +54,16 @@ All `RST xx` targets can be rewritten in a `JP` table originating at `0x8000` in
 
 For the RC2014 with 32k Basic the `USR(x)` loaded user program address is located at `0x8204`.
 
-Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0AF7`. The parameter is stored in register pair `DE`.
+Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0AF3`. The parameter is stored in register pair `DE`.
 
-When your assembly program is finished it can return a 16 bit parameter stored in `A` (MSB) and `B` (LSB) by jumping to `ABPASS` which is located at `0x12C8`.
+When your assembly program is finished it can return a 16 bit parameter stored in `A` (MSB) and `B` (LSB) by jumping to `ABPASS` which is located at `0x12CC`.
 
-Note that these address of these functions can also be loaded from `0x025B` for `DEINT` and `0x025D` for `ABPASS`, as noted in the NASCOM Basic Manual.
+Note that these address of these functions can also be loaded from `0x024B` for `DEINT` and `0x024D` for `ABPASS`, as noted in the NASCOM Basic Manual.
 
 ``` asm
                                 ; from Nascom Basic Symbol Tables
-DEINT           .EQU    $0AF7   ; Function DEINT to get USR(x) into DE registers
-ABPASS          .EQU    $12C8   ; Function ABPASS to put output into AB register for return
+DEINT           .EQU    $0AF3   ; Function DEINT to get USR(x) into DE registers
+ABPASS          .EQU    $12CC   ; Function ABPASS to put output into AB register for return
 
 
                 .ORG    9000H   ; your code origin, for example
@@ -73,7 +73,6 @@ ABPASS          .EQU    $12C8   ; Function ABPASS to put output into AB register
 
                 JP      ABPASS  ; return the 16 bit value to USR(x). Note JP not CALL
 ```
-The `RC2014_LABELS.TXT` file is provided to advise of the relevant RAM and ROM locations.
 
 # Program Usage
 
