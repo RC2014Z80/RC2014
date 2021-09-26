@@ -45,8 +45,7 @@ INCLUDE "rc2014.inc"
 ;
 
 ;------------------------------------------------------------------------------
-SECTION acia_interrupt
-
+SECTION acia_interrupt              ; ORG $0080
 
 .acia_int
         push af
@@ -127,12 +126,14 @@ SECTION acia_interrupt
 
 ;------------------------------------------------------------------------------
 ; SECTION acia_rxa_chk              ; ORG $00F0
+;
 ; .RXA_CHK                          ; insert directly into JumP table
 ;       ld a,(serRxBufUsed)
 ;       ret
 
 ;------------------------------------------------------------------------------
 SECTION acia_rxa                    ; ORG $00F0
+
 .RXA
         ld a,(serRxBufUsed)         ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
@@ -164,8 +165,9 @@ SECTION acia_rxa                    ; ORG $00F0
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
-SECTION acia_txa                ; ORG $0120
-.TXA
+SECTION acia_txa                    ; ORG $0120
+
+.TXA                                ; output a character in A via ACIA
         push hl                     ; store HL so we don't clobber it
         ld l,a                      ; store Tx character
 
@@ -219,17 +221,7 @@ SECTION acia_txa                ; ORG $0120
         ret
 
 ;------------------------------------------------------------------------------
-SECTION acia_print                  ; ORG $0170
-.PRINT
-        LD A,(HL)                   ; get character
-        OR A                        ; is it $00 ?
-        RET Z                       ; then RETurn on terminator
-        CALL TXA                    ; output character in A
-        INC HL                      ; next Character
-        JP PRINT                    ; continue until $00
-
-;------------------------------------------------------------------------------
-SECTION init                    ; ORG $0180
+SECTION init                        ; ORG $0170
 
 PUBLIC  INIT
 
@@ -301,6 +293,14 @@ PUBLIC  INIT
         RST 08H
 .WARMSTART
         JP $0243                    ; <<<< Start Basic WARM
+
+.PRINT
+        LD A,(HL)                   ; get character
+        OR A                        ; is it $00 ?
+        RET Z                       ; then RETurn on terminator
+        CALL TXA                    ; output character in A
+        INC HL                      ; next Character
+        JP PRINT                    ; continue until $00
 
 ;==============================================================================
 ;

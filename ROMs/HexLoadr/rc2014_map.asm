@@ -32,11 +32,8 @@ ORG         $00F0
 SECTION     acia_txa
 ORG         $0120
 
-SECTION     acia_print
-ORG         $0170
-
 SECTION     init
-ORG         $0180
+ORG         $0170
 
 SECTION     init_strings
 ORG         $01F0

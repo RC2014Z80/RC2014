@@ -144,7 +144,7 @@ BN      .EQU    28H             ; BIN error
 COLD:   JP      CSTART          ; Jump in for cold start (0x0240)
 WARM:   JP      WARMST          ; Jump in for warm start (0x0243)
 
-        .FILL   5               ; pad so DEINT is 0x025B, ABPASS is 0x024D
+        .FILL   5               ; pad so DEINT is 0x024B, ABPASS is 0x024D
 
         .WORD   DEINT           ; 0x024B Get integer -32768 to 32767
         .WORD   ABPASS          ; 0x024D Return integer in AB
@@ -685,7 +685,7 @@ SFTPRG: LD      A,(DE)          ; Shift rest of program down
         INC     DE              ; Next source
         LD      A,H             ; All done?
         SUB     D               ; Compare with D
-        JP      NZ,$+5          ; Different - Exit
+        JP      NZ,SFTPRG       ; More to do
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,SFTPRG       ; More to do
@@ -2232,8 +2232,7 @@ NOTSTR: LD      A,(FORFLG)      ; Array name needed ?
 NSCFOR: XOR     A               ; Simple variable
         LD      (FORFLG),A      ; Clear "FOR" flag
         PUSH    HL              ; Save code string address
-        LD      D,B             ; DE = Variable name to find
-        LD      E,C
+        LD      DE,BC           ; DE = Variable name to find
         LD      HL,(FNRGNM)     ; FN argument name
         LD      A,H             ; Is it the FN argument?
         SUB     D               ; Compare with D
@@ -2296,7 +2295,7 @@ ZEROLP: DEC     HL              ; Back through to zero variable
         LD      (HL),0          ; Zero byte in variable
         LD      A,H             ; Done them all?
         SUB     D               ; Compare with D
-        JP      NZ,$+5          ; Different - Exit
+        JP      NZ,ZEROLP       ; No - Keep on going
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,ZEROLP       ; No - Keep on going
@@ -2423,7 +2422,7 @@ ZERARY: DEC     HL              ; Back through array data
         LD      (HL),0          ; Set array element to zero
         LD      A,H             ; All elements zeroed?
         SUB     D               ; Compare with D
-        JP      NZ,$+5          ; Different - Exit
+        JP      NZ,ZERARY       ; No - Keep on going
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,ZERARY       ; No - Keep on going
@@ -2911,7 +2910,7 @@ GSTRDE: CALL    BAKTMP          ; Was it last tmp-str?
         LD      HL,(STRBOT)     ; Current bottom of string area
         LD      A,H             ; Last one in string area?
         SUB     D               ; Compare with D
-        JP      NZ,$+5          ; Different - Exit
+        JP      NZ,POPHL        ; No - Return
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NZ,POPHL        ; No - Return
@@ -2931,7 +2930,7 @@ BAKTMP: LD      HL,(TMSTPT)     ; Get temporary string pool top
         DEC     HL              ; Back
         LD      A,H             ; String last in string pool?
         SUB     D               ; Compare with D
-        JP      NZ,$+5          ; Different - Exit
+        RET     NZ              ; Yes - Leave it
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         RET     NZ              ; Yes - Leave it
