@@ -802,6 +802,7 @@ __siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
 
     ld hl,siobTxCount
     dec (hl)                    ; atomically decrement current Tx count
+
     pop hl
     jr NZ,siob_tx_end
 
@@ -809,7 +810,7 @@ siob_tx_int_pend:
     ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
     out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
 
-siob_tx_end:                        ; if we've more Tx bytes to send, we're done for now
+siob_tx_end:                    ; if we've more Tx bytes to send, we're done for now
     pop af
 
 __siob_interrupt_ext_status:
@@ -823,12 +824,16 @@ __siob_interrupt_rx_char:
 siob_rx_get:
     in a,(__IO_SIOB_DATA_REGISTER)  ; move Rx byte from the SIOB to A
     ld l,a                      ; put it in L
+
     ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
     jr NC,siob_rx_check         ; buffer full, check whether we need to drain H/W FIFO
+
     ld a,l                      ; get Rx byte from l
+
     ld hl,siobRxCount
     inc (hl)                    ; atomically increment Rx buffer count
+
     ld hl,(siobRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the siobRxIn target
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
@@ -836,14 +841,14 @@ siob_rx_get:
 
     ld a,(siobRxCount)          ; get the current Rx count
     cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-    jr NZ,siob_rx_check         ; if the buffer is fullish reset the RTS line
+    jp NZ,siob_rx_check         ; if the buffer is fullish reset the RTS line
 
     ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
     out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
     ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE    ; clear RTS
     out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
 
-siob_rx_check:                      ; SIO has 4 byte Rx H/W FIFO
+siob_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
     in a,(__IO_SIOB_CONTROL_REGISTER)   ; get the SIOB register R0
     rrca                        ; test whether we have received on SIOB
     jr C,siob_rx_get            ; if still more bytes in H/W FIFO, get them
@@ -890,6 +895,7 @@ __sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
 
     ld hl,sioaTxCount
     dec (hl)                    ; atomically decrement current Tx count
+
     pop hl
     jr NZ,sioa_tx_end
 
@@ -897,7 +903,7 @@ sioa_tx_int_pend:
     ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
     out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
 
-sioa_tx_end:                        ; if we've more Tx bytes to send, we're done for now
+sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for now
     pop af
 
 __sioa_interrupt_ext_status:
@@ -911,13 +917,16 @@ __sioa_interrupt_rx_char:
 sioa_rx_get:
     in a,(__IO_SIOA_DATA_REGISTER)  ; move Rx byte from the SIOA to A
     ld l,a                      ; put it in L
+
     ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
     cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
     jr NC,sioa_rx_check         ; buffer full, check whether we need to drain H/W FIFO
 
     ld a,l                      ; get Rx byte from l
+
     ld hl,sioaRxCount
     inc (hl)                    ; atomically increment Rx buffer count
+
     ld hl,(sioaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the sioaRxIn target
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
@@ -925,7 +934,7 @@ sioa_rx_get:
 
     ld a,(sioaRxCount)          ; get the current Rx count
     cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-    jr NZ,sioa_rx_check         ; if the buffer is fullish reset the RTS line
+    jp NZ,sioa_rx_check         ; if the buffer is fullish reset the RTS line
 
     ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
     out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
@@ -1035,7 +1044,7 @@ _sioa_getc:
     ret Z                       ; if the count is zero, then return
 
     cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-    jr NZ,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    jp NZ,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
 
     ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
     out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
@@ -1066,7 +1075,7 @@ _siob_getc:
     ret Z                       ; if the count is zero, then return
 
     cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-    jr NZ,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    jp NZ,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
 
     ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
     out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
@@ -1141,6 +1150,7 @@ _sioa_putc:
     ; modifies : af, hl
 
     di
+
     ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether the buffer is empty
     jr NZ,sioa_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
@@ -1151,6 +1161,7 @@ _sioa_putc:
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
     out (__IO_SIOA_DATA_REGISTER),a ; immediately output the Tx byte to the SIOA
+
     ei
     ret                         ; and just complete
 
@@ -1161,6 +1172,7 @@ sioa_putc_buffer_tx:
 
     ld a,l                      ; Tx byte
     ld hl,sioaTxCount
+
     di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(sioaTxIn)            ; get the pointer to where we poke
@@ -1173,6 +1185,7 @@ sioa_putc_buffer_tx:
     or sioaTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (sioaTxIn),hl            ; write where the next byte should be poked
+
     ret
 
 sioa_putc_buffer_tx_overflow:
@@ -1186,6 +1199,7 @@ _siob_putc:
     ; modifies : af, hl
 
     di
+
     ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether the buffer is empty
     jr NZ,siob_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
@@ -1196,6 +1210,7 @@ _siob_putc:
 
     ld a,l                      ; Retrieve Tx character for immediate Tx
     out (__IO_SIOB_DATA_REGISTER),a ; immediately output the Tx byte to the SIOB
+
     ei
     ret                         ; and just complete
 
@@ -1206,6 +1221,7 @@ siob_putc_buffer_tx:
 
     ld a,l                      ; Tx byte
     ld hl,siobTxCount
+
     di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(siobTxIn)            ; get the pointer to where we poke
@@ -1218,6 +1234,7 @@ siob_putc_buffer_tx:
     or siobTxBuffer&0xFF        ; locate base
     ld l,a                      ; return the low byte to l
     ld (siobTxIn),hl            ; write where the next byte should be poked
+
     ret
 
 siob_putc_buffer_tx_overflow:
