@@ -53,7 +53,7 @@ SECTION acia_interrupt              ; ORG $0080
 
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
-        jp NC,acia_tx_send          ; if not, go check for bytes to transmit
+        jr NC,acia_tx_send          ; if not, go check for bytes to transmit
 
 .acia_rx_get
         in a,(SER_DATA_ADDR)        ; Get the received byte from the ACIA 
@@ -61,7 +61,7 @@ SECTION acia_interrupt              ; ORG $0080
 
         ld a,(serRxBufUsed)         ; Get the number of bytes in the Rx buffer
         cp SER_RX_BUFSIZE-1         ; check whether there is space in the buffer
-        jp NC,acia_tx_check         ; buffer full, check if we can send something
+        jr NC,acia_tx_check         ; buffer full, check if we can send something
 
         ld a,l                      ; get Rx byte from l
         ld hl,(serRxInPtr)          ; get the pointer to where we poke
@@ -85,11 +85,11 @@ SECTION acia_interrupt              ; ORG $0080
 .acia_tx_check
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
-        jp C,acia_rx_get            ; another byte received, go get it
+        jr C,acia_rx_get            ; another byte received, go get it
 
 .acia_tx_send
         rrca                        ; check whether a byte can be transmitted, via SER_TDRE
-        jp NC,acia_txa_end          ; if not, we're done for now
+        jr NC,acia_txa_end          ; if not, we're done for now
 
         ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         or a                        ; check whether it is zero
@@ -109,7 +109,7 @@ SECTION acia_interrupt              ; ORG $0080
         ld hl,serTxBufUsed
         dec (hl)                    ; atomically decrement current Tx count
 
-        jp NZ,acia_txa_end          ; if we've more Tx bytes to send, we're done for now
+        jr NZ,acia_txa_end          ; if we've more Tx bytes to send, we're done for now
 
 .acia_tei_clear
         ld a,(serControl)           ; get the ACIA control echo byte
@@ -137,7 +137,7 @@ SECTION acia_rxa                    ; ORG $00F0
 .RXA
         ld a,(serRxBufUsed)         ; get the number of bytes in the Rx buffer
         or a                        ; see if there are zero bytes available
-        jp Z,RXA                    ; wait, if there are no bytes available
+        jr Z,RXA                    ; wait, if there are no bytes available
 
         cp SER_RX_EMPTYSIZE         ; compare the count with the preferred empty size
         jp NZ,rxa_get_byte          ; if the buffer is too full, don't change the RTS
@@ -173,11 +173,11 @@ SECTION acia_txa                    ; ORG $0120
 
         ld a,(serTxBufUsed)         ; Get the number of bytes in the Tx buffer
         or a                        ; check whether the buffer is empty
-        jp NZ,txa_buffer_out        ; buffer not empty, so abandon immediate Tx
+        jr NZ,txa_buffer_out        ; buffer not empty, so abandon immediate Tx
 
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         and SER_TDRE                ; check whether a byte can be transmitted
-        jp Z,txa_buffer_out         ; if not, so abandon immediate Tx
+        jr Z,txa_buffer_out         ; if not, so abandon immediate Tx
 
         ld a,l                      ; Retrieve Tx character for immediate Tx
         out (SER_DATA_ADDR),a       ; immediately output the Tx byte to the ACIA
@@ -188,7 +188,7 @@ SECTION acia_txa                    ; ORG $0120
 .txa_buffer_out
         ld a,(serTxBufUsed)         ; get the number of bytes in the Tx buffer
         cp SER_TX_BUFSIZE-1         ; check whether there is space in the buffer
-        jp NC,txa_buffer_out        ; buffer full, so wait till it has space
+        jr NC,txa_buffer_out        ; buffer full, so wait till it has space
 
         ld a,l                      ; retrieve Tx character
 

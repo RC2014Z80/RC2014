@@ -86,7 +86,11 @@ ABPASS          .EQU    $12CC   ; Function ABPASS to put output into AB register
 
 5. Profit.
 
-Note that your C or assembly program will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used. Any Basic programs loaded will also remain in place during a Warm Reset.
+## Notes
+
+Note that your C or assembly program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used.
+
+Any Basic programs loaded will also remain in place during a Warm Reset.
 
 Issuing the `RESET` keyword will clear the RC2014 RAM, and provide an option to return the original memory size. `RESET` is functionally equivalent to a cold start.
 
