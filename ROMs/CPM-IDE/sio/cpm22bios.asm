@@ -831,13 +831,13 @@ siob_rx_get:
 
     ld a,l                      ; get Rx byte from l
 
-    ld hl,siobRxCount
-    inc (hl)                    ; atomically increment Rx buffer count
-
     ld hl,(siobRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the siobRxIn target
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (siobRxIn),hl            ; write where the next byte should be poked
+
+    ld hl,siobRxCount
+    inc (hl)                    ; atomically increment Rx buffer count
 
     ld a,(siobRxCount)          ; get the current Rx count
     cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
@@ -924,13 +924,13 @@ sioa_rx_get:
 
     ld a,l                      ; get Rx byte from l
 
-    ld hl,sioaRxCount
-    inc (hl)                    ; atomically increment Rx buffer count
-
     ld hl,(sioaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the sioaRxIn target
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (sioaRxIn),hl            ; write where the next byte should be poked
+
+    ld hl,sioaRxCount
+    inc (hl)                    ; atomically increment Rx buffer count
 
     ld a,(sioaRxCount)          ; get the current Rx count
     cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
@@ -1039,7 +1039,6 @@ _sioa_getc:
     ;
     ; modifies : af, hl
     ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
@@ -1052,14 +1051,14 @@ _sioa_getc:
     out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
 
 sioa_getc_clean_up:
-    ld hl,sioaRxCount
-    di
-    dec (hl)                    ; atomically decrement Rx count
     ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
-    ei
     ld a,(hl)                   ; get the Rx byte
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (sioaRxOut),hl           ; write where the next byte should be popped
+
+    ld hl,sioaRxCount
+    dec (hl)                    ; atomically decrement Rx count
+
     ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
@@ -1070,7 +1069,6 @@ _siob_getc:
     ;
     ; modifies : af, hl
     ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
     ret Z                       ; if the count is zero, then return
 
@@ -1083,14 +1081,14 @@ _siob_getc:
     out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
 
 siob_getc_clean_up:
-    ld hl,siobRxCount
-    di
-    dec (hl)                    ; atomically decrement Rx count
     ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
-    ei
     ld a,(hl)                   ; get the Rx byte
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (siobRxOut),hl           ; write where the next byte should be popped
+
+    ld hl,siobRxCount
+    dec (hl)                    ; atomically decrement Rx count
+
     ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
@@ -1150,7 +1148,6 @@ _sioa_putc:
     ; modifies : af, hl
 
     di
-
     ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether the buffer is empty
     jr NZ,sioa_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
@@ -1171,8 +1168,8 @@ sioa_putc_buffer_tx:
     jr NC,sioa_putc_buffer_tx_overflow   ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
-    ld hl,sioaTxCount
 
+    ld hl,sioaTxCount
     di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(sioaTxIn)            ; get the pointer to where we poke
@@ -1190,7 +1187,7 @@ sioa_putc_buffer_tx:
 
 sioa_putc_buffer_tx_overflow:
     ei
-    jr sioa_putc_buffer_tx
+    jp sioa_putc_buffer_tx
 
 _siob_putc:
     ; enter    : l = char to output
@@ -1199,7 +1196,6 @@ _siob_putc:
     ; modifies : af, hl
 
     di
-
     ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
     or a                        ; check whether the buffer is empty
     jr NZ,siob_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
@@ -1220,8 +1216,8 @@ siob_putc_buffer_tx:
     jr NC,siob_putc_buffer_tx_overflow   ; buffer full, so keep trying
 
     ld a,l                      ; Tx byte
-    ld hl,siobTxCount
 
+    ld hl,siobTxCount
     di
     inc (hl)                    ; atomic increment of Tx count
     ld hl,(siobTxIn)            ; get the pointer to where we poke
@@ -1239,7 +1235,7 @@ siob_putc_buffer_tx:
 
 siob_putc_buffer_tx_overflow:
     ei
-    jr siob_putc_buffer_tx
+    jp siob_putc_buffer_tx
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - 8255 functions
