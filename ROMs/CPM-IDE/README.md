@@ -9,6 +9,8 @@ This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
+ The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
+
 In the ACIA build, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
 In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 31 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
@@ -227,7 +229,7 @@ end
 
 ## Shell Command Interface
 
-The shell command line interface is implemented in C, with the underlying functions either in C or in assembly.
+The shell command line interface is implemented in C, with the underlying functions either in C or in assembly. The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
 
 Again, here is a view of what success looks like.
 
