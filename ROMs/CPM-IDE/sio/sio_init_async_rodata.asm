@@ -16,7 +16,7 @@ __siob_init_async_rodata_begin:
     defb    __IO_SIO_WR0_R2
     defb    _cpm_sio_interrupt_vector_table&$F0
     defb    __IO_SIO_WR0_R4|__IO_SIO_WR0_EXT_INT_RESET
-    defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_1|__IO_SIO_WR4_PARITY_NONE
+    defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_2|__IO_SIO_WR4_PARITY_NONE
     defb    __IO_SIO_WR0_R3
     defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_RX_ENABLE
     defb    __IO_SIO_WR0_R5
@@ -30,7 +30,7 @@ __siob_init_async_rodata_end:
 __sioa_init_async_rodata_begin:
     defb    __IO_SIO_WR0_CHANNEL_RESET
     defb    __IO_SIO_WR0_R4|__IO_SIO_WR0_EXT_INT_RESET
-    defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_1|__IO_SIO_WR4_PARITY_NONE
+    defb    __IO_SIO_WR4_CLK_DIV_64|__IO_SIO_WR4_STOP_2|__IO_SIO_WR4_PARITY_NONE
     defb    __IO_SIO_WR0_R3
     defb    __IO_SIO_WR3_RX_8BIT|__IO_SIO_WR3_RX_ENABLE
     defb    __IO_SIO_WR0_R5
