@@ -3709,7 +3709,7 @@ MLDEBC:                         ; Multiply DE by BC to HL
         LD      B,16            ; 16 bits (iterations)
 MLDBLP: ADD     HL,HL           ; Shift partial product left
         JP      C,BSERR         ; ?BS Error if overflow
-        RL      C
+        SLA     C               ; Shift multiplier left
         RLA
         JP      NC,NOMLAD       ; Bit was zero - No add
         ADD     HL,DE
