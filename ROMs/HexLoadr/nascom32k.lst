@@ -1,3 +1,4 @@
 rc2014_map.asm
 page0.asm
 int32k.asm
+bas32k.asm

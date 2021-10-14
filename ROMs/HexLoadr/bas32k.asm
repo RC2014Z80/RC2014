@@ -37,117 +37,117 @@
 
 ; GENERAL EQUATES
 
-CTRLC   .EQU    03H             ; Control "C"
-CTRLG   .EQU    07H             ; Control "G"
-BKSP    .EQU    08H             ; Back space
-LF      .EQU    0AH             ; Line feed
-CS      .EQU    0CH             ; Clear screen
-CR      .EQU    0DH             ; Carriage return
-CTRLO   .EQU    0FH             ; Control "O"
-CTRLQ   .EQU    11H             ; Control "Q"
-CTRLR   .EQU    12H             ; Control "R"
-CTRLS   .EQU    13H             ; Control "S"
-CTRLU   .EQU    15H             ; Control "U"
-ESC     .EQU    1BH             ; Escape
-DEL     .EQU    7FH             ; Delete
+DEFC    CTRLC   =   03H         ; Control "C"
+DEFC    CTRLG   =   07H         ; Control "G"
+DEFC    BKSP    =   08H         ; Back space
+DEFC    LF      =   0AH         ; Line feed
+DEFC    CS      =   0CH         ; Clear screen
+DEFC    CR      =   0DH         ; Carriage return
+DEFC    CTRLO   =   0FH         ; Control "O"
+DEFC    CTRLQ   =   11H         ; Control "Q"
+DEFC    CTRLR   =   12H         ; Control "R"
+DEFC    CTRLS   =   13H         ; Control "S"
+DEFC    CTRLU   =   15H         ; Control "U"
+DEFC    ESC     =   1BH         ; Escape
+DEFC    DEL     =   7FH         ; Delete
 
 ; BASIC WORK SPACE LOCATIONS
 
-WRKSPC  .EQU    8200H           ; <<<< BASIC Work space ** Rx buffer & Tx buffer located from 8080H **
-USR     .EQU    WRKSPC+003H     ; "USR (x)" jump
-OUTSUB  .EQU    WRKSPC+006H     ; "OUT p,n"
-OTPORT  .EQU    WRKSPC+007H     ; Port (p)
-DIVSUP  .EQU    WRKSPC+009H     ; Division support routine
-DIV1    .EQU    WRKSPC+00AH     ; <- Values
-DIV2    .EQU    WRKSPC+00EH     ; <-   to
-DIV3    .EQU    WRKSPC+012H     ; <-   be
-DIV4    .EQU    WRKSPC+015H     ; <-inserted
-SEED    .EQU    WRKSPC+017H     ; Random number seed
-LSTRND  .EQU    WRKSPC+03AH     ; Last random number
-INPSUB  .EQU    WRKSPC+03EH     ; #INP (x)" Routine
-INPORT  .EQU    WRKSPC+03FH     ; PORT (x)
-NULLS   .EQU    WRKSPC+041H     ; Number of nulls
-LWIDTH  .EQU    WRKSPC+042H     ; Terminal width
-COMMAN  .EQU    WRKSPC+043H     ; Width for commas
-NULFLG  .EQU    WRKSPC+044H     ; Null after input byte flag
-CTLOFG  .EQU    WRKSPC+045H     ; Control "O" flag
-LINESC  .EQU    WRKSPC+046H     ; Lines counter
-LINESN  .EQU    WRKSPC+048H     ; Lines number
-CHKSUM  .EQU    WRKSPC+04AH     ; Array load/save check sum
-NMIFLG  .EQU    WRKSPC+04CH     ; Flag for NMI break routine
-BRKFLG  .EQU    WRKSPC+04DH     ; Break flag
-RINPUT  .EQU    WRKSPC+04EH     ; Input reflection
-STRSPC  .EQU    WRKSPC+051H     ; Bottom of string space
-LINEAT  .EQU    WRKSPC+053H     ; Current line number
-BASTXT  .EQU    WRKSPC+055H     ; Pointer to start of program
-BUFFER  .EQU    WRKSPC+058H     ; Input buffer
-STACK   .EQU    WRKSPC+05DH     ; Initial stack
-CURPOS  .EQU    WRKSPC+0A2H     ; <<<< Character position on line ** Top of Loader TEMPSTACK **
-LCRFLG  .EQU    WRKSPC+0A3H     ; Locate/Create flag
-TYPE    .EQU    WRKSPC+0A4H     ; Data type flag
-DATFLG  .EQU    WRKSPC+0A5H     ; Literal statement flag
-LSTRAM  .EQU    WRKSPC+0A6H     ; Last available RAM
-TMSTPT  .EQU    WRKSPC+0A8H     ; Temporary string pointer
-TMSTPL  .EQU    WRKSPC+0AAH     ; Temporary string pool
-TMPSTR  .EQU    WRKSPC+0B6H     ; Temporary string
-STRBOT  .EQU    WRKSPC+0BAH     ; Bottom of string space
-CUROPR  .EQU    WRKSPC+0BCH     ; Current operator in EVAL
-LOOPST  .EQU    WRKSPC+0BEH     ; First statement of loop
-DATLIN  .EQU    WRKSPC+0C0H     ; Line of current DATA item
-FORFLG  .EQU    WRKSPC+0C2H     ; "FOR" loop flag
-LSTBIN  .EQU    WRKSPC+0C3H     ; Last byte entered
-READFG  .EQU    WRKSPC+0C4H     ; Read/Input flag
-BRKLIN  .EQU    WRKSPC+0C5H     ; Line of break
-NXTOPR  .EQU    WRKSPC+0C7H     ; Next operator in EVAL
-ERRLIN  .EQU    WRKSPC+0C9H     ; Line of error
-CONTAD  .EQU    WRKSPC+0CBH     ; Where to CONTinue
-PROGND  .EQU    WRKSPC+0CDH     ; End of program
-VAREND  .EQU    WRKSPC+0CFH     ; End of variables
-ARREND  .EQU    WRKSPC+0D1H     ; End of arrays
-NXTDAT  .EQU    WRKSPC+0D3H     ; Next data item
-FNRGNM  .EQU    WRKSPC+0D5H     ; Name of FN argument
-FNARG   .EQU    WRKSPC+0D7H     ; FN argument value
-FPREG   .EQU    WRKSPC+0DBH     ; Floating point register
-FPEXP   .EQU    FPREG+3         ; Floating point exponent
-SGNRES  .EQU    WRKSPC+0DFH     ; Sign of result
-PBUFF   .EQU    WRKSPC+0E0H     ; Number print buffer
-MULVAL  .EQU    WRKSPC+0EDH     ; Multiplier
-PROGST  .EQU    WRKSPC+0F0H     ; Start of program text area
-STLOOK  .EQU    WRKSPC+154H     ; Start of memory test
+DEFC    WRKSPC  =   8200H       ; <<<< BASIC Work space ** Rx buffer & Tx buffer located from 8080H **
+DEFC    USR     =   WRKSPC+003H ; "USR (x)" jump
+DEFC    OUTSUB  =   WRKSPC+006H ; "OUT p,n"
+DEFC    OTPORT  =   WRKSPC+007H ; Port (p)
+DEFC    DIVSUP  =   WRKSPC+009H ; Division support routine
+DEFC    DIV1    =   WRKSPC+00AH ; <- Values
+DEFC    DIV2    =   WRKSPC+00EH ; <-   to
+DEFC    DIV3    =   WRKSPC+012H ; <-   be
+DEFC    DIV4    =   WRKSPC+015H ; <-inserted
+DEFC    SEED    =   WRKSPC+017H ; Random number seed
+DEFC    LSTRND  =   WRKSPC+03AH ; Last random number
+DEFC    INPSUB  =   WRKSPC+03EH ; #INP (x)" Routine
+DEFC    INPORT  =   WRKSPC+03FH ; PORT (x)
+DEFC    NULLS   =   WRKSPC+041H ; Number of nulls
+DEFC    LWIDTH  =   WRKSPC+042H ; Terminal width
+DEFC    COMMAN  =   WRKSPC+043H ; Width for commas
+DEFC    NULFLG  =   WRKSPC+044H ; Null after input byte flag
+DEFC    CTLOFG  =   WRKSPC+045H ; Control "O" flag
+DEFC    LINESC  =   WRKSPC+046H ; Lines counter
+DEFC    LINESN  =   WRKSPC+048H ; Lines number
+DEFC    CHKSUM  =   WRKSPC+04AH ; Array load/save check sum
+DEFC    NMIFLG  =   WRKSPC+04CH ; Flag for NMI break routine
+DEFC    BRKFLG  =   WRKSPC+04DH ; Break flag
+DEFC    RINPUT  =   WRKSPC+04EH ; Input reflection
+DEFC    STRSPC  =   WRKSPC+051H ; Bottom of string space
+DEFC    LINEAT  =   WRKSPC+053H ; Current line number
+DEFC    BASTXT  =   WRKSPC+055H ; Pointer to start of program
+DEFC    BUFFER  =   WRKSPC+058H ; Input buffer
+DEFC    STACK   =   WRKSPC+05DH ; Initial stack
+DEFC    CURPOS  =   WRKSPC+0A2H ; <<<< Character position on line ** Top of Loader TEMPSTACK **
+DEFC    LCRFLG  =   WRKSPC+0A3H ; Locate/Create flag
+DEFC    TYPE    =   WRKSPC+0A4H ; Data type flag
+DEFC    DATFLG  =   WRKSPC+0A5H ; Literal statement flag
+DEFC    LSTRAM  =   WRKSPC+0A6H ; Last available RAM
+DEFC    TMSTPT  =   WRKSPC+0A8H ; Temporary string pointer
+DEFC    TMSTPL  =   WRKSPC+0AAH ; Temporary string pool
+DEFC    TMPSTR  =   WRKSPC+0B6H ; Temporary string
+DEFC    STRBOT  =   WRKSPC+0BAH ; Bottom of string space
+DEFC    CUROPR  =   WRKSPC+0BCH ; Current operator in EVAL
+DEFC    LOOPST  =   WRKSPC+0BEH ; First statement of loop
+DEFC    DATLIN  =   WRKSPC+0C0H ; Line of current DATA item
+DEFC    FORFLG  =   WRKSPC+0C2H ; "FOR" loop flag
+DEFC    LSTBIN  =   WRKSPC+0C3H ; Last byte entered
+DEFC    READFG  =   WRKSPC+0C4H ; Read/Input flag
+DEFC    BRKLIN  =   WRKSPC+0C5H ; Line of break
+DEFC    NXTOPR  =   WRKSPC+0C7H ; Next operator in EVAL
+DEFC    ERRLIN  =   WRKSPC+0C9H ; Line of error
+DEFC    CONTAD  =   WRKSPC+0CBH ; Where to CONTinue
+DEFC    PROGND  =   WRKSPC+0CDH ; End of program
+DEFC    VAREND  =   WRKSPC+0CFH ; End of variables
+DEFC    ARREND  =   WRKSPC+0D1H ; End of arrays
+DEFC    NXTDAT  =   WRKSPC+0D3H ; Next data item
+DEFC    FNRGNM  =   WRKSPC+0D5H ; Name of FN argument
+DEFC    FNARG   =   WRKSPC+0D7H ; FN argument value
+DEFC    FPREG   =   WRKSPC+0DBH ; Floating point register
+DEFC    FPEXP   =   FPREG+3     ; Floating point exponent
+DEFC    SGNRES  =   WRKSPC+0DFH ; Sign of result
+DEFC    PBUFF   =   WRKSPC+0E0H ; Number print buffer
+DEFC    MULVAL  =   WRKSPC+0EDH ; Multiplier
+DEFC    PROGST  =   WRKSPC+0F0H ; Start of program text area
+DEFC    STLOOK  =   WRKSPC+154H ; Start of memory test
 
 ; BASIC ERROR CODE VALUES
 
-NF      .EQU    00H             ; NEXT without FOR
-SN      .EQU    02H             ; Syntax error
-RG      .EQU    04H             ; RETURN without GOSUB
-OD      .EQU    06H             ; Out of DATA
-FC      .EQU    08H             ; Function call error
-OV      .EQU    0AH             ; Overflow
-OM      .EQU    0CH             ; Out of memory
-UL      .EQU    0EH             ; Undefined line number
-BS      .EQU    10H             ; Bad subscript
-DD      .EQU    12H             ; Re-DIMensioned array
-DZ      .EQU    14H             ; Division by zero (/0)
-ID      .EQU    16H             ; Illegal direct
-TM      .EQU    18H             ; Type miss-match
-OS      .EQU    1AH             ; Out of string space
-LS      .EQU    1CH             ; String too long
-ST      .EQU    1EH             ; String formula too complex
-CN      .EQU    20H             ; Can't CONTinue
-UF      .EQU    22H             ; UnDEFined FN function
-MO      .EQU    24H             ; Missing operand
-HX      .EQU    26H             ; HEX error
-BN      .EQU    28H             ; BIN error
+DEFC    NF      =   00H         ; NEXT without FOR
+DEFC    SN      =   02H         ; Syntax error
+DEFC    RG      =   04H         ; RETURN without GOSUB
+DEFC    OD      =   06H         ; Out of DATA
+DEFC    FC      =   08H         ; Function call error
+DEFC    OV      =   0AH         ; Overflow
+DEFC    OM      =   0CH         ; Out of memory
+DEFC    UL      =   0EH         ; Undefined line number
+DEFC    BS      =   10H         ; Bad subscript
+DEFC    DD      =   12H         ; Re-DIMensioned array
+DEFC    DZ      =   14H         ; Division by zero (/0)
+DEFC    ID      =   16H         ; Illegal direct
+DEFC    TM      =   18H         ; Type miss-match
+DEFC    OS      =   1AH         ; Out of string space
+DEFC    LS      =   1CH         ; String too long
+DEFC    ST      =   1EH         ; String formula too complex
+DEFC    CN      =   20H         ; Can't CONTinue
+DEFC    UF      =   22H         ; UnDEFined FN function
+DEFC    MO      =   24H         ; Missing operand
+DEFC    HX      =   26H         ; HEX error
+DEFC    BN      =   28H         ; BIN error
 
-        .ORG    0240H           ; <<<< Modified to allow for ACIA Tx/Rx IM1
+        ORG     0240H           ; <<<< Modified to allow for ACIA Tx/Rx on RST6.5
 
 COLD:   JP      CSTART          ; Jump in for cold start (0x0240)
 WARM:   JP      WARMST          ; Jump in for warm start (0x0243)
 
-        .FILL   5               ; pad so DEINT is 0x024B, ABPASS is 0x024D
+        DEFS    5               ; pad so DEINT is 0x024B, ABPASS is 0x024D
 
-        .WORD   DEINT           ; 0x024B Get integer -32768 to 32767
-        .WORD   ABPASS          ; 0x024D Return integer in AB
+        DEFW    DEINT           ; 0x024B Get integer -32768 to 32767
+        DEFW    ABPASS          ; 0x024D Return integer in AB
 
 RESET:  RET     NZ              ; Return if any more on line
 CSTART: LD      HL,WRKSPC       ; Start of workspace RAM
@@ -232,242 +232,242 @@ WARMST: LD      SP,STACK        ; Temporary stack
 BRKRET: CALL    CLREG           ; Clear registers and stack
         JP      PRNTOK          ; Go to get command line
 
-BFREE:  .BYTE   " Bytes free",CR,LF,0,0
+BFREE:  DEFB    " Bytes free",CR,LF,0,0
 
-SIGNON: .BYTE   "Z80 BASIC Ver 4.7c",CR,LF
-        .BYTE   "Copyright ",40,"C",41
-        .BYTE   " 1978 by Microsoft",CR,LF,0,0
+SIGNON: DEFB    "Z80 BASIC Ver 4.7c",CR,LF
+        DEFB    "Copyright ",40,"C",41
+        DEFB    " 1978 by Microsoft",CR,LF,0,0
 
-MEMMSG: .BYTE   "Memory top",0
+MEMMSG: DEFB    "Memory top",0
 
 ; FUNCTION ADDRESS TABLE
 
-FNCTAB: .WORD   SGN
-        .WORD   INT
-        .WORD   ABS
-        .WORD   USR
-        .WORD   FRE
-        .WORD   INP
-        .WORD   POS
-        .WORD   SQR
-        .WORD   RND
-        .WORD   LOG
-        .WORD   EXP
-        .WORD   COS
-        .WORD   SIN
-        .WORD   TAN
-        .WORD   ATN
-        .WORD   PEEK
-        .WORD   DEEK
-        .WORD   LEN
-        .WORD   STR
-        .WORD   VAL
-        .WORD   ASC
-        .WORD   CHR
-        .WORD   HEX
-        .WORD   BIN
-        .WORD   LEFT
-        .WORD   RIGHT
-        .WORD   MID
+FNCTAB: DEFW    SGN
+        DEFW    INT
+        DEFW    ABS
+        DEFW    USR
+        DEFW    FRE
+        DEFW    INP
+        DEFW    POS
+        DEFW    SQR
+        DEFW    RND
+        DEFW    LOG
+        DEFW    EXP
+        DEFW    COS
+        DEFW    SIN
+        DEFW    TAN
+        DEFW    ATN
+        DEFW    PEEK
+        DEFW    DEEK
+        DEFW    LEN
+        DEFW    STR
+        DEFW    VAL
+        DEFW    ASC
+        DEFW    CHR
+        DEFW    HEX
+        DEFW    BIN
+        DEFW    LEFT
+        DEFW    RIGHT
+        DEFW    MID
 
 ; RESERVED WORD LIST
 
-WORDS:  .BYTE   'E'+80H,"ND"    ; 80h
-        .BYTE   'F'+80H,"OR"
-        .BYTE   'N'+80H,"EXT"
-        .BYTE   'D'+80H,"ATA"
-        .BYTE   'I'+80H,"NPUT"
-        .BYTE   'D'+80H,"IM"
-        .BYTE   'R'+80H,"EAD"
-        .BYTE   'L'+80H,"ET"
-        .BYTE   'G'+80H,"OTO"
-        .BYTE   'R'+80H,"UN"
-        .BYTE   'I'+80H,"F"
-        .BYTE   'R'+80H,"ESTORE"
-        .BYTE   'G'+80H,"OSUB"
-        .BYTE   'R'+80H,"ETURN"
-        .BYTE   'R'+80H,"EM"
-        .BYTE   'S'+80H,"TOP"
-        .BYTE   'O'+80H,"UT"    ; 90h
-        .BYTE   'O'+80H,"N"
-        .BYTE   'N'+80H,"ULL"
-        .BYTE   'W'+80H,"AIT"
-        .BYTE   'D'+80H,"EF"
-        .BYTE   'P'+80H,"OKE"
-        .BYTE   'D'+80H,"OKE"
-        .BYTE   'L'+80H,"INES"
-        .BYTE   'C'+80H,"LS"
-        .BYTE   'W'+80H,"IDTH"
-        .BYTE   'M'+80H,"ONITOR"
-        .BYTE   'R'+80H,"ESET"
-        .BYTE   'P'+80H,"RINT"
-        .BYTE   'C'+80H,"ONT"
-        .BYTE   'L'+80H,"IST"
-        .BYTE   'C'+80H,"LEAR"
-        .BYTE   'H'+80H,"LOAD"  ; A0h
-        .BYTE   'N'+80H,"EW"
+WORDS:  DEFB    'E'+80H,"ND"    ; 80h
+        DEFB    'F'+80H,"OR"
+        DEFB    'N'+80H,"EXT"
+        DEFB    'D'+80H,"ATA"
+        DEFB    'I'+80H,"NPUT"
+        DEFB    'D'+80H,"IM"
+        DEFB    'R'+80H,"EAD"
+        DEFB    'L'+80H,"ET"
+        DEFB    'G'+80H,"OTO"
+        DEFB    'R'+80H,"UN"
+        DEFB    'I'+80H,"F"
+        DEFB    'R'+80H,"ESTORE"
+        DEFB    'G'+80H,"OSUB"
+        DEFB    'R'+80H,"ETURN"
+        DEFB    'R'+80H,"EM"
+        DEFB    'S'+80H,"TOP"
+        DEFB    'O'+80H,"UT"    ; 90h
+        DEFB    'O'+80H,"N"
+        DEFB    'N'+80H,"ULL"
+        DEFB    'W'+80H,"AIT"
+        DEFB    'D'+80H,"EF"
+        DEFB    'P'+80H,"OKE"
+        DEFB    'D'+80H,"OKE"
+        DEFB    'L'+80H,"INES"
+        DEFB    'C'+80H,"LS"
+        DEFB    'W'+80H,"IDTH"
+        DEFB    'M'+80H,"ONITOR"
+        DEFB    'R'+80H,"ESET"
+        DEFB    'P'+80H,"RINT"
+        DEFB    'C'+80H,"ONT"
+        DEFB    'L'+80H,"IST"
+        DEFB    'C'+80H,"LEAR"
+        DEFB    'H'+80H,"LOAD"  ; A0h
+        DEFB    'N'+80H,"EW"
 
-        .BYTE   'T'+80H,"AB("
-        .BYTE   'T'+80H,"O"
-        .BYTE   'F'+80H,"N"
-        .BYTE   'S'+80H,"PC("
-        .BYTE   'T'+80H,"HEN"
-        .BYTE   'N'+80H,"OT"
-        .BYTE   'S'+80H,"TEP"
+        DEFB    'T'+80H,"AB("
+        DEFB    'T'+80H,"O"
+        DEFB    'F'+80H,"N"
+        DEFB    'S'+80H,"PC("
+        DEFB    'T'+80H,"HEN"
+        DEFB    'N'+80H,"OT"
+        DEFB    'S'+80H,"TEP"
 
-        .BYTE   '+'+80H
-        .BYTE   '-'+80H
-        .BYTE   '*'+80H
-        .BYTE   '/'+80H
-        .BYTE   '^'+80H
-        .BYTE   'A'+80H,"ND"
-        .BYTE   'O'+80H,"R"
-        .BYTE   '>'+80H         ; B0h
-        .BYTE   '='+80H
-        .BYTE   '<'+80H
+        DEFB    '+'+80H
+        DEFB    '-'+80H
+        DEFB    '*'+80H
+        DEFB    '/'+80H
+        DEFB    '^'+80H
+        DEFB    'A'+80H,"ND"
+        DEFB    'O'+80H,"R"
+        DEFB    '>'+80H         ; B0h
+        DEFB    '='+80H
+        DEFB    '<'+80H
 
-        .BYTE   'S'+80H,"GN"
-        .BYTE   'I'+80H,"NT"
-        .BYTE   'A'+80H,"BS"
-        .BYTE   'U'+80H,"SR"
-        .BYTE   'F'+80H,"RE"
-        .BYTE   'I'+80H,"NP"
-        .BYTE   'P'+80H,"OS"
-        .BYTE   'S'+80H,"QR"
-        .BYTE   'R'+80H,"ND"
-        .BYTE   'L'+80H,"OG"
-        .BYTE   'E'+80H,"XP"
-        .BYTE   'C'+80H,"OS"
-        .BYTE   'S'+80H,"IN"
-        .BYTE   'T'+80H,"AN"    ; C0h
-        .BYTE   'A'+80H,"TN"
-        .BYTE   'P'+80H,"EEK"
-        .BYTE   'D'+80H,"EEK"
-        .BYTE   'L'+80H,"EN"
-        .BYTE   'S'+80H,"TR$"
-        .BYTE   'V'+80H,"AL"
-        .BYTE   'A'+80H,"SC"
-        .BYTE   'C'+80H,"HR$"
-        .BYTE   'H'+80H,"EX$"
-        .BYTE   'B'+80H,"IN$"
-        .BYTE   'L'+80H,"EFT$"
-        .BYTE   'R'+80H,"IGHT$"
-        .BYTE   'M'+80H,"ID$"
-        .BYTE   80H             ; End of list marker
+        DEFB    'S'+80H,"GN"
+        DEFB    'I'+80H,"NT"
+        DEFB    'A'+80H,"BS"
+        DEFB    'U'+80H,"SR"
+        DEFB    'F'+80H,"RE"
+        DEFB    'I'+80H,"NP"
+        DEFB    'P'+80H,"OS"
+        DEFB    'S'+80H,"QR"
+        DEFB    'R'+80H,"ND"
+        DEFB    'L'+80H,"OG"
+        DEFB    'E'+80H,"XP"
+        DEFB    'C'+80H,"OS"
+        DEFB    'S'+80H,"IN"
+        DEFB    'T'+80H,"AN"    ; C0h
+        DEFB    'A'+80H,"TN"
+        DEFB    'P'+80H,"EEK"
+        DEFB    'D'+80H,"EEK"
+        DEFB    'L'+80H,"EN"
+        DEFB    'S'+80H,"TR$"
+        DEFB    'V'+80H,"AL"
+        DEFB    'A'+80H,"SC"
+        DEFB    'C'+80H,"HR$"
+        DEFB    'H'+80H,"EX$"
+        DEFB    'B'+80H,"IN$"
+        DEFB    'L'+80H,"EFT$"
+        DEFB    'R'+80H,"IGHT$"
+        DEFB    'M'+80H,"ID$"
+        DEFB    80H             ; End of list marker
 
 ; KEYWORD ADDRESS TABLE
 
-WORDTB: .WORD   PEND
-        .WORD   FOR
-        .WORD   NEXT
-        .WORD   DATA
-        .WORD   INPUT
-        .WORD   DIM
-        .WORD   READ
-        .WORD   LET
-        .WORD   GOTO
-        .WORD   RUN
-        .WORD   IF
-        .WORD   RESTOR
-        .WORD   GOSUB
-        .WORD   RETURN
-        .WORD   REM
-        .WORD   STOP
-        .WORD   POUT
-        .WORD   ON
-        .WORD   NULL
-        .WORD   WAIT
-        .WORD   DEF
-        .WORD   POKE
-        .WORD   DOKE
-        .WORD   LINES
-        .WORD   CLS
-        .WORD   WIDTH
-        .WORD   MONITR
-        .WORD   RESET
-        .WORD   PRINT
-        .WORD   CONT
-        .WORD   LIST
-        .WORD   CLEAR
-        .WORD   HLOAD
-        .WORD   NEW
+WORDTB: DEFW    PEND
+        DEFW    FOR
+        DEFW    NEXT
+        DEFW    DATA
+        DEFW    INPUT
+        DEFW    DIM
+        DEFW    READ
+        DEFW    LET
+        DEFW    GOTO
+        DEFW    RUN
+        DEFW    IF
+        DEFW    RESTOR
+        DEFW    GOSUB
+        DEFW    RETURN
+        DEFW    REM
+        DEFW    STOP
+        DEFW    POUT
+        DEFW    ON
+        DEFW    NULL
+        DEFW    WAIT
+        DEFW    DEF
+        DEFW    POKE
+        DEFW    DOKE
+        DEFW    LINES
+        DEFW    CLS
+        DEFW    WIDTH
+        DEFW    MONITR
+        DEFW    RESET
+        DEFW    PRINT
+        DEFW    CONT
+        DEFW    LIST
+        DEFW    CLEAR
+        DEFW    HLOAD
+        DEFW    NEW
 
 ; RESERVED WORD TOKEN VALUES
 
-ZEND    .EQU    080H            ; END
-ZFOR    .EQU    081H            ; FOR
-ZDATA   .EQU    083H            ; DATA
-ZGOTO   .EQU    088H            ; GOTO
-ZGOSUB  .EQU    08CH            ; GOSUB
-ZREM    .EQU    08EH            ; REM
-ZPRINT  .EQU    09CH            ; PRINT
-ZNEW    .EQU    0A1H            ; NEW
+DEFC    ZEND    =   080H        ; END
+DEFC    ZFOR    =   081H        ; FOR
+DEFC    ZDATA   =   083H        ; DATA
+DEFC    ZGOTO   =   088H        ; GOTO
+DEFC    ZGOSUB  =   08CH        ; GOSUB
+DEFC    ZREM    =   08EH        ; REM
+DEFC    ZPRINT  =   09CH        ; PRINT
+DEFC    ZNEW    =   0A1H        ; NEW
 
-ZTAB    .EQU    0A2H            ; TAB
-ZTO     .EQU    0A3H            ; TO
-ZFN     .EQU    0A4H            ; FN
-ZSPC    .EQU    0A5H            ; SPC
-ZTHEN   .EQU    0A6H            ; THEN
-ZNOT    .EQU    0A7H            ; NOT
-ZSTEP   .EQU    0A8H            ; STEP
+DEFC    ZTAB    =   0A2H        ; TAB
+DEFC    ZTO     =   0A3H        ; TO
+DEFC    ZFN     =   0A4H        ; FN
+DEFC    ZSPC    =   0A5H        ; SPC
+DEFC    ZTHEN   =   0A6H        ; THEN
+DEFC    ZNOT    =   0A7H        ; NOT
+DEFC    ZSTEP   =   0A8H        ; STEP
 
-ZPLUS   .EQU    0A9H            ; +
-ZMINUS  .EQU    0AAH            ; -
-ZTIMES  .EQU    0ABH            ; *
-ZDIV    .EQU    0ACH            ; /
-ZOR     .EQU    0AFH            ; OR
-ZGTR    .EQU    0B0H            ; >
-ZEQUAL  .EQU    0B1H            ; =
-ZLTH    .EQU    0B2H            ; <
-ZSGN    .EQU    0B3H            ; SGN
-ZLEFT   .EQU    0CBH            ; LEFT$
+DEFC    ZPLUS   =   0A9H        ; +
+DEFC    ZMINUS  =   0AAH        ; -
+DEFC    ZTIMES  =   0ABH        ; *
+DEFC    ZDIV    =   0ACH        ; /
+DEFC    ZOR     =   0AFH        ; OR
+DEFC    ZGTR    =   0B0H        ; >
+DEFC    ZEQUAL  =   0B1H        ; =
+DEFC    ZLTH    =   0B2H        ; <
+DEFC    ZSGN    =   0B3H        ; SGN
+DEFC    ZLEFT   =   0CBH        ; LEFT$
 
 ; ARITHMETIC PRECEDENCE TABLE
 
-PRITAB: .BYTE   79H             ; Precedence value
-        .WORD   PADD            ; FPREG = <last> + FPREG
+PRITAB: DEFB    79H             ; Precedence value
+        DEFW    PADD            ; FPREG = <last> + FPREG
 
-        .BYTE   79H             ; Precedence value
-        .WORD   PSUB            ; FPREG = <last> - FPREG
+        DEFB    79H             ; Precedence value
+        DEFW    PSUB            ; FPREG = <last> - FPREG
 
-        .BYTE   7CH             ; Precedence value
-        .WORD   MULT            ; FPREG = <last> * FPREG
+        DEFB    7CH             ; Precedence value
+        DEFW    MULT            ; FPREG = <last> * FPREG
 
-        .BYTE   7CH             ; Precedence value
-        .WORD   DIV             ; FPREG = <last> / FPREG
+        DEFB    7CH             ; Precedence value
+        DEFW    DIV             ; FPREG = <last> / FPREG
 
-        .BYTE   7FH             ; Precedence value
-        .WORD   POWER           ; FPREG = <last> ^ FPREG
+        DEFB    7FH             ; Precedence value
+        DEFW    POWER           ; FPREG = <last> ^ FPREG
 
-        .BYTE   50H             ; Precedence value
-        .WORD   PAND            ; FPREG = <last> AND FPREG
+        DEFB    50H             ; Precedence value
+        DEFW    PAND            ; FPREG = <last> AND FPREG
 
-        .BYTE   46H             ; Precedence value
-        .WORD   POR             ; FPREG = <last> OR FPREG
+        DEFB    46H             ; Precedence value
+        DEFW    POR             ; FPREG = <last> OR FPREG
 
 ; BASIC ERROR CODE LIST
 
-ERRORS: .BYTE   "NF"            ; NEXT without FOR
-        .BYTE   "SN"            ; Syntax error
-        .BYTE   "RG"            ; RETURN without GOSUB
-        .BYTE   "OD"            ; Out of DATA
-        .BYTE   "FC"            ; Illegal function call
-        .BYTE   "OV"            ; Overflow error
-        .BYTE   "OM"            ; Out of memory
-        .BYTE   "UL"            ; Undefined line
-        .BYTE   "BS"            ; Bad subscript
-        .BYTE   "DD"            ; Re-DIMensioned array
-        .BYTE   "/0"            ; Division by zero
-        .BYTE   "ID"            ; Illegal direct
-        .BYTE   "TM"            ; Type mis-match
-        .BYTE   "OS"            ; Out of string space
-        .BYTE   "LS"            ; String too long
-        .BYTE   "ST"            ; String formula too complex
-        .BYTE   "CN"            ; Can't CONTinue
-        .BYTE   "UF"            ; Undefined FN function
-        .BYTE   "MO"            ; Missing operand
-        .BYTE   "HX"            ; HEX error
-        .BYTE   "BN"            ; BIN error
+ERRORS: DEFB    "NF"            ; NEXT without FOR
+        DEFB    "SN"            ; Syntax error
+        DEFB    "RG"            ; RETURN without GOSUB
+        DEFB    "OD"            ; Out of DATA
+        DEFB    "FC"            ; Illegal function call
+        DEFB    "OV"            ; Overflow error
+        DEFB    "OM"            ; Out of memory
+        DEFB    "UL"            ; Undefined line
+        DEFB    "BS"            ; Bad subscript
+        DEFB    "DD"            ; Re-DIMensioned array
+        DEFB    "/0"            ; Division by zero
+        DEFB    "ID"            ; Illegal direct
+        DEFB    "TM"            ; Type mis-match
+        DEFB    "OS"            ; Out of string space
+        DEFB    "LS"            ; String too long
+        DEFB    "ST"            ; String formula too complex
+        DEFB    "CN"            ; Can't CONTinue
+        DEFB    "UF"            ; Undefined FN function
+        DEFB    "MO"            ; Missing operand
+        DEFB    "HX"            ; HEX error
+        DEFB    "BN"            ; BIN error
 
 ; INITIALISATION TABLE -------------------------------------------------------
 
@@ -488,49 +488,49 @@ INITAB: JP      WARMST          ; Warm start jump
         LD      A,0
         RET
 
-        .BYTE   0,0,0                   ; Random number seed
+        DEFB    0,0,0                   ; Random number seed
                                         ; table used by RND
-        .BYTE   035H,04AH,0CAH,099H     ;-2.65145E+07
-        .BYTE   039H,01CH,076H,098H     ; 1.61291E+07
-        .BYTE   022H,095H,0B3H,098H     ;-1.17691E+07
-        .BYTE   00AH,0DDH,047H,098H     ; 1.30983E+07
-        .BYTE   053H,0D1H,099H,099H     ;-2-01612E+07
-        .BYTE   00AH,01AH,09FH,098H     ;-1.04269E+07
-        .BYTE   065H,0BCH,0CDH,098H     ;-1.34831E+07
-        .BYTE   0D6H,077H,03EH,098H     ; 1.24825E+07
-        .BYTE   052H,0C7H,04FH,080H     ; Last random number
+        DEFB    035H,04AH,0CAH,099H     ;-2.65145E+07
+        DEFB    039H,01CH,076H,098H     ; 1.61291E+07
+        DEFB    022H,095H,0B3H,098H     ;-1.17691E+07
+        DEFB    00AH,0DDH,047H,098H     ; 1.30983E+07
+        DEFB    053H,0D1H,099H,099H     ;-2-01612E+07
+        DEFB    00AH,01AH,09FH,098H     ;-1.04269E+07
+        DEFB    065H,0BCH,0CDH,098H     ;-1.34831E+07
+        DEFB    0D6H,077H,03EH,098H     ; 1.24825E+07
+        DEFB    052H,0C7H,04FH,080H     ; Last random number
 
         IN      A,(0)           ; INP (x) skeleton
         RET
 
-        .BYTE   1               ; POS (x) number (1)
-        .BYTE   255             ; Terminal width (255 = no auto CRLF)
-        .BYTE   28              ; Width for commas (3 columns)
-        .BYTE   0               ; No nulls after input bytes
-        .BYTE   0               ; Output enabled (^O off)
+        DEFB    1               ; POS (x) number (1)
+        DEFB    255             ; Terminal width (255 = no auto CRLF)
+        DEFB    28              ; Width for commas (3 columns)
+        DEFB    0               ; No nulls after input bytes
+        DEFB    0               ; Output enabled (^O off)
 
-        .WORD   20              ; Initial lines counter
-        .WORD   20              ; Initial lines number
-        .WORD   0               ; Array load/save check sum
+        DEFW    20              ; Initial lines counter
+        DEFW    20              ; Initial lines number
+        DEFW    0               ; Array load/save check sum
 
-        .BYTE   0               ; Break not by NMI
-        .BYTE   0               ; Break flag
+        DEFB    0               ; Break not by NMI
+        DEFB    0               ; Break flag
 
          JP     TTYLIN          ; Input reflection (set to TTY)
 
-        .WORD   STLOOK          ; Temp string space
-        .WORD   -2              ; Current line number (cold)
-        .WORD   PROGST+1        ; Start of program text
+        DEFW    STLOOK          ; Temp string space
+        DEFW    -2              ; Current line number (cold)
+        DEFW    PROGST+1        ; Start of program text
 INITBE:
-        .FILL   3               ; Fill 3 Bytes for copy
+        DEFS    3               ; Fill 3 Bytes for copy
 
 ; END OF INITIALISATION TABLE ---------------------------------------------------
 
-ERRMSG: .BYTE   " Error",0
-INMSG:  .BYTE   " in ",0
-ZERBYT  .EQU    $-1             ; A zero byte
-OKMSG:  .BYTE   "Ok",CR,LF,0,0
-BRKMSG: .BYTE   "Break",0
+ERRMSG: DEFB    " Error",0
+INMSG:  DEFB    " in ",0
+DEFC    ZERBYT  =   $-1         ; A zero byte
+OKMSG:  DEFB    "Ok",CR,LF,0,0
+BRKMSG: DEFB    "Break",0
 
 BAKSTK: LD      HL,4            ; Look for "FOR" block with
         ADD     HL,SP           ; same index as specified
@@ -581,7 +581,7 @@ CHKSTK: PUSH    HL              ; Save code string address
         LD      B,0             ; BC = Number of levels to test
         ADD     HL,BC           ; 2 Bytes for each level
         ADD     HL,BC
-        .BYTE   3EH             ; Skip "PUSH HL"
+        DEFB    3EH             ; Skip "PUSH HL"
 ENFMEM: PUSH    HL              ; Save code string address
         LD      A,0D0H          ; 48 Bytes minimum RAM
         SUB     L
@@ -599,17 +599,17 @@ OMERR:  LD      E,OM            ; ?OM Error
 DATSNR: LD      HL,(DATLIN)     ; Get line of current DATA item
         LD      (LINEAT),HL     ; Save as current line
 SNERR:  LD      E,SN            ; ?SN Error
-        .BYTE   01H             ; Skip "LD E,DZ"
+        DEFB    01H             ; Skip "LD E,DZ"
 DZERR:  LD      E,DZ            ; ?/0 Error
-        .BYTE   01H             ; Skip "LD E,NF"
+        DEFB    01H             ; Skip "LD E,NF"
 NFERR:  LD      E,NF            ; ?NF Error
-        .BYTE   01H             ; Skip "LD E,DD"
+        DEFB    01H             ; Skip "LD E,DD"
 DDERR:  LD      E,DD            ; ?DD Error
-        .BYTE   01H             ; Skip "LD E,UF"
+        DEFB    01H             ; Skip "LD E,UF"
 UFERR:  LD      E,UF            ; ?UF Error
-        .BYTE   01H             ; Skip "LD E,OV
+        DEFB    01H             ; Skip "LD E,OV
 OVERR:  LD      E,OV            ; ?OV Error
-        .BYTE   01H             ; Skip "LD E,TM"
+        DEFB    01H             ; Skip "LD E,TM"
 TMERR:  LD      E,TM            ; ?TM Error
 
 ERROR:  CALL    CLREG           ; Clear registers and stack
@@ -638,7 +638,7 @@ ERRIN:  CALL    PRS             ; Output message
         AND     L               ; Line = -1 if direct error
         INC     A
         CALL    NZ,LINEIN       ; No - output line of error
-        .BYTE   3EH             ; Skip "POP BC"
+        DEFB    3EH             ; Skip "POP BC"
 POPNOK: POP     BC              ; Drop address in input buffer
 
 PRNTOK: XOR     A               ; Output "Ok" and get command
@@ -930,7 +930,7 @@ DODEL:  LD      A,(NULFLG)      ; Get null flag status
         DEC     B               ; Decrement length
         JP      Z,RINPUT        ; Get line again if empty
         CALL    OUTC            ; Output null character
-        .BYTE   3EH             ; Skip "DEC B"
+        DEFB    3EH             ; Skip "DEC B"
 ECHDEL: DEC     B               ; Count bytes in buffer
         DEC     HL              ; Back space buffer
         JP      Z,OTKLN         ; No buffer - Try again
@@ -1175,7 +1175,7 @@ FORFND: EX      DE,HL           ; Code string address to HL
         EX      (SP),HL         ; Save and restore code string
         CALL    TSTNUM          ; Make sure it's a number
         CALL    CHKSYN          ; Make sure "TO" is next
-        .BYTE   ZTO             ; "TO" token
+        DEFB    ZTO             ; "TO" token
         CALL    GETNUM          ; Get "TO" expression value
         LD      DE,(FPREG)      ; Move "TO" value to BCDE
         LD      BC,(FPREG+2)
@@ -1293,10 +1293,10 @@ BRK:    LD      A,$FF           ; Set BRKFLG
 
 
 STOP:   RET     NZ              ; Exit if anything else
-        .BYTE   0F6H            ; Flag "STOP"
+        DEFB    0F6H            ; Flag "STOP"
 PEND:   RET     NZ              ; Exit if anything else
         LD      (BRKLIN),HL     ; Save point of break
-        .BYTE   21H             ; Skip "OR 11111111B"
+        DEFB    21H             ; Skip "OR 11111111B"
 INPBRK: OR      11111111B       ; Flag "Break" wanted
         POP     BC              ; Return not needed and more
 ENDPRG: LD      HL,(LINEAT)     ; Get current line number
@@ -1401,7 +1401,7 @@ CLEAR:  JP      Z,INTVAR        ; Just "CLEAR" Keep parameters
         JP      Z,STORED        ; No value given - Use stored
         POP     HL              ; Restore code string address
         CALL    CHKSYN          ; Check for comma
-        .BYTE   ','
+        DEFB    ','
         PUSH    DE              ; Save number
         CALL    POSINT          ; Get integer 0 to 32767
         DEC     HL              ; Cancel increment
@@ -1487,10 +1487,10 @@ RETURN: RET     NZ              ; Return if not just RETURN
         JP      NZ,POPNOK       ; Yes - Go to command mode
 RETLIN: LD      HL,RUNCNT       ; Execution driver loop
         EX      (SP),HL         ; Into stack - Code string out
-        .BYTE   3EH             ; Skip "POP HL"
+        DEFB    3EH             ; Skip "POP HL"
 NXTDTA: POP     HL              ; Restore code string address
 
-DATA:   .BYTE   01H,3AH         ; ':' End of statement
+DATA:   DEFB    01H,3AH         ; ':' End of statement
 REM:    LD      C,0             ; 00  End of statement
         LD      B,0
 NXTSTL: LD      A,C             ; Statement and byte
@@ -1508,7 +1508,7 @@ NXTSTT: LD      A,(HL)          ; Get byte
 
 LET:    CALL    GETVAR          ; Get variable name
         CALL    CHKSYN          ; Make sure "=" follows
-        .BYTE   ZEQUAL          ; "=" token
+        DEFB    ZEQUAL          ; "=" token
         PUSH    DE              ; Save address of variable
         LD      A,(TYPE)        ; Get data type
         PUSH    AF              ; Save type
@@ -1549,7 +1549,7 @@ LETSTR: PUSH    HL              ; Save address of string var
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      NC,MVSTPT       ; No - Set up pointer
-        .BYTE   3EH             ; Skip "POP DE"
+        DEFB    3EH             ; Skip "POP DE"
 CRESTR: POP     DE              ; Restore address of string
         CALL    BAKTMP          ; Back to last tmp-str entry
         EX      DE,HL           ; Address of string entry
@@ -1581,7 +1581,7 @@ ON:     CALL    GETINT          ; Get integer 0-255
         CP      ZGOSUB          ; "GOSUB" token?
         JP      Z,ONGO          ; Yes - Find line number
         CALL    CHKSYN          ; Make sure it's "GOTO"
-        .BYTE   ZGOTO           ; "GOTO" token
+        DEFB    ZGOTO           ; "GOTO" token
         DEC     HL              ; Cancel increment
 ONGO:   LD      C,E             ; Integer of branch value
 ONGOLP: DEC     C               ; Count branches
@@ -1597,7 +1597,7 @@ IF:     CALL    EVAL            ; Evaluate expression
         CP      ZGOTO           ; "GOTO" token?
         JP      Z,IFGO          ; Yes - Get line
         CALL    CHKSYN          ; Make sure it's "THEN"
-        .BYTE   ZTHEN           ; "THEN" token
+        DEFB    ZTHEN           ; "THEN" token
         DEC     HL              ; Cancel increment
 IFGO:   CALL    TSTNUM          ; Make sure it's numeric
         CALL    TSTSGN          ; Test state of expression
@@ -1683,7 +1683,7 @@ ZONELP: SUB     14              ; Next zone of 14 characters
 DOTAB:  PUSH    AF              ; Save token
         CALL    FNDNUM          ; Evaluate expression
         CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
         DEC     HL              ; Back space on to ")"
         POP     AF              ; Restore token
         SUB     ZSPC            ; Was it "SPC(" ?
@@ -1703,7 +1703,7 @@ NEXITM: POP     HL              ; Restore code string address
         CALL    GETCHR          ; Get next character
         JP      PRNTLP          ; More to print
 
-REDO:   .BYTE   "?Redo from start",CR,LF,0
+REDO:   DEFB    "?Redo from start",CR,LF,0
 
 BADINP: LD      A,(READFG)      ; READ or INPUT?
         OR      A
@@ -1721,10 +1721,10 @@ INPUT:  CALL    IDTEST          ; Test for illegal direct
         JP      NZ,NOPMPT       ; No prompt - get input
         CALL    QTSTR           ; Get string terminated by '"'
         CALL    CHKSYN          ; Check for ';' after prompt
-        .BYTE   ';'
+        DEFB    ';'
         PUSH    HL              ; Save code string address
         CALL    PRS1            ; Output prompt string
-        .BYTE   3EH             ; Skip "PUSH HL"
+        DEFB    3EH             ; Skip "PUSH HL"
 NOPMPT: PUSH    HL              ; Save code string address
         CALL    PROMPT          ; Get input with "? " prompt
         POP     BC              ; Restore code string address
@@ -1740,14 +1740,14 @@ NOPMPT: PUSH    HL              ; Save code string address
 
 READ:   PUSH    HL              ; Save code string address
         LD      HL,(NXTDAT)     ; Next DATA statement
-        .BYTE   0F6H            ; Flag "READ"
+        DEFB    0F6H            ; Flag "READ"
 NXTITM: XOR     A               ; Flag "INPUT"
         LD      (READFG),A      ; Save "READ"/"INPUT" flag
         EX      (SP),HL         ; Get code str' , Save pointer
         JP      GTVLUS          ; Get values
 
 NEDMOR: CALL    CHKSYN          ; Check for comma between items
-        .BYTE   ','
+        DEFB    ','
 GTVLUS: CALL    GETVAR          ; Get variable name
         EX      (SP),HL         ; Save code str" , Get pointer
         PUSH    DE              ; Save variable address
@@ -1823,7 +1823,7 @@ MORDT:  EX      (SP),HL         ; Get code string address
         POP     HL              ; Restore code string address
         RET
 
-EXTIG:  .BYTE   "?Extra ignored",CR,LF,0
+EXTIG:  DEFB    "?Extra ignored",CR,LF,0
 
 FDTLP:  CALL    DATA            ; Get next statement
         OR      A               ; End of line?
@@ -1893,7 +1893,7 @@ KILFOR: LD      SP,HL           ; Remove "FOR" block
 ; < will not RETurn to here , Exit to RUNCNT or Loop >
 
 GETNUM: CALL    EVAL            ; Get a numeric expression
-TSTNUM: .BYTE   0F6H            ; Clear carry (numeric)
+TSTNUM: DEFB    0F6H            ; Clear carry (numeric)
 TSTSTR: SCF                     ; Set carry (string)
 CHKTYP: LD      A,(TYPE)        ; Check types match
         ADC     A,A             ; Expected + actual
@@ -1902,7 +1902,7 @@ CHKTYP: LD      A,(TYPE)        ; Check types match
         JP      TMERR           ; Different types - Error
 
 OPNPAR: CALL    CHKSYN          ; Make sure "(" follows
-        .BYTE   "("
+        DEFB    "("
 EVAL:   DEC     HL              ; Evaluate expression & save
         LD      D,0             ; Precedence value
 EVAL1:  PUSH    DE              ; Save precedence
@@ -2006,7 +2006,7 @@ NOTAMP: SUB     ZSGN            ; Is it a function?
         JP      NC,FNOFST       ; Yes - Evaluate function
 EVLPAR: CALL    OPNPAR          ; Evaluate expression in "()"
         CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
         RET
 
 MINUS:  LD      D,7DH           ; '-' precedence
@@ -2038,7 +2038,7 @@ FNOFST: LD      B,0             ; Get address of function
         JP      C,FNVAL         ; No - Do function
         CALL    OPNPAR          ; Evaluate expression  (X,...
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         CALL    TSTSTR          ; Make sure it's a string
         EX      DE,HL           ; Save code string address
         LD      HL,(FPREG)      ; Get address of string
@@ -2075,7 +2075,7 @@ SGNEXP: DEC     D               ; Dee to flag negative exponent
         DEC     HL              ; DEC 'cos GETCHR INCs
         RET                     ; Return "NZ"
 
-POR:    .BYTE   0F6H            ; Flag "OR"
+POR:    DEFB    0F6H            ; Flag "OR"
 PAND:   XOR     A               ; Flag "AND"
         PUSH    AF              ; Save "AND" / "OR" flag
         CALL    TSTNUM          ; Make sure it's a number
@@ -2118,7 +2118,7 @@ TSTRED: LD      HL,CMPLOG       ; Logical compare routine
         RET     NC              ; Eval if last was rel' or log'
         JP      STKTHS          ; Stack this one and get next
 
-CMPLOG: .WORD   CMPLG1          ; Compare two values / strings
+CMPLOG: DEFW    CMPLG1          ; Compare two values / strings
 CMPLG1: LD      A,C             ; Get data type
         OR      A
         RRA
@@ -2192,10 +2192,10 @@ DIMRET: DEC     HL              ; DEC 'cos GETCHR INCs
         CALL    GETCHR          ; Get next character
         RET     Z               ; End of DIM statement
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
 DIM:    LD      BC,DIMRET       ; Return to "DIMRET"
         PUSH    BC              ; Save on stack
-        .BYTE   0F6H            ; Flag "Create" variable
+        DEFB    0F6H            ; Flag "Create" variable
 GETVAR: XOR     A               ; Find variable address,to DE
         LD      (LCRFLG),A      ; Set locate / create flag
         LD      B,(HL)          ; Get First byte of name
@@ -2333,18 +2333,18 @@ SCPTLP: PUSH    DE              ; Save number of dimensions
         CP      ','             ; Comma (more to come)?
         JP      Z,SCPTLP        ; Yes - More subscripts
         CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
         LD      (NXTOPR),HL     ; Save code string address
         POP     HL              ; Get LCRFLG and TYPE
         LD      (LCRFLG),HL     ; Restore Locate/create & type
         LD      E,0             ; Flag not CSAVE* or CLOAD*
         PUSH    DE              ; Save number of dimensions (D)
-        .BYTE   11H             ; Skip "PUSH HL" and "PUSH AF'
+        DEFB    11H             ; Skip "PUSH HL" and "PUSH AF'
 
 ARLDSV: PUSH    HL              ; Save code string address
         PUSH    AF              ; A = 00 , Flags set = Z,N
         LD      HL,(VAREND)     ; Start of arrays
-        .BYTE   3EH             ; Skip "ADD HL,DE"
+        DEFB    3EH             ; Skip "ADD HL,DE"
 FNDARY: ADD     HL,DE           ; Move to next array start
         LD      DE,(ARREND)     ; End of arrays
         LD      A,H             ; End of arrays found?
@@ -2446,7 +2446,7 @@ FINDEL: LD      B,A             ; Find array element
         LD      C,A
         LD      A,(HL)          ; Number of dimensions
         INC     HL
-        .BYTE   16H             ; Skip "POP HL"
+        DEFB    16H             ; Skip "POP HL"
 FNDELP: POP     HL              ; Address of next dim' size
         LD      E,(HL)          ; Get LSB of dim'n size
         INC     HL
@@ -2512,7 +2512,7 @@ DEF:    CALL    CHEKFN          ; Get "FN" and name
         PUSH    BC              ; Save address for RETurn
         PUSH    DE              ; Save address of function ptr
         CALL    CHKSYN          ; Make sure "(" follows
-        .BYTE   "("
+        DEFB    "("
         CALL    GETVAR          ; Get argument variable name
         PUSH    HL              ; Save code string address
         EX      DE,HL           ; Argument address to HL
@@ -2523,9 +2523,9 @@ DEF:    CALL    CHEKFN          ; Get "FN" and name
         POP     HL              ; Restore code string address
         CALL    TSTNUM          ; Make sure numeric argument
         CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
         CALL    CHKSYN          ; Make sure "=" follows
-        .BYTE   ZEQUAL          ; "=" token
+        DEFB    ZEQUAL          ; "=" token
         LD      BC,HL           ; Code string address to BC
         EX      (SP),HL         ; Save code str , Get FN ptr
         LD      (HL),C          ; Save LSB of FN code string
@@ -2589,7 +2589,7 @@ IDTEST: PUSH    HL              ; Save code string address
         JP      ERROR
 
 CHEKFN: CALL    CHKSYN          ; Make sure FN follows
-        .BYTE   ZFN             ; "FN" token
+        DEFB    ZFN             ; "FN" token
         LD      A,80H
         LD      (FORFLG),A      ; Flag FN name to find
         OR      (HL)            ; FN name has bit 7 set
@@ -2691,7 +2691,7 @@ PRSLP:  DEC     E               ; Count characters
         JP      PRSLP           ; More characters to output
 
 TESTR:  OR      A               ; Test if enough room
-        .BYTE   0EH             ; No garbage collection done
+        DEFB    0EH             ; No garbage collection done
 GRBDON: POP     AF              ; Garbage collection done
         PUSH    AF              ; Save status
         LD      HL,(STRSPC)     ; Bottom of string space in use
@@ -2976,7 +2976,7 @@ MID1:   PUSH    HL              ; Save string block address
         CP      B               ; Compare with number given
         JP      C,ALLFOL        ; All following bytes required
         LD      A,B             ; Get new length
-        .BYTE   11H             ; Skip "LD C,0"
+        DEFB    11H             ; Skip "LD C,0"
 ALLFOL: LD      C,0             ; First byte of string
         PUSH    BC              ; Save position in string
         CALL    TESTR           ; See if enough string space
@@ -3017,10 +3017,10 @@ MID:    EX      DE,HL           ; Get code string address
         CP      ')'             ; Any length given?
         JP      Z,RSTSTR        ; No - Rest of string
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         CALL    GETINT          ; Get integer 0-255
 RSTSTR: CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
         POP     AF              ; Restore starting position
         EX      (SP),HL         ; Get string,8ave code string
         LD      BC,MID1         ; Continuation of MID$ routine
@@ -3070,7 +3070,7 @@ VAL3:   POP     BC              ; Restore end+1 byte
 
 LFRGNM: EX      DE,HL           ; Code string address to HL
         CALL    CHKSYN          ; Make sure ")" follows
-        .BYTE   ")"
+        DEFB    ")"
 MIDNUM: POP     BC              ; Get return address
         POP     DE              ; Get number supplied
         PUSH    BC              ; Re-save return address
@@ -3092,7 +3092,7 @@ WAIT:   CALL    SETIO           ; Set up port number
         CALL    GETCHR          ; Get next character
         JP      Z,NOXOR         ; No XOR byte given
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         CALL    GETINT          ; Get integer 0-255 to XOR with
 NOXOR:  POP     BC              ; Restore AND mask
 WAITLP: CALL    INPSUB          ; Get input
@@ -3105,7 +3105,7 @@ SETIO:  CALL    GETINT          ; Get integer 0-255
         LD      (INPORT),A      ; Set input port
         LD      (OTPORT),A      ; Set output port
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         JP      GETINT          ; Get integer 0-255 and return
 
 FNDNUM: CALL    GETCHR          ; Get next character
@@ -3127,7 +3127,7 @@ POKE:   CALL    GETNUM          ; Get memory address
         CALL    DEINT           ; Get integer -32768 to 3276
         PUSH    DE              ; Save memory address
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         CALL    GETINT          ; Get integer 0-255
         POP     DE              ; Restore memory address
         LD      (DE),A          ; Load it into memory
@@ -3138,7 +3138,7 @@ ADDPHL: CALL    LOADFP          ; Load FP at (HL) to BCDE
         JP      FPADD           ; Add BCDE to FPREG
 
 SUBPHL: CALL    LOADFP          ; FPREG = -FPREG + number at HL
-        .BYTE   21H             ; Skip "POP BC" and "POP DE"
+        DEFB    21H             ; Skip "POP BC" and "POP DE"
 PSUB:   POP     BC              ; Get FP number from stack
         POP     DE
 SUBCDE: CALL    INVSGN          ; Negate FPREG
@@ -3318,12 +3318,12 @@ SHRT1:  RRA                     ; Shift it right
         LD      B,A             ; Re-save underflow
         JP      SHRLP           ; More bits to do
 
-UNITY:  .BYTE   000H,000H,000H,081H     ; 1.00000
+UNITY:  DEFB    000H,000H,000H,081H     ; 1.00000
 
-LOGTAB: .BYTE   3                       ; Table used by LOG
-        .BYTE   0AAH,056H,019H,080H     ; 0.59898
-        .BYTE   0F1H,022H,076H,080H     ; 0.96147
-        .BYTE   045H,0AAH,038H,082H     ; 2.88539
+LOGTAB: DEFB    3                       ; Table used by LOG
+        DEFB    0AAH,056H,019H,080H     ; 0.59898
+        DEFB    0F1H,022H,076H,080H     ; 0.96147
+        DEFB    045H,0AAH,038H,082H     ; 2.88539
 
 LOG:    CALL    TSTSGN          ; Test sign of value
         OR      A
@@ -3353,7 +3353,7 @@ LOG:    CALL    TSTSGN          ; Test sign of value
         CALL    RSCALE          ; Re-scale number
 MULLN2: LD      BC,8031H        ; BCDE = Ln(2)
         LD      DE,7218H
-        .BYTE   21H             ; Skip "POP BC" and "POP DE"
+        DEFB    21H             ; Skip "POP BC" and "POP DE"
 
 MULT:   POP     BC              ; Get number from stack
         POP     DE
@@ -3457,7 +3457,7 @@ DIVLP:  PUSH    HL              ; Save divisor
         POP     AF              ; Scrap divisor
         POP     AF
         SCF                     ; Set carry to
-        .BYTE   0D2H            ; Skip "POP BC" and "POP HL"
+        DEFB    0D2H            ; Skip "POP BC" and "POP HL"
 
 RESDIV: POP     BC              ; Restore divisor
         POP     HL
@@ -3540,7 +3540,7 @@ TSTSGN: LD      A,(FPEXP)       ; Get sign of FPREG
         OR      A
         RET     Z               ; RETurn if number is zero
         LD      A,(FPREG+2)     ; Get MSB of FPREG
-        .BYTE   0FEH            ; Test sign
+        DEFB    0FEH            ; Test sign
 RETREL: CPL                     ; Invert sign
         RLA                     ; Sign bit to carry
 FLGDIF: SBC     A,A             ; Carry to all bits of A
@@ -3569,7 +3569,7 @@ INVSGN: LD      HL,FPREG+2      ; Point to MSB
         RET
 
 STAKFP: EX      DE,HL           ; Save code string address
-        LD      HL,(FPREG)      ; LSB,NLSB of FPREG
+        LD      HL,(FPREG)      ; LSB and NLSB of FPREG
         EX      (SP),HL         ; Stack them,get return
         PUSH    HL              ; Re-save return
         LD      HL,(FPREG+2)    ; MSB and exponent of FPREG
@@ -3788,7 +3788,7 @@ ADDIG:  PUSH    DE              ; Save sign of exponent
         POP     DE              ; Restore sign of exponent
         JP      MANLP           ; Get another digit
 
-RSCALE: LD      HL,(FPREG)      ; LSB,NLSB of FPREG
+RSCALE: LD      HL,(FPREG)      ; LSB and NLSB of FPREG
         PUSH    HL              ; Stack them
         LD      HL,(FPREG+2)    ; MSB and exponent of FPREG
         PUSH    HL              ; Stack them
@@ -3948,14 +3948,14 @@ RNGTST: LD      BC,9474H        ; BCDE = 999999.
         JP      PO,GTSIXD       ; Too big - Divide by ten
         JP      (HL)            ; Otherwise return to caller
 
-HALF:   .BYTE   00H,00H,00H,80H ; 0.5
+HALF:   DEFB    00H,00H,00H,80H ; 0.5
 
-POWERS: .BYTE   0A0H,086H,001H  ; 100000
-        .BYTE   010H,027H,000H  ;  10000
-        .BYTE   0E8H,003H,000H  ;   1000
-        .BYTE   064H,000H,000H  ;    100
-        .BYTE   00AH,000H,000H  ;     10
-        .BYTE   001H,000H,000H  ;      1
+POWERS: DEFB    0A0H,086H,001H  ; 100000
+        DEFB    010H,027H,000H  ;  10000
+        DEFB    0E8H,003H,000H  ;   1000
+        DEFB    064H,000H,000H  ;    100
+        DEFB    00AH,000H,000H  ;     10
+        DEFB    001H,000H,000H  ;      1
 
 NEGAFT: LD      HL,INVSGN       ; Negate result
         EX      (SP),HL         ; To be done after caller
@@ -4037,15 +4037,15 @@ EXP:    CALL    STAKFP          ; Put value on stack
         LD      C,D             ; Zero MSB
         JP      FPMULT          ; Scale result to correct value
 
-EXPTAB: .BYTE   8                       ; Table used by EXP
-        .BYTE   040H,02EH,094H,074H     ; -1/7! (-1/5040)
-        .BYTE   070H,04FH,02EH,077H     ;  1/6! ( 1/720)
-        .BYTE   06EH,002H,088H,07AH     ; -1/5! (-1/120)
-        .BYTE   0E6H,0A0H,02AH,07CH     ;  1/4! ( 1/24)
-        .BYTE   050H,0AAH,0AAH,07EH     ; -1/3! (-1/6)
-        .BYTE   0FFH,0FFH,07FH,07FH     ;  1/2! ( 1/2)
-        .BYTE   000H,000H,080H,081H     ; -1/1! (-1/1)
-        .BYTE   000H,000H,000H,081H     ;  1/0! ( 1/1)
+EXPTAB: DEFB    8                       ; Table used by EXP
+        DEFB    040H,02EH,094H,074H     ; -1/7! (-1/5040)
+        DEFB    070H,04FH,02EH,077H     ;  1/6! ( 1/720)
+        DEFB    06EH,002H,088H,07AH     ; -1/5! (-1/120)
+        DEFB    0E6H,0A0H,02AH,07CH     ;  1/4! ( 1/24)
+        DEFB    050H,0AAH,0AAH,07EH     ; -1/3! (-1/6)
+        DEFB    0FFH,0FFH,07FH,07FH     ;  1/2! ( 1/2)
+        DEFB    000H,000H,080H,081H     ; -1/1! (-1/1)
+        DEFB    000H,000H,000H,081H     ;  1/0! ( 1/1)
 
 SUMSER: CALL    STAKFP          ; Put FPREG on stack
         LD      DE,MULT         ; Multiply by "X"
@@ -4063,7 +4063,7 @@ SMSER1: CALL    STAKFP          ; Put value on stack
         LDI
         LDI
         LDI
-        .BYTE   06H             ; Skip "POP AF"
+        DEFB    06H             ; Skip "POP AF"
 SUMLP:  POP     AF              ; Restore count
         POP     BC              ; Restore number
         POP     DE
@@ -4122,7 +4122,7 @@ RND1:   LD      DE,(FPREG)      ; Move FPREG to BCDE
         LD      E,C             ; LSB = MSB
         XOR     01001111B       ; Fiddle around
         LD      C,A             ; New MSB
-        LD      HL,SGNRES
+        LD      HL,SGNRES       ; HL is pointing to SGNRES
         LD      (HL),80H        ; Set saved signed bit to positive
         DEC     HL              ; Point to Exponent
         LD      B,(HL)          ; Get Exponent to BCDE
@@ -4152,9 +4152,9 @@ RESEED: LD      (HL),A          ; Re-seed random numbers
         LD      (HL),A
         JP      RND1            ; Return RND seed
 
-RNDTAB: .BYTE   068H,0B1H,046H,068H ; Table used by RND
-        .BYTE   099H,0E9H,092H,069H
-        .BYTE   010H,0D1H,075H,068H
+RNDTAB: DEFB    068H,0B1H,046H,068H ; Table used by RND
+        DEFB    099H,0E9H,092H,069H
+        DEFB    010H,0D1H,075H,068H
 
 COS:    LD      HL,HALFPI       ; Point to PI/2
         CALL    ADDPHL          ; Add it to FPREG
@@ -4188,16 +4188,16 @@ SIN1:   PUSH    AF              ; Save sign
         LD      HL,SINTAB       ; Coefficient table
         JP      SUMSER          ; Evaluate sum of series
 
-HALFPI: .BYTE   0DBH,00FH,049H,081H     ; 1.5708 (PI/2)
+HALFPI: DEFB    0DBH,00FH,049H,081H     ; 1.5708 (PI/2)
 
-QUARTR: .BYTE   000H,000H,000H,07FH     ; 0.25
+QUARTR: DEFB    000H,000H,000H,07FH     ; 0.25
 
-SINTAB: .BYTE   5                       ; Table used by SIN
-        .BYTE   0BAH,0D7H,01EH,086H     ; 39.711
-        .BYTE   064H,026H,099H,087H     ;-76.575
-        .BYTE   058H,034H,023H,087H     ; 81.602
-        .BYTE   0E0H,05DH,0A5H,086H     ;-41.342
-        .BYTE   0DAH,00FH,049H,083H     ;  6.2832
+SINTAB: DEFB    5                       ; Table used by SIN
+        DEFB    0BAH,0D7H,01EH,086H     ; 39.711
+        DEFB    064H,026H,099H,087H     ;-76.575
+        DEFB    058H,034H,023H,087H     ; 81.602
+        DEFB    0E0H,05DH,0A5H,086H     ;-41.342
+        DEFB    0DAH,00FH,049H,083H     ;  6.2832
 
 TAN:    CALL    STAKFP          ; Put angle on stack
         CALL    SIN             ; Get SIN of angle
@@ -4227,16 +4227,16 @@ ATN1:   LD      HL,ATNTAB       ; Coefficient table
         LD      HL,HALFPI       ; PI/2 - angle in case > 1
         RET                     ; Number > 1 - Sub from PI/2
 
-ATNTAB: .BYTE   9                       ; Table used by ATN
-        .BYTE   04AH,0D7H,03BH,078H     ; 1/17
-        .BYTE   002H,06EH,084H,07BH     ;-1/15
-        .BYTE   0FEH,0C1H,02FH,07CH     ; 1/13
-        .BYTE   074H,031H,09AH,07DH     ;-1/11
-        .BYTE   084H,03DH,05AH,07DH     ; 1/9
-        .BYTE   0C8H,07FH,091H,07EH     ;-1/7
-        .BYTE   0E4H,0BBH,04CH,07EH     ; 1/5
-        .BYTE   06CH,0AAH,0AAH,07FH     ;-1/3
-        .BYTE   000H,000H,000H,081H     ; 1/1
+ATNTAB: DEFB    9                       ; Table used by ATN
+        DEFB    04AH,0D7H,03BH,078H     ; 1/17
+        DEFB    002H,06EH,084H,07BH     ;-1/15
+        DEFB    0FEH,0C1H,02FH,07CH     ; 1/13
+        DEFB    074H,031H,09AH,07DH     ;-1/11
+        DEFB    084H,03DH,05AH,07DH     ; 1/9
+        DEFB    0C8H,07FH,091H,07EH     ;-1/7
+        DEFB    0E4H,0BBH,04CH,07EH     ; 1/5
+        DEFB    06CH,0AAH,0AAH,07FH     ;-1/3
+        DEFB    000H,000H,000H,081H     ; 1/1
 
 MONITR: JP      $0000           ; Restart (Normally Monitor Start)
 
@@ -4268,7 +4268,7 @@ DOKE:   CALL    GETNUM          ; Get a number
         CALL    DEINT           ; Get integer -32768 to 32767
         PUSH    DE              ; Save address
         CALL    CHKSYN          ; Make sure ',' follows
-        .BYTE   ','
+        DEFB    ','
         CALL    GETNUM          ; Get a number
         CALL    DEINT           ; Get integer -32768 to 32767
         EX      (SP),HL         ; Save value,get address
