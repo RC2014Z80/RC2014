@@ -16,8 +16,9 @@ Finding first 7,500 primes
 
 _MS Basic 4.7_
 
-- Searle  4.7b  1'57"  - 100%<br>
-- feilipu 4.7c  1'48"  -  92%<br>
+- Searle        - 4.7b  1'57"  - 100%<br>
+- feilipu Z80   - 4.7c  1'48"  -  92%<br>
+- feilipu 8085  - 4.7c  1'50"  -  94%
 
 _MS Basic 5.29_
 
@@ -25,4 +26,5 @@ _MS Basic 5.29_
 
 _MS BASCOM 5.3a_
 
-- Microsoft  
+- Microsoft
+
