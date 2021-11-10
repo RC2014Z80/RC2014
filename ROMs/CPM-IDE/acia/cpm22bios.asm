@@ -83,7 +83,7 @@ PUBLIC  _cpm_bios_head
 _cpm_bios_head:                 ;origin of the cpm bios
 
 ;
-;    jump vector for individual subroutines
+;   jump vector for individual subroutines
 ;
 PUBLIC    cboot     ;cold start
 PUBLIC    wboot     ;warm start
@@ -122,9 +122,13 @@ wboote:
     jp    listst    ;return list status
     jp    sectran   ;sector translate
 
-;    individual subroutines to perform each function
+;   individual subroutines to perform each function
 
 EXTERN    pboot     ;location of preamble code to load CCP/BDOS
+
+EXTERN    asm_shadow_copy       ;RAM copy function
+EXTERN    asm_shadow_relocate   ;relocate the RAM copy function
+
 PUBLIC    qboot     ;arrival from preamble code
 
 PUBLIC _cpm_boot
@@ -132,37 +136,44 @@ PUBLIC _cpm_boot
 _cpm_boot:
 
 cboot:
-    di                      ;Page 0 will be blank, after toggling ROM
-                            ;so leave interrupts off, until later
+    di                              ;Page 0 will be blank, after toggling ROM
+                                    ;so leave interrupts off, until later
 
-    ld      sp,bios_stack   ;temporary stack
+    ld      sp,bios_stack           ;temporary stack
 
-    ld      a,$01                   ;A = $01 RAM
-    out     (__IO_ROM_TOGGLE),a     ;latch ROM OUT
+    ld      a,$01                   ;RAM $01
+    out     (__IO_ROM_TOGGLE),a     ;latch ROM out
 
-                            ;Set up Page 0
+;   Set up Page 0
 
-    ld      a,$C9           ;C9 is a ret instruction for:
-    ld      ($0008),a       ;rst 08
-    ld      ($0010),a       ;rst 10
-    ld      ($0018),a       ;rst 18
-    ld      ($0020),a       ;rst 20
-    ld      ($0028),a       ;rst 28
-    ld      ($0030),a       ;rst 30
+    ld      a,$C9                   ;C9 is a ret instruction for:
+    ld      ($0008),a               ;rst 08
+    ld      ($0010),a               ;rst 10
+    ld      ($0018),a               ;rst 18
+    ld      ($0020),a               ;rst 20
+    ld      ($0028),a               ;rst 28
+    ld      ($0030),a               ;rst 30
 
-    ld      a,$C3           ;C3 is a jmp instruction
-    ld      ($0038),a       ;for jmp to _acia_interrupt
+    ld      a,$C3                   ;C3 is a jmp instruction
+    ld      ($0038),a               ;for jmp to _acia_interrupt
     ld      hl,_acia_interrupt
-    ld      ($0039),hl      ;enable acia interrupt at rst 38
+    ld      ($0039),hl              ;enable acia interrupt at rst 38
 
-    xor     a               ;zero in the accum
-    ld      (_cpm_cdisk),a  ;select disk zero
+    xor     a                       ;zero in the accum
+    ld      (_cpm_cdisk),a          ;select disk zero
 
     ld      a,$01
-    ld      (_cpm_iobyte),a ;set cpm iobyte to CRT default ($01)
+    ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT default ($01)
 
-    ld      hl,$AA55        ;enable the canary, to show CP/M bios alive
+    ld      hl,asm_shadow_copy          ;prepare current RAM copy location
+    ld      (__IO_RAM_SHADOW_BASE),hl   ;write it to RAM copy base
+
+    ld      hl,shadow_copy_addr     ;new location for shadow_copy function
+    call    asm_shadow_relocate     ;move it to final (?) location
+
+    ld      hl,$AA55                ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl
+
     jr      rboot
 
 wboot:                              ;from a normal restart
@@ -1183,7 +1194,7 @@ ENDIF
     ret
 
 ;------------------------------------------------------------------------------
-; start of common area 1 driver - IDE functions
+; start of common area driver - IDE functions
 ;------------------------------------------------------------------------------
 
 PUBLIC ide_setup_lba
@@ -1447,10 +1458,10 @@ PHASE _cpm_bios_bss_bridge
 
 PUBLIC  _cpm_bios_bss_head
 
-PUBLIC _cpm_dsk0_base
-PUBLIC _cpm_bios_canary
+PUBLIC  _cpm_dsk0_base
+PUBLIC  _cpm_bios_canary
 
-PUBLIC _bios_iobyte
+PUBLIC  _bios_iobyte
 
 _cpm_bios_bss_head:         ;head of the cpm bios bss
 
@@ -1512,20 +1523,24 @@ aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initial
 
 aciaControl:    defb 0                  ;local control echo of ACIA
 
+PUBLIC  shadow_copy_addr
+
+shadow_copy_addr:   defs 0x20           ;reserve space for relocation of shadow_copy
+
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned data
 ;------------------------------------------------------------------------------
 
 PUBLIC  aciaTxBuffer
 
-ALIGN       __IO_ACIA_TX_SIZE           ;ALIGN to __IO_ACIA_TX_SIZE byte boundary
+ALIGN   __IO_ACIA_TX_SIZE               ;ALIGN to __IO_ACIA_TX_SIZE byte boundary
                                         ;when finally locating
 
 aciaTxBuffer:   defs __IO_ACIA_TX_SIZE  ;space for the Tx Buffer
 
 PUBLIC  aciaRxBuffer
 
-ALIGN       __IO_ACIA_RX_SIZE           ;ALIGN to __IO_ACIA_RX_SIZE byte boundary
+ALIGN   __IO_ACIA_RX_SIZE               ;ALIGN to __IO_ACIA_RX_SIZE byte boundary
                                         ;when finally locating
 
 aciaRxBuffer:   defs __IO_ACIA_RX_SIZE  ;space for the Rx Buffer
