@@ -2,9 +2,13 @@
 
 The Am9511 APU is a complete, high performance, complex arithmetic processor contained within a single Large Scale Integration device. It is designed to enhance the number manipulation capability of a wide variety of processor systems. It includes not only floating-point operations but fixed-point as well; not only basic add, subtract, multiply, and divide operations, but a group of transcendental derived functions plus control and format conversion commands as well.
 
-The first Large Scale Integrated single-chip floating point processors available commercially were introduced by Advanced Micro Devices. AMD introduced the Am9511 Arithmetic Processor in 1977, and the Am9512 Floating Point Processor in 1979. Intel licensed the Am9511A and released it to the market as the 8231A.
+The first Large Scale Integrated single-chip floating point processors available commercially were introduced by Advanced Micro Devices. AMD introduced the Am9511 Arithmetic Processor in 1977, and the Am9512 Floating Point Processor in 1979.
 
 ![Am9511A APU Module](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu.jpg)
+
+ Intel licensed the Am9511A from AMD and released it to the market as the 8231A APU, before their 8087 FPU was available.
+
+![8231A APU Module](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/8231A.jpg)
 
 All transfers, including operand, result, status, and command information, take place over an 8-bit bidirectional data bus. Operands are pushed onto an internal stack and a command is issued to perform operations on the data in the stack. Results are then available to be retrieved from the stack, or additional commands may be entered operating on the intermediate results.
 
@@ -44,7 +48,7 @@ To assemble the Am9511A APU Module, start with the two resistors. They will be 1
 
 Then assemble the __4__ diodes. Note that the diodes are polarised. The black band should be at the top of the board. Locate the diodes in the positions indicated.
 
-__OPTIONAL__ Connecting a 220pF capacitor across the `/WAIT` line diode speeds up recovery of this line which, in turn, speeds up resumption of the CPU processing as soon as the APU releases `/WAIT`. Adding this capacitance positively impacts benchmarking, so it is a recommended optional addition.
+__OPTIONAL__ Connecting a 200pF capacitor across the `/WAIT` line diode (i.e. in parallel) speeds up recovery of this line which, in turn, speeds up resumption of the CPU processing as soon as the APU releases the `/WAIT` signal. Adding this capacitance positively impacts benchmarking, so it is a highly recommended optional addition.
 
 ![APU Module Diodes](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu_diode.png)
 
@@ -100,11 +104,13 @@ Also, the Z88DK development platform includes Am9511A APU drivers and floating p
 
 ## RC2014/APU MS BASIC v4.7
 
-[This ROM](https://github.com/feilipu/NASCOM_BASIC_4.7/tree/master/rc2014_NascomBasic32k_AM9511) works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This ROM supports the Am9511A APU Module, and provides the capability to upload and run C or assembly programs from within MS Basic.
+[This ROM](https://gitlab.com/feilipu/NASCOM_BASIC/-/tree/master/rc2014_NascomBasic32k_AM9511) works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This ROM supports the Am9511A APU Module, and provides the capability to upload and run C or assembly programs from within MS Basic.
+
+The APU Module also works with the__Classic__ version of the RC2014 together using the [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/), using [this ROM](https://gitlab.com/feilipu/NASCOM_BASIC/-/tree/master/rc2014_NascomBasic32k_8085_AM9511).
 
 ACIA 6850 interrupt driven serial I/O to run modified Microsoft Basic 4.7. Full input and output buffering with incoming data hardware handshaking. Handshake shows full before the buffer is totally filled to allow run-on from the sender. Transmit and receive are interrupt driven, and are fast.
 
-Receive buffer is 255 bytes, to allow efficient pasting of Basic into the editor. The Transmit buffer is 63 bytes. Receive buffer overflows are silently discarded.
+Receive buffer is 255 bytes, to allow efficient pasting of Basic into the editor. The Transmit buffer is 31 bytes.
 
 Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM JumP Table, starting at `0x8000`. This allows you to upload Assembly or compiled C programs, and then run them as described below.
 
@@ -142,8 +148,8 @@ Basic is interpreted from tokens derived from the program text entered on the Ba
 
 _Benchmark Mandelbrot `colour.bas` - MS Basic 4.7 - omitted program spaces_
 
-- Searle Std 11'46"  - 100%<br>
-- feilipu APU  9'44"  -  83% (with 220pF `/WAIT` capacitor).
+- Searle  Std       - 4.7b  11'46"  - 100%<br>
+- feilipu Z80+APU   - 4.7c   9'44"  -  83% (with 200pF `/WAIT` capacitor).<br>
 
 
 ## Z88DK Am9511 Floating Point Library
