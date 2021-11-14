@@ -106,7 +106,7 @@ Also, the Z88DK development platform includes Am9511A APU drivers and floating p
 
 [This ROM](https://gitlab.com/feilipu/NASCOM_BASIC/-/tree/master/rc2014_NascomBasic32k_AM9511) works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This ROM supports the Am9511A APU Module, and provides the capability to upload and run C or assembly programs from within MS Basic.
 
-The APU Module also works with the__Classic__ version of the RC2014 together using the [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/), using [this ROM](https://gitlab.com/feilipu/NASCOM_BASIC/-/tree/master/rc2014_NascomBasic32k_8085_AM9511).
+The APU Module also works with the __Classic__ version of the RC2014 together using the [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/), using [this ROM](https://gitlab.com/feilipu/NASCOM_BASIC/-/tree/master/rc2014_NascomBasic32k_8085_AM9511).
 
 ACIA 6850 interrupt driven serial I/O to run modified Microsoft Basic 4.7. Full input and output buffering with incoming data hardware handshaking. Handshake shows full before the buffer is totally filled to allow run-on from the sender. Transmit and receive are interrupt driven, and are fast.
 
