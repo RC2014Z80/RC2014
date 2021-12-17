@@ -5,13 +5,13 @@ Each implementation has its own focus, and the same is true here.
 
 ## Concept
 
-This CP/M-IDE is designed to provide support for CP/M while using a normal FATFS formatted PATA drive. And further, to do so with the minimum of cards, complexity, and expense.
+This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA drive. And further, to do so with the minimum of cards, complexity, and expense.
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
  The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
 
-In the ACIA build, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the ACIA builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
 In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
@@ -67,12 +67,17 @@ Optionally, replacing 3. and 4. with below can save a slot and provides some imp
 
 - [Z80 CPU & Clock Module](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
 
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for 3. and 4.
+
+- [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
+
 Optionally, replacing 2. and 5. with below avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
 Using the Memory Module (also compatible with SC108) provides access to the 64kB of shadow RAM for CP/M programs.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
-Additionally, the ACIA serial card could be substituted for the SIO/2 dual serial interface.
+Additionally, the ACIA Serial Module could be substituted for the SIO/2 dual serial interface.
+The ACIA Serial Module is supported with the 8085 CPU Module.
 
 - [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
@@ -150,12 +155,18 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 
 ### Building
 
-The z88dk command line to build the CP/M-IDE is below. Either the ACIA or SIO subtype should be selected, in the relevant directory.
+The z88dk command line to build the CP/M-IDE for Z80 CPUs is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
 
 ```bash
 zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 
 zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --math32 --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
+```
+
+The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
+
+``` bash
+zcc +rc2014 -subtype=acia85 -O2 -m -llib/rc2014/ff_ro --math32 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 ```
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.

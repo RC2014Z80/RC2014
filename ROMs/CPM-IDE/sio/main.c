@@ -571,8 +571,8 @@ int main(int argc, char **argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
-    fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2021\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)
