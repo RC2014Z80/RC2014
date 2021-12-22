@@ -206,8 +206,7 @@ rboot:
 
     ld      (_cpm_ccp_tfcb),a
     ld      hl,_cpm_ccp_tfcb
-    ld      d,h
-    ld      e,l
+    ld      de,hl
     inc     de
     call    ldi_31          ;clear default FCB
 
@@ -353,8 +352,7 @@ setsec:     ;set sector passed from BDOS given by register BC
     ret
 
 sectran:    ;translate passed from BDOS sector number BC
-    ld      h,b
-    ld      l,c
+    ld      hl,bc
     ret
 
 setdma:     ;set dma address given by registers BC
@@ -629,6 +627,7 @@ ldi_128:
     push bc
     push bc
     push bc
+
 ldi_32:
     ldi
 ldi_31:
@@ -668,6 +667,7 @@ ldi_31:
     ldi
 
     ret
+
 ;
 ;*****************************************************
 ;*                                                   *

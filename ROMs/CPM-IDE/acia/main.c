@@ -31,10 +31,13 @@
 #define BUFFER_SIZE 1024        // size of working buffer (on heap)
 #define LINE_SIZE 256           // size of a command line (on heap)
 
+#define TOK_BUFSIZE 32
+#define TOK_DELIM " \t\r\n\a"
+
 static void * buffer;           /* create a scratch buffer on heap later */
 
-static FATFS *fs;               /* Pointer to the filesystem object (on heap) */
-static DIR *dir;                /* Pointer to the directory object (on heap) */
+static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
+static DIR * dir;               /* Pointer to the directory object (on heap) */
 
 static FILINFO Finfo;           /* File Information */
 static FIL File[MAX_FILES];     /* File object needed for each open file */
@@ -46,26 +49,26 @@ extern uint32_t cpm_dsk0_base[4];
  */
 
 // CP/M related functions
-int8_t ya_mkcpm(char **args);   // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char ** args);  // initialise CP/M with up to 4 drives
 
 // system related functions
-int8_t ya_md(char **args);      // memory dump
-int8_t ya_help(char **args);    // help
-int8_t ya_exit(char **args);    // exit and restart
+int8_t ya_md(char ** args);     // memory dump
+int8_t ya_help(char ** args);   // help
+int8_t ya_exit(char ** args);   // exit and restart
 
 // fat related functions
-int8_t ya_ls(char **args);      // directory listing
-int8_t ya_cd(char **args);      // change the current working directory
-int8_t ya_pwd(char **args);     // show the current working directory
-int8_t ya_mount(char **args);   // mount a FAT file system
+int8_t ya_ls(char ** args);     // directory listing
+int8_t ya_cd(char ** args);     // change the current working directory
+int8_t ya_pwd(char ** args);    // show the current working directory
+int8_t ya_mount(char ** args);  // mount a FAT file system
 
 // disk related functions
-int8_t ya_ds(char **args);      // disk status
-int8_t ya_dd(char **args);      // disk dump sector
+int8_t ya_ds(char ** args);     // disk status
+int8_t ya_dd(char ** args);     // disk dump sector
 
 // helper functions
-static void put_rc (FRESULT rc);        // print error codes to defined error IO
-static void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt);
+static void put_rc (FRESULT rc);    // print error codes to defined error IO
+static void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt);
 
 // external functions
 
@@ -76,9 +79,9 @@ extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise
  */
 
 struct Builtin {
-  const char *name;
-  int8_t (*func) (char** args);
-  const char *help;
+  const char * name;
+  int8_t (*func) (char ** args);
+  const char * help;
 };
 
 struct Builtin builtins[] = {
@@ -118,7 +121,7 @@ uint8_t ya_num_builtins() {
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mkcpm(char **args)    // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
 {
     FRESULT res;
     uint8_t i = 0;
@@ -154,7 +157,7 @@ int8_t ya_mkcpm(char **args)    // initialise CP/M with up to 4 drives
    @param args List of args.  args[0] is "md". args[1] is the origin address.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_md(char **args)       // dump RAM contents from nominated bank from nominated origin.
+int8_t ya_md(char ** args)       // dump RAM contents from nominated bank from nominated origin.
 {
     static uint8_t * origin;
     static uint8_t bank;
@@ -182,7 +185,7 @@ int8_t ya_md(char **args)       // dump RAM contents from nominated bank from no
    @param args List of args.  args[0] is "help".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_help(char **args)
+int8_t ya_help(char ** args)
 {
     uint8_t i;
     (void *)args;
@@ -202,7 +205,7 @@ int8_t ya_help(char **args)
    @param args List of args.  args[0] is "exit".
    @return Always returns 0, to terminate execution.
  */
-int8_t ya_exit(char **args)
+int8_t ya_exit(char ** args)
 {
     (void *)args;
     f_mount(0, (const TCHAR*)"", 0);        /* Unmount the default drive */
@@ -217,7 +220,7 @@ int8_t ya_exit(char **args)
    @param args List of args.  args[0] is "ls".  args[1] is the path.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ls(char **args)
+int8_t ya_ls(char ** args)
 {
     FRESULT res;
     uint32_t p1;
@@ -273,7 +276,7 @@ int8_t ya_ls(char **args)
    @param args List of args.  args[0] is "cd".  args[1] is the directory.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_cd(char **args)
+int8_t ya_cd(char ** args)
 {
     if (args[1] == NULL) {
         fprintf(stdout, "yash: expected 1 argument to \"cd\"\n");
@@ -289,7 +292,7 @@ int8_t ya_cd(char **args)
    @param args List of args.  args[0] is "pwd".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_pwd(char **args)      // show the current working directory
+int8_t ya_pwd(char ** args)      // show the current working directory
 {
     FRESULT res;
     uint8_t * directory;                         /* put directory buffer on heap */
@@ -307,6 +310,7 @@ int8_t ya_pwd(char **args)      // show the current working directory
         }
         free(directory);
     }
+
     return 1;
 }
 
@@ -316,7 +320,7 @@ int8_t ya_pwd(char **args)      // show the current working directory
    @param args List of args.  args[0] is "mount". args[1] is the option byte.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mount(char **args)    // mount a FAT file system
+int8_t ya_mount(char ** args)    // mount a FAT file system
 {
     if (args[1] == NULL) {
         put_rc(f_mount(fs, (const TCHAR*)"", 0));
@@ -334,7 +338,7 @@ int8_t ya_mount(char **args)    // mount a FAT file system
    @param args List of args.  args[0] is "ds".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ds(char **args)       // disk status
+int8_t ya_ds(char ** args)       // disk status
 {
     FRESULT res;
     int32_t p1;
@@ -359,7 +363,7 @@ int8_t ya_ds(char **args)       // disk status
    @param args List of args.  args[0] is "dd". args[1] is the sector in decimal.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_dd(char **args)       // disk dump
+int8_t ya_dd(char ** args)       // disk dump
 {
     FRESULT res;
     static uint32_t sect;
@@ -403,7 +407,7 @@ void put_rc (FRESULT rc)
 
 
 static
-void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt)
+void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt)
 {
     uint8_t i;
 
@@ -425,7 +429,7 @@ void put_dump (const uint8_t *buff, uint32_t ofs, uint8_t cnt)
    @param args Null terminated list of arguments.
    @return 1 if the shell should continue running, 0 if it should terminate
  */
-int8_t ya_execute(char **args)
+int8_t ya_execute(char ** args)
 {
     uint8_t i;
 
@@ -442,66 +446,75 @@ int8_t ya_execute(char **args)
     return 1;
 }
 
-#define YA_TOK_BUFSIZE 32
-#define YA_TOK_DELIM " \t\r\n\a"
+
 /**
    @brief Split a line into tokens (very naively).
    @param line The line.
    @return Null-terminated array of tokens.
  */
-char **ya_split_line(char *line)
+char ** ya_split_line(char * line)
 {
-    uint16_t bufsize = YA_TOK_BUFSIZE;
+    uint16_t bufsize = TOK_BUFSIZE;
     uint16_t position = 0;
-    char *token;
-    char **tokens, **tokens_backup;
+    char * token;
+    char ** tokens_backup;
+
+    static char ** tokens;
 
     tokens = (char **)malloc(bufsize * sizeof(char*));
 
-    if (tokens && line)
-    {
-        token = strtok(line, YA_TOK_DELIM);
-        while (token != NULL) {
-            tokens[position] = token;
-            position++;
-
-            // If we have exceeded the tokens buffer, reallocate.
-            if (position >= bufsize) {
-                bufsize += YA_TOK_BUFSIZE;
-                tokens_backup = tokens;
-                tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
-                if (tokens == NULL) {
-                    free(tokens_backup);
-                    fprintf(stdout, "yash: tokens realloc failure\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-
-            token = strtok(NULL, YA_TOK_DELIM);
-        }
-        tokens[position] = NULL;
+    if (tokens == NULL) {
+      fprintf(stderr, "yash: tokens allocation failed\n");
+      exit(EXIT_FAILURE);
     }
+
+    token = strtok(line, TOK_DELIM);
+
+    while (token != NULL) {
+        tokens[position++] = token;
+
+        // If we have exceeded the tokens buffer, reallocate.
+        if (position >= bufsize) {
+            bufsize += TOK_BUFSIZE;
+            tokens_backup = tokens;
+            tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
+            if (tokens == NULL) {
+                free(tokens_backup);
+                fprintf(stderr, "yash: tokens realloc failed\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, TOK_DELIM);
+    }
+
+    tokens[position] = NULL;
+
     return tokens;
 }
+
 
 /**
    @brief Loop getting input and executing it.
  */
 void ya_loop(void)
 {
-    char **args;
+    char ** args;
     int status;
-    char *line;
-    uint16_t len;
+    char * line;
+
+    uint16_t len = LINE_SIZE;
 
     line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
-    if (line == NULL) return;
 
-    len = LINE_SIZE;
+    if (line == NULL) {
+      fprintf(stderr, "yash: line allocation failed\n");
+      exit(EXIT_FAILURE);
+    }
 
     do {
-        fprintf(stdout,"\n> ");
         fflush(stdin);
+        fprintf(stdout,"\n> ");
 
         getline(&line, &len, stdin);
         args = ya_split_line(line);
@@ -521,7 +534,7 @@ void ya_loop(void)
    @param argv Argument vector.
    @return status code
  */
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
     (void)argc;
     (void *)argv;

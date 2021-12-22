@@ -35,8 +35,7 @@ pboot:                      ; preamble code also used by wboot
     xor a
     ld hl,_cpm_bdos_bss_head
     ld (hl),a
-    ld d,h
-    ld e,l
+    ld de,hl
     inc de
     ld bc,_cpm_bdos_bss_tail-_cpm_bdos_bss_head-1
     ldir
@@ -59,8 +58,7 @@ pboot:                      ; preamble code also used by wboot
     xor a
     ld hl,_cpm_bios_bss_head
     ld (hl),a
-    ld d,h
-    ld e,l
+    ld de,hl
     inc de
     ld bc,_cpm_bios_bss_tail-_cpm_bios_bss_head-1
     ldir

@@ -507,7 +507,7 @@ ADDHL:
     LD    L,A
     RET    NC        ;take care of any carry.
     INC    H
-    RET    
+    RET
 ;
 ;   Convert the first name in (FCB).
 ;
@@ -1326,11 +1326,11 @@ UNKWN4:
     LD    HL,INBUFF+2    ;now move the remainder of the input
 UNKWN5:
     LD    A,(HL)        ;line down to (0080h). Look for a non blank.
-    OR    A        ;or a null.
+    OR    A         ;or a null.
     JP    Z,UNKWN6
     CP    ' '
     JP    Z,UNKWN6
-    INC    HL
+    INC     HL
     JP    UNKWN5
 ;
 ;   Do the line move now. It ends in a null byte.
@@ -1894,7 +1894,7 @@ DIRCIO:
 DIRC1:
     CALL    CONST           ;this is an input request.
     OR      A
-    JP      Z,GOBACK1       ;not ready? Just return (directly).
+    JP      Z,RETMON        ;not ready? Just return (directly).
     CALL    CONIN           ;yes, get character.
     JP      SETSTAT         ;set status and return.
 ;
@@ -2514,6 +2514,7 @@ LDI_128:                    ;(HL++)->(DE++), 128 times.
     PUSH    BC              ;a total of 4 times,
     PUSH    BC              ;for a total of 128 times.
     PUSH    BC
+;
 LDI_32:                     ;(HL++)->(DE++), 32 times.
     LDI
     LDI
@@ -2561,7 +2562,7 @@ CKFILPOS:
     CP      (HL)            ;are both bytes the same?
     RET     NZ
     INC     A               ;yes, but are they each 0ffh?
-    RET    
+    RET
 ;
 ;   Set location (FILEPOS) to 0ffffh.
 ;
@@ -2637,7 +2638,7 @@ CKBMAP1:
     RLCA                    ;get correct bit into position 0.
     DEC     E
     JP      NZ,CKBMAP1
-    RET    
+    RET
 ;
 ;   Set or clear the bit map such that block number (BC) will be marked
 ;   as used. On entry, if (E)=0 then this bit will be cleared, if it equals
@@ -2660,7 +2661,7 @@ STBMAP1:
     DEC     D
     JP      NZ,STBMAP1
     LD      (HL),A          ;and store byte in table.
-    RET    
+    RET
 ;
 ;   Set/clear space used bits in allocation map for this file.
 ;   On entry, (C)=1 to set the map and (C)=0 to clear it.
@@ -2721,8 +2722,7 @@ BITMAP:
     SRL     H
     RR      L
     INC     HL              ;at least 1 byte.
-    LD      B,H
-    LD      C,L             ;set (BC) to the allocation table length.
+    LD      BC,HL           ;set (BC) to the allocation table length.
 ;
 ;   Initialize the bitmap for this drive. Right now, the first
 ;   two bytes are specified by the disk parameter block. However
@@ -3010,8 +3010,7 @@ FCBSET:
 UPDATE:
     LD      HL,(PARAMS)     ;get address of fcb.
     ADD     HL,BC           ;compute starting byte.
-    LD      B,D
-    LD      C,E             ;set (C) to number of bytes to change.
+    LD      BC,DE           ;set (C) to number of bytes to change.
     EX      DE,HL
     CALL    FCB2HL          ;get address of fcb to update in directory.
     EX      DE,HL
@@ -3707,7 +3706,7 @@ LOGINDRV:
     POP     HL
     CALL    Z,SLCTERR       ;valid drive?
     LD      A,L             ;is this a newly activated drive?
-    RRA    
+    RRA
     RET     C
     LD      HL,(LOGIN)      ;yes, update the login vector.
     LD      C,L
@@ -3934,22 +3933,22 @@ FILESIZE:
 GOBACK:
     LD      A,(AUTO)        ;was auto select activated?
     OR      A
-    JP      Z,GOBACK1
+    JP      Z,RETMON
     LD      HL,(PARAMS)     ;yes, but was a change made?
     LD      (HL),0          ;(* reset first byte of fcb *)
     LD      A,(AUTOFLAG)
     OR      A
-    JP      Z,GOBACK1
+    JP      Z,RETMON
     LD      (HL),A          ;yes, reset first byte properly.
     LD      A,(OLDDRV)      ;and get the old drive and select it.
     LD      (EPARAM),A
     CALL    SETDSK
-GOBACK1:
+RETMON:
     LD      SP,(USRSTACK)   ;reset the users stack pointer.
     LD      HL,(STATUS)     ;get return status.
     LD      A,L             ;force version 1.4 compatability.
     LD      B,H
-    RET                     ;and go back to user.  
+    RET                     ;and go back to user.
 ;
 PUBLIC  _cpm_bdos_tail
 _cpm_bdos_tail:             ;tail of the cpm bdos
