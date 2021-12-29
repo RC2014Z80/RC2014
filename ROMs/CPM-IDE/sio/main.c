@@ -315,7 +315,7 @@ int8_t ya_pwd(char ** args)      // show the current working directory
     directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory buffer */
 
     if (directory != NULL) {
-        res = f_getcwd(directory, sizeof(uint8_t)*LINE_SIZE);
+        res = f_getcwd((char *)directory, sizeof(uint8_t)*LINE_SIZE);
         if (res != FR_OK) {
             put_rc(res);
         } else {

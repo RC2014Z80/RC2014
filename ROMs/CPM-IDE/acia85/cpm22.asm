@@ -23,7 +23,7 @@ SECTION rodata_lib           ;read only library (code)
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_CCP_BDOS    ;base of ccp
-defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDA00
+defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDC00
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -1273,9 +1273,7 @@ UNKWN2:
     CALL    DSELECT        ;select specified drive.
     POP    DE
     LD    HL,COMFILE    ;set the extension to 'COM'.
-    LDI
-    LDI
-    LDI
+    CALL    LDI_3
     CALL    OPENFCB        ;and open this file.
     JP    Z,UNKWN9    ;not present?
 ;
@@ -1322,7 +1320,8 @@ UNKWN4:
     LD    DE,TFCB        ;move it into place at(005Ch).
     LD    HL,FCB
     CALL    LDI_32      ;move 33 bytes in total
-    LDI
+    LD      A,(HL)
+    LD      (DE),A
     LD    HL,INBUFF+2    ;now move the remainder of the input
 UNKWN5:
     LD    A,(HL)        ;line down to (0080h). Look for a non blank.
@@ -1460,7 +1459,10 @@ FBASE:
     LD      (EPARAM),A
     LD      HL,0
     LD      (STATUS),HL     ;clear return status.
-    LD      (USRSTACK),SP   ;save users stack pointer.
+    EX      DE,HL
+    LD      DE,SP           ;save users stack pointer.
+    EX      DE,HL
+    LD      (USRSTACK),HL
     LD      SP,STKAREA      ;and set our own.
     XOR     A               ;clear auto select storage space.
     LD      (AUTOFLAG),A
@@ -2026,10 +2028,8 @@ IORET:
 TRKSEC:
     LD      HL,(FILEPOS)    ;get position of last accessed file
                             ;in directory and compute sector #.
-    SRL     H               ;sector #=file-position/4.
-    RR      L
-    SRL     H
-    RR      L
+    SRA     HL              ;sector #=file-position/4.
+    SRA     HL
     LD      (BLKNMBR),HL    ;save this as the block number of interest.
 ;
 ;   If the sector number has already been set (BLKNMBR), enter
@@ -2273,8 +2273,7 @@ SHIFTR:
 SHIFTR1:
     DEC     C
     RET     Z
-    SRL     H
-    RR      L
+    SRA     HL              ;shift right 1 bit.
     JP      SHIFTR1
 ;
 ;   Compute the check-sum for the directory buffer. Return
@@ -2444,10 +2443,12 @@ SETDIR:
 ;   then this disk will be write protected.
 ;
 CHECKDIR:
+    LD      A,C             ;preserve C
+    LD      HL,(ALLOC1)
+    LD      BC,HL
     LD      HL,(CKSUMTBL)
-    LD      DE,(ALLOC1)
-    OR      A               ;clear carry
-    SBC     HL,DE           ;HL=(CKSUMTBL)-(ALLOC1)
+    SUB     HL,BC           ;HL=(CKSUMTBL)-(ALLOC1)
+    LD      C,A             ;recover C
     RET     NC              ;ok if (CKSUMTBL) > (ALLOC1), so return.
     PUSH    BC
     CALL    CHECKSUM        ;else compute checksum.
@@ -2516,41 +2517,103 @@ LDI_128:                    ;(HL++)->(DE++), 128 times.
     PUSH    BC
 ;
 LDI_32:                     ;(HL++)->(DE++), 32 times.
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
 LDI_16:                     ;(HL++)->(DE++), 16 times.
-    LDI
+    LD      A,(HL+)
+    LD      (DE+),A
 LDI_15:                     ;(HL++)->(DE++), 15 times.
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-LDI_8:                     ;(HL++)->(DE++), 8 times.
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
-    LDI
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+LDI_8:                      ;(HL++)->(DE++), 8 times.
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+LDI_3:                      ;(HL++)->(DE++), 3 times.
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
+    LD      A,(HL+)
+    LD      (DE+),A
+;
     RET
 ;
 ;   Check (FILEPOS) and set the zero flag if it equals 0ffffh.
@@ -2583,10 +2646,11 @@ NXENTRY:
     LD      HL,(FILEPOS)    ;get current count.
     INC     HL              ;go on to the next one.
     LD      (FILEPOS),HL
-    EX      DE,HL
+    LD      A,C             ;preserve C
+    LD      BC,HL
     LD      HL,(DIRSIZE)    ;get directory entry size limit.
-    OR      A               ;clear carry
-    SBC     HL,DE           ;HL=(DIRSIZE)-(FILEPOS)
+    SUB     HL,BC           ;HL=(DIRSIZE)-(FILEPOS)
+    LD      C,A             ;recover C
     JP      NC,NXENT1       ;is there more room left?
     JP      STFILPOS        ;no. Set this flag and return.
 NXENT1:
@@ -2621,12 +2685,11 @@ CKBITMAP:
 ;
 ;   Compute (BC)=(BC)/8.
 ;
-    SRL     B
-    RR      C
-    SRL     B
-    RR      C
-    SRL     B
-    RR      C
+    LD      HL,BC
+    SRA     HL
+    SRA     HL
+    SRA     HL
+    LD      BC,HL
 ;
 ;   Use this as an offset into the disk space allocation
 ;   table.
@@ -2715,12 +2778,9 @@ SETFL4:
 ;
 BITMAP:
     LD      HL,(DSKSIZE)    ;compute size of allocation table.
-    SRL     H               ;(HL)=(HL)/8. 
-    RR      L
-    SRL     H
-    RR      L
-    SRL     H
-    RR      L
+    SRA     HL              ;(HL)=(HL)/8. 
+    SRA     HL
+    SRA     HL
     INC     HL              ;at least 1 byte.
     LD      BC,HL           ;set (BC) to the allocation table length.
 ;
@@ -3014,7 +3074,12 @@ UPDATE:
     EX      DE,HL
     CALL    FCB2HL          ;get address of fcb to update in directory.
     EX      DE,HL
-    LDIR                    ;(HL++)->(DE++), BC times.
+    DEC     BC
+UPDATE_LOOP:                ;(HL++)->(DE++), BC+1 times.
+    LD      A,(HL+)
+    LD      (DE+),A
+    DEC     BC
+    JP      NK,UPDATE_LOOP
 UPDATE1:
     CALL    TRKSEC          ;determine the track and sector affected.
     JP      DIRWRITE        ;then write this sector out.
@@ -3944,7 +4009,8 @@ GOBACK:
     LD      (EPARAM),A
     CALL    SETDSK
 RETMON:
-    LD      SP,(USRSTACK)   ;reset the users stack pointer.
+    LD      HL,(USRSTACK)   ;reset the users stack pointer.
+    LD      SP,HL
     LD      HL,(STATUS)     ;get return status.
     LD      A,L             ;force version 1.4 compatability.
     LD      B,H

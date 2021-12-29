@@ -7,7 +7,7 @@
 
 SECTION rodata_driver               ;read only driver (code)
 
-INCLUDE "config_rc2014_private.inc"
+INCLUDE "config_rc2014-8085_private.inc"
 
 ;------------------------------------------------------------------------------
 ; location setting
@@ -151,25 +151,29 @@ cboot:
     ld      ($0010),a               ;rst 10
     ld      ($0018),a               ;rst 18
     ld      ($0020),a               ;rst 20
+    ld      ($0025),a               ;trap/nmi - $24
     ld      ($0028),a               ;rst 28
+    ld      ($002D),a               ;int 55  -  $2C
     ld      ($0030),a               ;rst 30
+    ld      ($0038),a               ;rst 38
+    ld      ($003D),a               ;int 75  -  $3C
+    ld      ($0040),a               ;rst 40
+
+    ld      a,$FB                   ;FB is a ei instruction for:
+    ld      ($0024),a               ;trap/nmi
+    ld      ($002C),a               ;int 55
+    ld      ($003C),a               ;int 75
 
     ld      a,$C3                   ;C3 is a jmp instruction for:
-    ld      ($0038),a               ;jmp _acia_interrupt
+    ld      ($0034),a               ;jmp _acia_interrupt
     ld      hl,_acia_interrupt
-    ld      ($0039),hl              ;enable acia interrupt at rst 38
+    ld      ($0035),hl              ;enable acia interrupt at int 65
 
     xor     a                       ;zero in the accum
     ld      (_cpm_cdisk),a          ;select disk zero
 
     ld      a,$01
     ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT default ($01)
-
-    ld      hl,asm_shadow_copy          ;prepare current RAM copy location
-    ld      (__IO_RAM_SHADOW_BASE),hl   ;write it to RAM copy base
-
-    ld      hl,shadow_copy_addr     ;new location for shadow_copy function
-    call    asm_shadow_relocate     ;move it to final (?) location
 
     ld      hl,$AA55                ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl
@@ -347,11 +351,13 @@ homed:
     ld      bc,$0000
 
 settrk:     ;set track passed from BDOS in register BC
-    ld      (sektrk),bc
+    ld      hl,bc
+    ld      (sektrk),hl
     ret
 
 setsec:     ;set sector passed from BDOS given by register BC
-    ld      (seksec),bc
+    ld      hl,bc
+    ld      (seksec),hl
     ret
 
 sectran:    ;translate passed from BDOS sector number BC
@@ -359,7 +365,8 @@ sectran:    ;translate passed from BDOS sector number BC
     ret
 
 setdma:     ;set dma address given by registers BC
-    ld      (dmaadr),bc     ;save the address
+    ld      hl,bc
+    ld      (dmaadr),hl     ;save the address
     ret
 
 seldsk:    ;select disk given by register c
@@ -494,8 +501,8 @@ chkuna:
     ld      hl,(unasec)
     inc     hl              ;unasec = unasec+1
     ld      (unasec),hl
-    ld      de,cpmspt       ;count CP/M sectors
-    sbc     hl,de           ;end of track?
+    ld      bc,cpmspt       ;count CP/M sectors
+    sub     hl,bc           ;end of track?
     jr      C,noovf         ;skip if no overflow
 
 ;           overflow to next track
@@ -529,11 +536,9 @@ rwoper:
     xor     a               ;zero to accum
     ld      (erflag),a      ;no errors (yet)
     ld      hl,(seksec)     ;compute host sector
-    ld      a,l             ;assuming 4 CP/M sectors per host sector
-    srl     h               ;shift right
-    rra
-    srl     h               ;shift right
-    rra
+    sra     hl              ;assuming 4 CP/M sectors per host sector
+    sra     hl              ;shift right
+    ld      a,l
     ld      (sekhst),a      ;host sector to seek
 
 ;           active host sector?
@@ -587,8 +592,7 @@ match:
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
     ld      h,a             ;shift left 7, for 128 bytes x seksec LSBs
     ld      l,0             ;ready to shift
-    srl     h
-    rr      l
+    sra     hl
 
 ;           HL has relative host buffer address
     ld      de,hstbuf
@@ -622,6 +626,10 @@ rwmove:
     ld      a,(erflag)
     ret
 
+ldi_31:
+    call ldi_16
+    jp ldi_15
+
 ldi_128:
     ld bc,ldi_32
     push bc
@@ -629,42 +637,56 @@ ldi_128:
     push bc
 
 ldi_32:
-    ldi
-ldi_31:
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    call ldi_16
 
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+ldi_16:
+    ld a,(hl+)
+    ld (de+),a
+ldi_15:
+    ld a,(hl+)
+    ld (de+),a
 
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    ld a,(hl+)
+    ld (de+),a
 
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+    
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
+
+    ld a,(hl+)
+    ld (de+),a
 
     ret
 
@@ -779,8 +801,6 @@ getLBAbase:
 ; start of common area driver - acia functions
 ;------------------------------------------------------------------------------
 
-PUBLIC _acia_interrupt
-
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_putc
@@ -894,7 +914,7 @@ _acia_flush_Tx:
     ret
 
 _acia_getc:
-    ; exit     : l = char received
+    ; exit     : a = char received
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -924,18 +944,16 @@ getc_clean_up_rx:
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; and put it in hl
     scf                         ; indicate char received
     ret
 
 _acia_pollc:
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
     ld a,(aciaRxCount)          ; load the Rx bytes in buffer
-    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1400,6 +1418,13 @@ alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
 dirbf:      defs    128     ;scratch directory area
 hstbuf:     defs    hstsiz  ;buffer for host disk sector
 bios_stack:                 ;temporary bios stack origin
+
+PUBLIC  _cpm_bios_bss_initialised_tail
+_cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
+
+;------------------------------------------------------------------------------
+; start of bss tables - uninitialised by cpm22preamble (initialised in crt)
+;------------------------------------------------------------------------------
 
 PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
 PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut

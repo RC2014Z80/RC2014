@@ -4,7 +4,7 @@
   @author       Phillip Stevens, inspired by Stephen Brennan
   @brief        YASH (Yet Another SHell)
 
-  This RC2014 programme was reached working state on St Patrick's Day 2018.
+  This RC2014 programme was reached working state at New Year 2022.
 
 *******************************************************************************/
 
@@ -12,6 +12,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/compiler.h>
+
+#if __CLASSIC
+
+#include <../libsrc/_DEVELOPMENT/target/rc2014/config_rc2014-8085.h>
+#include <_DEVELOPMENT/sccz80/arch/rc2014.h>
+
+#include "ffconf.h"
+#include <_DEVELOPMENT/sccz80/lib/rc2014/ff.h>
+
+#include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
+
+#else
 
 #include <arch.h>
 #include <arch/rc2014.h>
@@ -21,9 +34,11 @@
 
 #include <arch/rc2014/diskio.h>
 
+#endif
+
 // PRAGMA DEFINES
 #pragma output REGISTER_SP = 0xDC00
-#pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
+#pragma printf = "%c %s %d %02u %lu %02X %08lX"  // enables %c, %s, %d, %u, %lu, %X %lX only
 
 // DEFINES
 
@@ -33,6 +48,12 @@
 
 #define TOK_BUFSIZE 32
 #define TOK_DELIM " \t\r\n\a"
+
+#define KEY_BS      8
+#define KEY_LF      10
+#define KEY_CR      13
+#define KEY_SPACE   32
+#define KEY_DEL     127
 
 static void * buffer;           /* create a scratch buffer on heap later */
 
@@ -72,7 +93,7 @@ static void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt);
 
 // external functions
 
-extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise cpm
+extern void cpm_boot(void);     // initialise cpm
 
 /*
   List of builtin commands.
@@ -448,6 +469,47 @@ int8_t ya_execute(char ** args)
 
 
 /**
+   @brief Read a line of input from stdin, echo it to stdout.
+   @return The line from stdin.
+ */
+void ya_getline(char * line, uint8_t len)
+{
+    char c;
+    uint8_t position = 0;
+
+    while (--len) {
+
+        // Read a character
+        c = fgetc(stdin);
+
+        // If we hit EOF, replace it with a null character and return.
+        if (c == EOF || c == KEY_LF || c == KEY_CR) {
+            line[position] = '\0';
+            // Echo the character
+            fputc(c, stdout);
+            return;
+        }
+
+        else if ((c == KEY_BS || c == KEY_DEL) && position > 0) {
+            line[--position] = '\0';
+            ++len;
+            // Remove the character
+            fputc(KEY_BS, stdout);
+            fputc(KEY_SPACE, stdout);
+            fputc(KEY_BS, stdout);
+        }
+
+        else {
+            line[position++] = c;
+            // Echo the character
+            fputc(c, stdout);
+        }
+    }
+    line[position] = '\0';
+}
+
+
+/**
    @brief Split a line into tokens (very naively).
    @param line The line.
    @return Null-terminated array of tokens.
@@ -503,8 +565,6 @@ void ya_loop(void)
     int status;
     char * line;
 
-    uint16_t len = LINE_SIZE;
-
     line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
 
     if (line == NULL) {
@@ -516,7 +576,7 @@ void ya_loop(void)
         fflush(stdin);
         fprintf(stdout,"\n> ");
 
-        getline(&line, &len, stdin);
+        ya_getline(line, LINE_SIZE);
         args = ya_split_line(line);
 
         status = ya_execute(args);
@@ -545,7 +605,7 @@ int main(int argc, char ** argv)
 
     // Load config files, if any.
 
-    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :-)\n");
+    fprintf(stdout, "\n\nRC2014 CP/M-IDE 8085\nfeilipu 2022\n\n> :-)\n");
 
     // Run command loop if we got all the memory allocations we need.
     if ( fs && dir && buffer)

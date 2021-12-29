@@ -146,14 +146,14 @@ cboot:
 
 ;   Set up Page 0
 
-    ld      a,$C9           ;C9 is a ret instruction for:
-    ld      ($0008),a       ;rst 08
-    ld      ($0010),a       ;rst 10
-    ld      ($0018),a       ;rst 18
-    ld      ($0020),a       ;rst 20
-    ld      ($0028),a       ;rst 28
-    ld      ($0030),a       ;rst 30
-    ld      ($0038),a       ;rst 38
+    ld      a,$C9                   ;C9 is a ret instruction for:
+    ld      ($0008),a               ;rst 08
+    ld      ($0010),a               ;rst 10
+    ld      ($0018),a               ;rst 18
+    ld      ($0020),a               ;rst 20
+    ld      ($0028),a               ;rst 28
+    ld      ($0030),a               ;rst 30
+    ld      ($0038),a               ;rst 38
 
     xor     a                       ;zero in the accum
     ld      (_cpm_cdisk),a          ;select disk zero
@@ -246,9 +246,9 @@ diskchk:
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
     and     00001011b       ;mask off console and high bit of reader
-    cp      00001010b       ;redirected to siob TTY
+    cp      00001010b       ;redirected to siob
     jr      Z,const1
-    cp      00000010b       ;redirected to siob TTY
+    cp      00000010b       ;redirected to siob
     jr      Z,const1
 
     and     00000011b       ;remove the reader from the mask - only console bits then remain
@@ -278,13 +278,13 @@ conin:    ;console character into register a
 conin0:
    call     _sioa_getc      ;check whether any characters are in CRT Rx0 buffer
    jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;strip parity bit - support 8 bit XMODEM
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
    ret
 
 conin1:
    call     _siob_getc      ;check whether any characters are in TTY Rx1 buffer
    jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;strip parity bit - support 8 bit XMODEM
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
    ret
 
 reader:
@@ -582,13 +582,10 @@ match:
 ;           copy data to or from buffer
     ld      a,(seksec)      ;mask buffer number LSB
     and     secmsk          ;least significant bits, shifted off in sekhst calculation
-    ld      l,a             ;ready to shift
-
-    xor     a               ;shift left 7, for 128 bytes x seksec LSBs
-    srl     l
-    rra
-    ld      h,l
-    ld      l,a
+    ld      h,a             ;shift left 7, for 128 bytes x seksec LSBs
+    ld      l,0             ;ready to shift
+    srl     h
+    rr      l
 
 ;           HL has relative host buffer address
     ld      de,hstbuf
@@ -782,14 +779,12 @@ getLBAbase:
 PUBLIC _sioa_reset
 PUBLIC _sioa_flush_rx_di
 PUBLIC _sioa_getc
-PUBLIC _sioa_peekc
 PUBLIC _sioa_putc
 PUBLIC _sioa_pollc
 
 PUBLIC _siob_reset
 PUBLIC _siob_flush_rx_di
 PUBLIC _siob_getc
-PUBLIC _siob_peekc
 PUBLIC _siob_putc
 PUBLIC _siob_pollc
 
@@ -980,6 +975,18 @@ sioa_interrupt_rx_exit:
     ei
     reti
 
+_sioa_reset:
+    ; interrupts should be disabled
+    call _sioa_flush_rx
+    call _sioa_flush_tx
+    ret
+
+_siob_reset:
+    ; interrupts should be disabled
+    call _siob_flush_rx
+    call _siob_flush_tx
+    ret
+
 _sioa_flush_rx:
     xor a
     ld (sioaRxCount),a          ; reset the Rx counter (set 0)
@@ -1030,18 +1037,6 @@ _siob_flush_rx_di:
     ei
     pop hl
     pop af
-    ret
-
-_sioa_reset:
-    ; interrupts should be disabled
-    call _sioa_flush_rx
-    call _sioa_flush_tx
-    ret
-
-_siob_reset:
-    ; interrupts should be disabled
-    call _siob_flush_rx
-    call _siob_flush_tx
     ret
 
 _sioa_getc:
@@ -1104,28 +1099,6 @@ siob_getc_clean_up:
     scf                         ; indicate char received
     ret
 
-_sioa_peekc:
-    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
-    or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
-
-    ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
-    ld l,a                      ; and put it in hl
-    ret
-
-_siob_peekc:
-    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
-    or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
-
-    ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
-    ld l,a                      ; and put it in hl
-    ret
-
 _sioa_pollc:
     ; exit     : l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
@@ -1154,8 +1127,7 @@ _siob_pollc:
 
 _sioa_putc:
     ; enter    : l = char to output
-    ; exit     : l = 1 if Tx buffer is full
-    ;            carry reset
+    ;
     ; modifies : af, hl
 
     di
@@ -1202,8 +1174,7 @@ sioa_putc_buffer_tx_overflow:
 
 _siob_putc:
     ; enter    : l = char to output
-    ; exit     : l = 1 if Tx buffer is full
-    ;            carry reset
+    ;
     ; modifies : af, hl
 
     di
@@ -1668,7 +1639,6 @@ dirbf:      defs    128     ;scratch directory area
 hstbuf:     defs    hstsiz  ;buffer for host disk sector
 bios_stack:                 ;temporary bios stack origin
 
-
 PUBLIC  sioaRxCount, sioaRxIn, sioaRxOut
 PUBLIC  siobRxCount, siobRxIn, siobRxOut
 PUBLIC  sioaTxCount, sioaTxIn, sioaTxOut
@@ -1696,7 +1666,7 @@ siobTxOut:      defw siobTxBuffer       ;non-zero item in bss since it's initial
 
 ALIGN   $10000 - $20 - __IO_SIO_TX_SIZE*2 - __IO_SIO_RX_SIZE*2
 
-shadow_copy_addr:   defs 0x20           ;reserve space for relocation of shadow_copy
+shadow_copy_addr:   defs $20            ;reserve space for relocation of shadow_copy
 
 PUBLIC  sioaTxBuffer
 PUBLIC  siobTxBuffer
@@ -1721,7 +1691,7 @@ siobRxBuffer:   defs __IO_SIO_RX_SIZE   ;space for the Rx Buffer
 ;------------------------------------------------------------------------------
 
 PUBLIC  _cpm_bios_bss_tail
-_cpm_bios_bss_tail:         ;tail of the cpm bios bss
+_cpm_bios_bss_tail:                     ;tail of the cpm bios bss
 
 DEPHASE
 

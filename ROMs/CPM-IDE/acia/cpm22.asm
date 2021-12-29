@@ -1140,63 +1140,63 @@ NOSPACE:
 ;**************************************************************
 ;
 RENAME:
-    CALL    CONVFST        ;convert first file name.
-    JP    NZ,SYNERR    ;wild cards not allowed.
-    LD    A,(CHGDRV)    ;remember any change in drives specified.
+    CALL    CONVFST         ;convert first file name.
+    JP      NZ,SYNERR       ;wild cards not allowed.
+    LD      A,(CHGDRV)      ;remember any change in drives specified.
     PUSH    AF
-    CALL    DSELECT        ;and select this drive.
-    CALL    SRCHFCB        ;is this file present?
-    JP    NZ,RENAME6    ;yes, print error message.
-    LD    HL,FCB        ;yes, move this name into second slot.
-    LD    DE,FCB+16
-    CALL    LDI_16
-    LD    HL,(INPOINT)    ;get input pointer.
-    EX    DE,HL
-    CALL    NONBLANK    ;get next non blank character.
-    CP    '='        ;only allow an '=' or '_' seperator.
-    JP    Z,RENAME1
-    CP    '_'
-    JP    NZ,RENAME5
+    CALL    DSELECT         ;and select this drive.
+    CALL    SRCHFCB         ;is this file present?
+    JP      NZ,RENAME6      ;yes, print error message.
+    LD      HL,FCB          ;yes, move this name into second slot.
+    LD      DE,FCB+16
+    CALL    LDI_16          ;copy 16 bytes
+    LD      HL,(INPOINT)    ;get input pointer.
+    EX      DE,HL
+    CALL    NONBLANK        ;get next non blank character.
+    CP      '='             ;only allow an '=' or '_' seperator.
+    JP      Z,RENAME1
+    CP      '_'
+    JP      NZ,RENAME5
 RENAME1:
-    EX    DE,HL
-    INC    HL        ;ok, skip seperator.
-    LD    (INPOINT),HL    ;save input line pointer.
-    CALL    CONVFST        ;convert this second file name now.
-    JP    NZ,RENAME5    ;again, no wild cards.
-    POP    AF        ;if a drive was specified, then it
-    LD    B,A        ;must be the same as before.
-    LD    HL,CHGDRV
-    LD    A,(HL)
-    OR    A
-    JP    Z,RENAME2
-    CP    B
-    LD    (HL),B
-    JP    NZ,RENAME5    ;they were different, error.
+    EX      DE,HL
+    INC     HL              ;ok, skip seperator.
+    LD      (INPOINT),HL    ;save input line pointer.
+    CALL    CONVFST         ;convert this second file name now.
+    JP      NZ,RENAME5      ;again, no wild cards.
+    POP     AF              ;if a drive was specified, then it
+    LD      B,A             ;must be the same as before.
+    LD      HL,CHGDRV
+    LD      A,(HL)
+    OR      A
+    JP      Z,RENAME2
+    CP      B
+    LD      (HL),B
+    JP      NZ,RENAME5      ;they were different, error.
 RENAME2:
-    LD    (HL),B        ;reset as per the first file specification.
-    XOR    A
-    LD    (FCB),A        ;clear the drive byte of the fcb.
+    LD      (HL),B          ;reset as per the first file specification.
+    XOR     A
+    LD      (FCB),A         ;clear the drive byte of the fcb.
 RENAME3:
-    CALL    SRCHFCB        ;and go look for second file.
-    JP    Z,RENAME4    ;doesn't exist?
-    LD    DE,FCB
-    CALL    RENAM        ;ok, rename the file.
-    JP    GETBACK
+    CALL    SRCHFCB         ;and go look for second file.
+    JP      Z,RENAME4       ;doesn't exist?
+    LD      DE,FCB
+    CALL    RENAM           ;ok, rename the file.
+    JP      GETBACK
 ;
 ;   Process rename errors here.
 ;
 RENAME4:
-    CALL    NONE        ;file not there.
-    JP    GETBACK
+    CALL    NONE            ;file not there.
+    JP      GETBACK
 
 RENAME5:
     CALL    RESETDR        ;bad command format.
-    JP    SYNERR
+    JP      SYNERR
 
 RENAME6:
-    LD    BC,EXISTS    ;destination file already exists.
+    LD      BC,EXISTS       ;destination file already exists.
     CALL    PLINE
-    JP    GETBACK
+    JP      GETBACK
 
 EXISTS:
     DEFM    "File exists",0
@@ -1321,7 +1321,7 @@ UNKWN4:
     LD    (FCB+32),A
     LD    DE,TFCB        ;move it into place at(005Ch).
     LD    HL,FCB
-    CALL    LDI_32
+    CALL    LDI_32      ;move 33 bytes in total
     LDI
     LD    HL,INBUFF+2    ;now move the remainder of the input
 UNKWN5:

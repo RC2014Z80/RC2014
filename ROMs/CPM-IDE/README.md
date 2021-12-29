@@ -49,8 +49,7 @@ The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. T
 
 ## Hardware
 
-In addition to the [RC2014 Plus](https://www.tindie.com/products/Semachthemonkey/rc2014-plus-homebrew-z80-computer-kit/) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary.
-An additional 32k RAM must be installed in the 64k RAM module.
+In addition to the [RC2014 Plus](https://www.tindie.com/products/Semachthemonkey/rc2014-plus-homebrew-z80-computer-kit/) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary. An additional 32k RAM must be installed in the 64k RAM module.
 
 1. [IDE Hard Drive Module](https://rc2014.co.uk/modules/ide-hard-drive-module/).
 2. [64kB RAM Module](https://rc2014.co.uk/modules/64k-ram/).
@@ -67,17 +66,17 @@ Optionally, replacing 3. and 4. with below can save a slot and provides some imp
 
 - [Z80 CPU & Clock Module](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
 
-To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for 3. and 4.
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 3. and 4.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-Optionally, replacing 2. and 5. with below avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
+Optionally, replacing items 2. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
 Using the Memory Module (also compatible with SC108) provides access to the 64kB of shadow RAM for CP/M programs.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
-Additionally, the ACIA Serial Module could be substituted for the SIO/2 dual serial interface.
-The ACIA Serial Module is supported with the 8085 CPU Module.
+Additionally, the ACIA Serial Module could be substituted for item 6. the SIO/2 dual serial interface.
+With the 8085 CPU Module, only the ACIA Serial Module is supported.
 
 - [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
@@ -155,7 +154,7 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 
 ### Building
 
-The z88dk command line to build the CP/M-IDE for Z80 CPUs is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
+The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
 
 ```bash
 zcc +rc2014 -subtype=acia -SO3 -m --math32 -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
@@ -165,7 +164,6 @@ zcc +rc2014 -subtype=sio -SO3 -m --math32 -llib/rc2014/ff_ro --max-allocs-per-no
 The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
 
 ``` bash
-zcc +rc2014 -subtype=acia -clib=new -O2 -m --math32 -llib/rc2014/ff_ro @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 zcc +rc2014 -subtype=acia85 -O2 -m -D__CLASSIC -DAMALLOC --math32 -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
 ```
 
