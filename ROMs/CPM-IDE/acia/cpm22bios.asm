@@ -92,7 +92,7 @@ PUBLIC    conin     ;console character in
 PUBLIC    conout    ;console character out
 PUBLIC    list      ;list character out
 PUBLIC    punch     ;punch character out
-PUBLIC    reader    ;reader character out
+PUBLIC    reader    ;reader character in
 PUBLIC    home      ;move head to home position
 PUBLIC    seldsk    ;select disk
 PUBLIC    settrk    ;set track number
@@ -214,7 +214,7 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
-    call    _acia_reset     ; reset and empty the ACIA Tx & Rx buffers
+    call    _acia_reset     ;reset and empty the ACIA Tx & Rx buffers
     ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
@@ -311,7 +311,7 @@ conout:    ;console character output from register c
     jp      _acia0_putc
 
 list:
-    ld      l,c             ;Store character
+    ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     11000000b
     cp      01000000b
@@ -321,7 +321,7 @@ list:
     ret
 
 punch:
-    ld      l,c             ;Store character
+    ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b
@@ -331,7 +331,7 @@ punch:
     ret
 
 listst:     ;return list status
-    ld      a,$FF           ;Return list status of 0xFF (ready).
+    ld      a,$FF           ;return list status of 0xFF (ready).
     ret
 
 ;=============================================================================

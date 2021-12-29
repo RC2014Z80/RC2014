@@ -92,7 +92,7 @@ PUBLIC    conin     ;console character in
 PUBLIC    conout    ;console character out
 PUBLIC    list      ;list character out
 PUBLIC    punch     ;punch character out
-PUBLIC    reader    ;reader character out
+PUBLIC    reader    ;reader character in
 PUBLIC    home      ;move head to home position
 PUBLIC    seldsk    ;select disk
 PUBLIC    settrk    ;set track number
@@ -172,8 +172,8 @@ cboot:
     xor     a                       ;zero in the accum
     ld      (_cpm_cdisk),a          ;select disk zero
 
-    ld      a,$01
-    ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT default ($01)
+    ld      a,$81
+    ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT: plus LPT: ($81)
 
     ld      hl,$AA55                ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl
@@ -218,7 +218,10 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
-    call    _acia_reset     ; reset and empty the ACIA Tx & Rx buffers
+    ld      a,$DD           ;set SOD high, set MSE to mask int 75 & int 55
+    sim
+
+    call    _acia_reset     ;reset and empty the ACIA Tx & Rx buffers
     ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
@@ -315,17 +318,14 @@ conout:    ;console character output from register c
     jp      _acia0_putc
 
 list:
-    ld      l,c             ;Store character
-    ld      a,(_cpm_iobyte)
-    and     11000000b
-    cp      01000000b
-    jp      Z,_acia0_putc
-    cp      00000000b
-    jp      Z,_acia1_putc
+    ld      l,c             ;store character
+    ld      a,(_cpm_iobyte) ;1xxxxxxxb LPT: or UL1:
+    rlca
+    jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
     ret
 
 punch:
-    ld      l,c             ;Store character
+    ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b
@@ -335,7 +335,7 @@ punch:
     ret
 
 listst:     ;return list status
-    ld      a,$FF           ;Return list status of 0xFF (ready).
+    ld      a,$FF           ;return list status of 0xFF (ready).
     ret
 
 ;=============================================================================
@@ -1019,6 +1019,45 @@ putc_buffer_tx:
     defc _acia1_getc = _acia_getc
     defc _acia1_putc = _acia_putc
     defc _acia1_pollc = _acia_pollc
+
+;------------------------------------------------------------------------------
+; start of common area driver - sod functions
+;------------------------------------------------------------------------------
+
+PUBLIC _sod_putc
+
+_sod_putc:
+    ; output a character in l via SOD at 115200 baud 8n2
+    ; enter    : l = char to output
+    ;
+    ; modifies : af, hl
+
+    ld h,9                      ;10 bits per byte (1 start, 1 active stop bits)
+
+    ld a,$40                    ; 7 clear start and set SOD enable bits
+    di
+    sim                         ; 4 output start bit
+
+sod_loop:
+    nop                         ; 4 delay for a bit time
+    nop                         ; 4 delay
+    nop                         ; 4 delay
+    ld a,0                      ; 7 delay
+
+    ld a,l                      ; 4
+    scf                         ; 4 set eventual stop bit(s)
+    rra                         ; 4 get bit into carry
+    ld l,a                      ; 4
+
+    ld a,$80                    ; 7 set eventual SOD enable bit
+    rra                         ; 4 move carry into SOD bit
+
+    dec h                       ; 4 loop 8 + 1 bits
+    sim                         ; 4 output bit data
+    jp NZ,sod_loop              ;10/7
+                                ;loop total 64 cycles for correct timing
+    ei
+    ret
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - 8255 functions

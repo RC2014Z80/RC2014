@@ -1,7 +1,6 @@
 # CP/M - IDE
 
-There are several implementations of CP/M available for the RC2014.
-Each implementation has its own focus, and the same is true here.
+There are several implementations of CP/M available for the RC2014. Each implementation has its own focus, and the same is true here.
 
 ## Concept
 
@@ -9,7 +8,7 @@ This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
- The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
+The serial interfaces (ACIA and SIO/2, and the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
 
 In the ACIA builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
@@ -142,7 +141,7 @@ Rather than spend time on long descriptions, one picture is worth 2kByte.
 
 ## Software
 
-The CP/M-IDE is based on the z88dk with a simple command shell for the RC2014, together with the DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions. Z80 `LDI` instructions (for example) have been used to improve buffer copy performance.
+The CP/M-IDE is based on the z88dk with a simple command shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions and 8085 CPU undocumented instructions. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
 
 ### Installation
 
@@ -188,6 +187,8 @@ CP/M can be started by command `cpm [file][][][]` At least one valid file name m
 The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
+
+In the 8085 CPU Module build the CPU Serial Output (SOD) is supported as the CP/M LPT: device. It is enabled from within CP/M using `^P` from the CCP as normal.
 
 ### CP/M System Disk
 
