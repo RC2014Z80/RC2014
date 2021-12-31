@@ -321,10 +321,12 @@ conout:    ;console character output from register c
 
 list:
     ld      l,c             ;store character
-    ld      a,(_cpm_iobyte) ;1xxxxxxxb LPT: or UL1:
+    ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
-    ret
+    rlca
+    jp      C,_acia1_putc   ;01------b CRT:
+    jp      _acia0_putc     ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
