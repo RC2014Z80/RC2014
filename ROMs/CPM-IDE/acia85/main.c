@@ -4,7 +4,7 @@
   @author       Phillip Stevens, inspired by Stephen Brennan
   @brief        YASH (Yet Another SHell)
 
-  This RC2014 programme was reached working state at New Year 2022.
+  This RC2014 programme reached working state at New Year 2022.
 
 *******************************************************************************/
 

@@ -4,6 +4,8 @@
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
+; Adapted to 8085 CPU - December 2021
+;
 
 SECTION rodata_driver               ;read only driver (code)
 
