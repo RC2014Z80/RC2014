@@ -2,7 +2,7 @@ Binary to CP/M converter v0.2
 By Christian Frintrup
 
 Converts a CP/M file to a .hex file to use it with Grant Searle's download.com.
-http://searle.hostei.com/grant/cpm/#InstallingApplications
+http://searle.x10host.com/cpm/#InstallingApplications
 
 Down load main.c and build it with.
  
