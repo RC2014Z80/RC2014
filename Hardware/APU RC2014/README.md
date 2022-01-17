@@ -80,6 +80,8 @@ The [Pololu U3V12F12](https://www.pololu.com/product/2117) boost converter PCB c
 
 ![Pololu U3V12F12](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/0J4328.600x480.jpg)
 
+As an alternative, the [Pololu S10V2F12](https://www.pololu.com/product/2096) buck/boost converter can be used. It can be mounted flipped over, [as shown here](https://www.tindie.com/products/semachthemonkey/rc2014-am9511a-apu-arithmetic-processor/). Or, perhaps more neatly, it can be mounted to the rear of the PCB and laid directly onto the APU Module PCB. In either case the SHDN pin shall remain unconnected.
+
 Depending on your level of confidence and competence you can choose to assemble the APU Module with or without device sockets. Either way, ensure that the device numbers are identical to the numbers printed on each device outline. Ensure that the device orientation is the same as on the PCB. Double check orientation by reading the text on the devices and matching to what you can see on this completed APU Module, below.
 
 ![Am9511A APU Module](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/apu.jpg)
