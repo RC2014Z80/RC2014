@@ -102,7 +102,7 @@ As noted Compact Flash cards are also supported in native 16 bit PATA mode, as d
 </table>
 </div>
 
-## Configuration
+### Configuration
 
 The cards are configured in their normal settings for CP/M. A jumper for the `PAGE` signal is shown on pin 39, although this can be done in any alternative way.
 
@@ -162,25 +162,6 @@ Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, R
 Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
 
 Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
-
-### Building
-
-The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
-
-```bash
-zcc +rc2014 -subtype=acia -SO3 -m --math32 -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
-zcc +rc2014 -subtype=sio -SO3 -m --math32 -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
-```
-
-The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
-
-``` bash
-zcc +rc2014 -subtype=acia85 -O2 -m -D__CLASSIC -DAMALLOC --math32 -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
-```
-
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
-
-The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
 
 ### Boot up
 
@@ -250,7 +231,7 @@ end
 
 ```
 
-## Shell Command Interface
+### Shell Command Interface
 
 The shell command line interface is implemented in C, with the underlying functions either in C or in assembly. The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
 
@@ -287,6 +268,26 @@ Again, here is a view of what success looks like.
 - `ds` - disk status
 - `dd [sector]` - disk dump, sector in decimal
 
-## CP/M CCP Extension
+### CP/M CCP Extension
 
 An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the CP/M drives. `EXIT` initialises a clean reboot of the RC2014, and returns to the command shell.
+
+
+## Building Software from Source
+
+The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
+
+```bash
+zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
+zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
+```
+
+The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
+
+``` bash
+zcc +rc2014 -subtype=acia85 -O2 -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
+```
+
+Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
+
+The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
