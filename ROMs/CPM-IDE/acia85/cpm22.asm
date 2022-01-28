@@ -3099,7 +3099,7 @@ CHGNAM1:
     LD      BC,16           ;start 16 bytes into fcb.
     LD      DE,12           ;and update the first 12 bytes of directory.
     CALL    UPDATE
-    CALL    FINDNXT         ;get te next file name.
+    CALL    FINDNXT         ;get the next file name.
     JP      CHGNAM1         ;and continue.
 ;
 ;   Update a files attributes. The procedure is to search for

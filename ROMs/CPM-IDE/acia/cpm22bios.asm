@@ -365,14 +365,7 @@ setdma:     ;set dma address given by registers BC
 seldsk:    ;select disk given by register c
     ld      a,c
     cp      _cpm_disks      ;must be between 0 and 3
-    jr      C,chgdsk        ;if invalid drive will result in BDOS error
-
-seldskreset:
-    xor     a               ;reset default disk back to 0 (A:)
-    ld      (_cpm_cdisk),a
-    ld      (sekdsk),a      ;and set the seeked disk
-    ld      hl,$0000        ;return error code in HL
-    ret
+    jr      NC,seldskreset  ;invalid drive will result in BDOS error
 
 chgdsk:
     call    getLBAbase      ;get the LBA base address for disk
@@ -383,7 +376,7 @@ chgdsk:
     or      a,(hl)
     inc     hl
     or      a,(hl)
-    jr      Z,seldskreset   ;invalid disk LBA, so load default disk
+    jr      Z,seldskreset   ;invalid disk LBA, so return BDOS error
 
     ld      a,c             ;recover selected disk
     ld      (sekdsk),a      ;and set the seeked disk
@@ -398,6 +391,12 @@ chgdsk:
     inc     h
     ret                     ;return the disk dpbase in HL
 
+seldskreset:
+    xor     a               ;reset default disk back to 0 (A:)
+    ld      (_cpm_cdisk),a
+    ld      (sekdsk),a      ;and set the seeked disk
+    ld      hl,$0000        ;return error code in HL
+    ret
 ;
 ;*****************************************************
 ;*                                                   *
