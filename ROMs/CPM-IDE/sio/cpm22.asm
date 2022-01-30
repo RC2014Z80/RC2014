@@ -3048,8 +3048,8 @@ SAVEATTR:
 SAVATR1:
     CALL    CKFILPOS        ;was one found?
     RET     Z               ;nope, we must be done.
-    LD      BC,0            ;yes, update the first 12 bytes now.
-    LD      DE,12
+    LD      BC,0            ;yes,
+    LD      DE,12           ;update the first 12 bytes now.
     CALL    UPDATE          ;update filename and write directory.
     CALL    FINDNXT         ;and get the next file.
     JP      SAVATR1         ;then continue until done.
@@ -3736,7 +3736,7 @@ AUTOSEL:
     LD      (OLDDRV),A      ;drive.
     LD      A,(HL)          ;and save first byte of fcb also.
     LD      (AUTOFLAG),A    ;this must be non-zero.
-    AND     0E0H            ;whats this for (bits 6,7 are used for
+    AND     0E0H            ;whats this for (bits 5,6,7 are used for
     LD      (HL),A          ;something)?
     CALL    SETDSK          ;select and log in this drive.
 AUTOSL1:

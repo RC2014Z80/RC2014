@@ -181,7 +181,7 @@ The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` 
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
-In the 8085 CPU Module build the CPU Serial Output (SOD) is supported as the CP/M LPT: device. It is enabled from within CP/M using `^P` from the CCP command line as normal.
+In the 8085 CPU Module ACIA build the CPU Serial Output (SOD) is also supported as the CP/M `LPT:` device. It is enabled from within CP/M using `^P` from the CCP command line as normal.
 
 ### CP/M System Disk
 

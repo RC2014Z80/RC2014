@@ -3056,7 +3056,7 @@ FNDSPA4:
 ;
 FCBSET:
     LD      BC,0            ;set (BC) to relative byte position.
-    LD      DE,32           ;length of each entry.
+    LD      E,32            ;length of each entry.
 ;
 ;   Move (E) bytes from the fcb pointed to by (PARAMS) into
 ;   fcb in directory starting at relative byte (C). This updated
@@ -3065,16 +3065,15 @@ FCBSET:
 UPDATE:
     LD      HL,(PARAMS)     ;get address of fcb.
     ADD     HL,BC           ;compute starting byte.
-    LD      BC,DE           ;set (C) to number of bytes to change.
+    LD      C,E             ;set (C) to number of bytes to change.
     EX      DE,HL
     CALL    FCB2HL          ;get address of fcb to update in directory.
     EX      DE,HL
-    DEC     BC
-UPDATE_LOOP:                ;(HL++)->(DE++), BC+1 times.
+UPDATE_LOOP:                ;(HL++)->(DE++), C times.
     LD      A,(HL+)
     LD      (DE+),A
-    DEC     BC
-    JP      NK,UPDATE_LOOP
+    DEC     C
+    JP      NZ,UPDATE_LOOP
 UPDATE1:
     CALL    TRKSEC          ;determine the track and sector affected.
     JP      DIRWRITE        ;then write this sector out.
@@ -3097,7 +3096,7 @@ CHGNAM1:
     RET     Z               ;no, we must be done.
     CALL    CHKROFL         ;check for read only file.
     LD      BC,16           ;start 16 bytes into fcb.
-    LD      DE,12           ;and update the first 12 bytes of directory.
+    LD      E,12            ;and update the first 12 bytes of directory.
     CALL    UPDATE
     CALL    FINDNXT         ;get the next file name.
     JP      CHGNAM1         ;and continue.
@@ -3113,8 +3112,8 @@ SAVEATTR:
 SAVATR1:
     CALL    CKFILPOS        ;was one found?
     RET     Z               ;nope, we must be done.
-    LD      BC,0            ;yes, update the first 12 bytes now.
-    LD      DE,12
+    LD      BC,0            ;yes,
+    LD      E,12            ;update the first 12 bytes now.
     CALL    UPDATE          ;update filename and write directory.
     CALL    FINDNXT         ;and get the next file.
     JP      SAVATR1         ;then continue until done.
@@ -3801,7 +3800,7 @@ AUTOSEL:
     LD      (OLDDRV),A      ;drive.
     LD      A,(HL)          ;and save first byte of fcb also.
     LD      (AUTOFLAG),A    ;this must be non-zero.
-    AND     0E0H            ;whats this for (bits 6,7 are used for
+    AND     0E0H            ;whats this for (bits 5,6,7 are used for
     LD      (HL),A          ;something)?
     CALL    SETDSK          ;select and log in this drive.
 AUTOSL1:
