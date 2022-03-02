@@ -412,7 +412,7 @@ seldskreset:
 ;*****************************************************
 ;*                                                   *
 ;*      The READ entry point takes the place of      *
-;*      the previous BIOS defintion for READ.        *
+;*      the previous BIOS definition for READ.       *
 ;*                                                   *
 ;*****************************************************
 
@@ -438,7 +438,7 @@ read:
 ;*****************************************************
 ;*                                                   *
 ;*    The WRITE entry point takes the place of       *
-;*      the previous BIOS defintion for WRITE.       *
+;*     the previous BIOS definition for WRITE.       *
 ;*                                                   *
 ;*****************************************************
 
