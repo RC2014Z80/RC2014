@@ -1144,6 +1144,9 @@ _sioa_putc:
     ei
     ret                         ; and just complete
 
+sioa_putc_buffer_tx_overflow:
+    ei
+
 sioa_putc_buffer_tx:
     ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
@@ -1167,10 +1170,6 @@ sioa_putc_buffer_tx:
 
     ret
 
-sioa_putc_buffer_tx_overflow:
-    ei
-    jp sioa_putc_buffer_tx
-
 _siob_putc:
     ; enter    : l = char to output
     ;
@@ -1190,6 +1189,9 @@ _siob_putc:
 
     ei
     ret                         ; and just complete
+
+siob_putc_buffer_tx_overflow:
+    ei
 
 siob_putc_buffer_tx:
     ld a,(siobTxCount)          ; Get the number of bytes in the Tx buffer
@@ -1213,10 +1215,6 @@ siob_putc_buffer_tx:
     ld (siobTxIn),hl            ; write where the next byte should be poked
 
     ret
-
-siob_putc_buffer_tx_overflow:
-    ei
-    jp siob_putc_buffer_tx
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - 8255 functions
