@@ -266,6 +266,7 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     and     00000011b       ;remove the reader from the mask - only console bits then remain
     cp      00000001b
     jr      NZ,const1
+
 const0:
     call    _acia0_pollc    ;check whether any characters are in CRT Rx0 buffer
     jr      NC,dataEmpty
@@ -287,6 +288,7 @@ conin:    ;console character into register a
     jr      Z,reader        ;"BAT:" redirect
     cp      00000001b
     jr      NZ,conin1
+
 conin0:
    call     _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
    jr       NC,conin0       ;if Rx buffer is empty
@@ -896,20 +898,13 @@ tx_end:
     ret
 
 _acia_reset:                    ; interrupts should be disabled
-    call _acia_flush_Rx
-    call _acia_flush_Tx
-    ret
-
-_acia_flush_Rx:
     xor a
+
     ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home
     ld (aciaRxIn),hl
     ld (aciaRxOut),hl
-    ret
 
-_acia_flush_Tx:
-    xor a
     ld (aciaTxCount),a          ; reset the Tx counter (set 0)
     ld hl,aciaTxBuffer          ; load Tx buffer pointer home
     ld (aciaTxIn),hl
@@ -917,7 +912,7 @@ _acia_flush_Tx:
     ret
 
 _acia_getc:
-    ; exit     : a = char received
+    ; exit     : l = char received
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -947,16 +942,18 @@ getc_clean_up_rx:
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
+    ld l,a                      ; and put it in hl
     scf                         ; indicate char received
     ret
 
 _acia_pollc:
-    ; exit     : a = number of characters in Rx buffer
+    ; exit     : l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
     ld a,(aciaRxCount)          ; load the Rx bytes in buffer
+    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1486,9 +1483,7 @@ aciaControl:    defb 0                  ;local control echo of ACIA
 ; start of bss tables - aligned data
 ;------------------------------------------------------------------------------
 
-ALIGN   $10000 - $20 - __IO_ACIA_TX_SIZE - __IO_ACIA_RX_SIZE
-
-shadow_copy_addr:   defs $20            ;reserve space for relocation of shadow_copy
+ALIGN   $10000 - __IO_ACIA_TX_SIZE - __IO_ACIA_RX_SIZE
 
 PUBLIC  aciaTxBuffer
 

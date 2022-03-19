@@ -257,6 +257,7 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     and     00000011b       ;remove the reader from the mask - only console bits then remain
     cp      00000001b
     jr      NZ,const1
+
 const0:
     call    _acia0_pollc    ;check whether any characters are in CRT Rx0 buffer
     jr      NC,dataEmpty
@@ -278,6 +279,7 @@ conin:    ;console character into register a
     jr      Z,reader        ;"BAT:" redirect
     cp      00000001b
     jr      NZ,conin1
+
 conin0:
    call     _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
    jr       NC,conin0       ;if Rx buffer is empty
@@ -872,20 +874,13 @@ tx_end:
     ret
 
 _acia_reset:                    ; interrupts should be disabled
-    call _acia_flush_Rx
-    call _acia_flush_Tx
-    ret
-
-_acia_flush_Rx:
     xor a
+
     ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home
     ld (aciaRxIn),hl
     ld (aciaRxOut),hl
-    ret
 
-_acia_flush_Tx:
-    xor a
     ld (aciaTxCount),a          ; reset the Tx counter (set 0)
     ld hl,aciaTxBuffer          ; load Tx buffer pointer home
     ld (aciaTxIn),hl
