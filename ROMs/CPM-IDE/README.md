@@ -285,7 +285,7 @@ zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --max-allocs-per-node400000 
 The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
 
 ``` bash
-zcc +rc2014 -subtype=acia85 -O2 -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
+zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=inlineints -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
 ```
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
