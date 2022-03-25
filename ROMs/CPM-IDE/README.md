@@ -2,6 +2,8 @@
 
 There are several implementations of CP/M available for the RC2014. Each implementation has its own focus, and the same is true here.
 
+For further reading, an additional extensive [description of CP/M-IDE can be found here](https://feilipu.me/2022/03/23/cpm-ide-for-rc2014/).
+
 ## Concept
 
 This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA drive. And further, to do so with the minimum of cards, complexity, and expense.
