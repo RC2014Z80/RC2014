@@ -89,7 +89,7 @@ struct Builtin builtins[] = {
     { "cpm", &ya_mkcpm, "[file][][][] - initiate CP/M with up to 4 drive files"},
 
 // system related functions
-    { "md", &ya_md, "- [origin] - memory dump"},
+    { "md", &ya_md, "[origin] - memory dump, origin in hexadecimal"},
     { "help", &ya_help, "- this is it"},
     { "exit", &ya_exit, "- exit and restart"},
 
@@ -100,7 +100,7 @@ struct Builtin builtins[] = {
     { "pwd", &ya_pwd, "- show the current working directory"},
 
 // disk related functions
-    { "ds", &ya_ds, " - disk status"},
+    { "ds", &ya_ds, "- disk status"},
     { "dd", &ya_dd, "[sector] - disk dump, sector in decimal"},
 };
 
