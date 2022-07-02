@@ -3219,7 +3219,8 @@ NORMAL: DEC     B               ; Count bits
         ADD     HL,HL           ; Shift HL left
         RL      D               ; Get NMSB, shift left with last bit
         RL      C               ; Get MSB, shift left with last bit
-PNORM:  JP      P,NORMAL        ; Not done - Keep going
+PNORM:
+        JP      P,NORMAL        ; Not done - Keep going
         LD      A,B             ; Number of bits shifted
         LD      E,H             ; Save HL in EB
         LD      B,L
