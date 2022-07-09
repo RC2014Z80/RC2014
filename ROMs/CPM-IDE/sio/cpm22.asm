@@ -10,6 +10,16 @@
 ;*
 ;**************************************************************
 ;
+; Let this paragraph represent a right to use, distribute, modify,
+; enhance, and otherwise make available in a nonexclusive manner
+; CP/M and its derivatives. This right comes from the company,
+; DRDOS, Inc.'s purchase of Digital Research, the company and
+; all assets, dating back to the mid-1990's. DRDOS, Inc. and I,
+; Bryan Sparks, President of DRDOS, Inc. as its representative,
+; is the owner of CP/M and the successor in interest of
+; Digital Research assets."
+;
+;**************************************************************
 ;
 ; Converted to z88dk z80asm for RC2014 by
 ; Phillip Stevens @feilipu https://feilipu.me
