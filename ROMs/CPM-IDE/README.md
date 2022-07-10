@@ -6,7 +6,7 @@ For further reading, an additional extensive [description of CP/M-IDE can be fou
 
 ## Concept
 
-This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA drive. And further, to do so with the minimum of cards, complexity, and expense.
+This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA hard drive. And further, to do so with the minimum of modules, complexity, and expense.
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
 
@@ -14,11 +14,11 @@ The serial interfaces (ACIA and SIO/2, and the 8085 CPU Module SOD) are configur
 
 In the ACIA builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-In the SIO/2 build, both ports enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
+In the SIO/2 build, both ports are enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-The IDE interface is optimised for performance and can achieve about 100kB/s throughput using FatFS libraries in C. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
+The IDE interface driver is optimised for performance and can achieve about 100kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
-The IDE interface supports both PATA hard drives (including SSD IDE and DOM storage) and Compact Flash cards in native 16 bit PATA mode with buffered I/O provided by the 82C55 device.
+The IDE interface module supports both PATA hard drives (including magnetic platter, SSD, and DOM storage) and Compact Flash cards in native 16-bit PATA mode with buffered I/O provided by the 82C55 device.
 
 The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. There can be as many CP/M "drives" stored on the FAT32 formatted disk as needed, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M "drives" can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
@@ -56,40 +56,35 @@ The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. T
 
 ## Hardware
 
-In addition to the [RC2014 Plus](https://www.tindie.com/products/Semachthemonkey/rc2014-plus-homebrew-z80-computer-kit/) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary. An additional 32k RAM must be installed in the 64k RAM module.
+In addition to the [RC2014 Pro](https://www.tindie.com/products/semachthemonkey/rc2014-pro-homebrew-z80-computer-kit//) which contains the CPU and SIO/2 serial modules, just the IDE module is necessary.
 
 1. [IDE Hard Drive Module](https://rc2014.co.uk/modules/ide-hard-drive-module/).
-2. [64kB RAM Module](https://rc2014.co.uk/modules/64k-ram/).
 
-As noted above, the complete system must also include:
+As noted above, the complete RC2014 Pro system must include:
 
-3. [CPU Module](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
-4. [Clock Module](https://rc2014.co.uk/modules/clock/).
+2. [CPU Module](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
+3. [Clock Module](https://rc2014.co.uk/modules/clock/).
+4. [64k RAM Module](https://rc2014.co.uk/modules/64k-ram/).
 5. [Pageable ROM Module](https://rc2014.co.uk/modules/pageable-rom/).
 6. [SIO/2 Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
-7. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or Backplane Pro.
+7. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or [Backplane Pro](https://rc2014.co.uk/backplanes/backplane-pro/).
 
-Optionally, replacing 3. and 4. with below can save a slot and provides some improvements.
-
-- [Z80 CPU & Clock Module](https://www.tindie.com/products/tynemouthsw/z80-cpu-clock-and-reset-module-for-rc2014/).
-
-To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 3. and 4.
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-Optionally, replacing items 2. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
-Using the Memory Module (also compatible with SC108) provides access to the 64kB of shadow RAM for CP/M programs.
+Optionally, replacing items 4. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8. Using the Memory Module (also compatible with SC108) provides access to the 64kB of shadow RAM for CP/M programs.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
-Additionally, the ACIA Serial Module could be substituted for item 6. the SIO/2 dual serial interface.
-With the 8085 CPU Module, only the ACIA Serial Module is supported.
+Additionally, the ACIA Serial Module from the [RC2014 Classic II](https://rc2014.co.uk/full-kits/rc2014-classic-ii/) could be substituted for item 6. the SIO/2 Dual Serial Module.<br>
+__NOTE:__ For use with the 8085 CPU Module, only the ACIA Serial Module is supported.
 
 - [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
-Also works with Grant Searle's [9 Chip CP/M](http://searle.hostei.com/grant/cpm/index.html) if a 32kB ROM is used, and with Steve Cousins' [SC108 (Z80, RAM, ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/), because Richard Deane cared enough to ask. Thanks Richard.
+Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) is supported if a 32kB ROM is used, and Steve Cousins' [SC108 (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
 
-As noted Compact Flash cards are also supported in native 16 bit PATA mode, as demonstrated below.
+As noted Compact Flash cards are also supported in their native 16-bit PATA mode, as demonstrated below.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -106,9 +101,9 @@ As noted Compact Flash cards are also supported in native 16 bit PATA mode, as d
 
 ### Configuration
 
-The cards are configured in their normal settings for CP/M. A jumper for the `PAGE` signal is shown on pin 39, although this can be done in any alternative way.
+The modules are configured in their normal settings for CP/M. A jumper for the `PAGE` signal is shown on pin 39, although this can be done in any alternative way.
 
-Rather than spend time on long descriptions, one picture is worth 2kByte.
+Rather than spend time on long written descriptions, one picture is worth 2kByte.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -155,7 +150,7 @@ Rather than spend time on long descriptions, one picture is worth 2kByte.
 
 ## Software
 
-The CP/M-IDE is based on the z88dk with a simple command shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions and 8085 CPU undocumented instructions. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
+The CP/M-IDE is built using the z88dk compilers and libraries with a simple command shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions and 8085 CPU undocumented instructions. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
 
 ### Installation
 
@@ -167,9 +162,9 @@ Connect the hardware as shown, and then use the commands given in the Shell Comm
 
 ### Boot up
 
-When the RC2014 first boots, the z88dk system configures a number of items via a preamble.
+When the RC2014 first boots, the z88dk provided [`crt0`](https://en.wikipedia.org/wiki/Crt0) configures a number of items via preamble code.
 
-The preamble code copies the CCP/BDOS to the correct location, and then checks for the existence of the BIOS. If the BIOS exists, and a valid drive is found, then control is passed directly to the CCP. This is the situation when a CP/M application overwrites the CCP, and it needs to be rewritten before control can be returned to it.
+The preamble code copies the CCP/BDOS to the correct location, and then checks for the existence of the BIOS. If the BIOS exists, and a valid drive is found, then control is passed directly to the CCP. This is the usual situation when a CP/M application overwrites the CCP, and it needs to be rewritten before control can be returned to it.
 
 If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is returned to the preamble code to continue to load the CP/M BIOS, the ACIA or SIO drivers, and the IDE drivers necessary for operation of the shell and CP/M.
 
@@ -189,11 +184,13 @@ In the 8085 CPU Module ACIA build the CPU Serial Output (SOD) is also supported 
 
 The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M.
 
-Also, the [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to return to the shell.
+The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like operations, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to return to the shell.
 
-As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), some template and example drives are provided as zip files. These zip files can be expanded into the directory structure of the IDE drive and used or augmented by the CP/M Tools noted below.
+Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
 
-Because the CCP/BDOS and BIOS are stored in ROM, there is no IDE "system disk". Cold and warm boot are from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a non-existent drive letter.
+Because the CCP/BDOS and BIOS are stored in ROM, there is no CP/M-IDE "system disk". Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter.
+
+As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded into the directory structure of the IDE drive and used or augmented by the CP/M Tools noted below.
 
 ### CP/M Application Disks
 
@@ -207,7 +204,7 @@ FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is po
 
 CP/M drive files can be read and written using a host computer with any operating system, by using the [`cpmtools`](http://www.moria.de/~michael/cpmtools/) utilities, simply by inserting the PATA IDE drive into a USB drive caddy.
 
-The CP/M TOOLS package v2.20 is available from debian repositories.
+The CP/M TOOLS package v2.20 is available from [debian repositories](https://packages.debian.org/sid/cpmtools).
 
 Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com`).
 
@@ -290,7 +287,9 @@ The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. T
 zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=inlineints -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
 ```
 
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) into the rc2014 library directory. This provides a high quality FATFS implementation. Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
+Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) files into the rc2014 library directory.
+
+Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
 
 The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
 
