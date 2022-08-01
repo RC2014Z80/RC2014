@@ -47,7 +47,7 @@ The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. T
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1688.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1688.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE 8085 with ACIA<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014-8085 CP/M-IDE with ACIA<center></th>
 </tr>
 </tbody>
 </table>
@@ -84,7 +84,7 @@ __NOTE:__ For use with the 8085 CPU Module, only the ACIA Serial Module is suppo
 
 Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) is supported if a 32kB ROM is used, and Steve Cousins' [SC108 (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
 
-As noted Compact Flash cards are also supported in their native 16-bit PATA mode, as demonstrated below.
+As noted both SD Cards and Compact Flash cards are also supported in their native 16-bit PATA mode, as shown below.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -94,6 +94,12 @@ As noted Compact Flash cards are also supported in their native 16-bit PATA mode
 </tr>
 <tr>
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 running CP/M-IDE by DJRM<center></th>
+</tr>
+<tr>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_2134.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_2134.JPG"/></a></td>
+</tr>
+<tr>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014-8085 running CP/M-IDE with SD to CF Storage Adapter<center></th>
 </tr>
 </tbody>
 </table>
@@ -136,13 +142,13 @@ Rather than spend time on long written descriptions, one picture is worth 2kByte
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 82C55 IDE Module<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 IDE Hard Drive Module with DOM<center></th>
 </tr>
 <tr>
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 82C55 IDE Module disk options<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 IDE Hard Drive Module storage options<center></th>
 </tr>
 </tbody>
 </table>
