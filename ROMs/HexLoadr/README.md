@@ -121,11 +121,10 @@ http://searle.wales/
 
 ---
 
-The rework to support MS Basic HLOAD, RESET, and the Z80 instruction tuning are copyright (C) 2020 Phillip Stevens
+The rework to support MS Basic HLOAD, RESET, and the 8085 and Z80 instruction tuning are copyright (C) 2021 Phillip Stevens.
 
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-Source files archived at https://github.com/feilipu/NASCOM_BASIC_4.7
-Further maintenance at https://gitlab.com/feilipu/NASCOM_BASIC
+Further source maintenance at https://github.com/feilipu/NASCOM_BASIC_4.7
 
-@feilipu, August 2021
+@feilipu, October 2021
