@@ -472,10 +472,10 @@ int8_t ya_execute(char ** args)
    @brief Read a line of input from stdin, echo it to stdout.
    @return The line from stdin.
  */
-void ya_getline(char * line, uint8_t len)
+void ya_getline(char * line, uint16_t len)
 {
     char c;
-    uint8_t position = 0;
+    uint16_t position = 0;
 
     while (--len) {
 
