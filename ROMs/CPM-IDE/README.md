@@ -280,14 +280,14 @@ An additional CP/M CCP function `EXIT` provides a way to return to the shell to 
 
 ## Building Software from Source
 
-The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, in the relevant directory.
+The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, from within the relevant directory.
 
 ```bash
 zcc +rc2014 -subtype=acia -SO3 -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-acia-cpm22 -create-app
 zcc +rc2014 -subtype=sio -SO3 -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 ```
 
-The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, in the relevant directory.
+The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, from within the relevant directory.
 
 ``` bash
 zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=inlineints -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
