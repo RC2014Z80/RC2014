@@ -22,9 +22,9 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDA00    // below the CP/M CCP
-#pragma output CRT_ORG_VECTOR_TABLE = 0// we place our own IM2 Vector Table
-#pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
+#pragma output CRT_ORG_VECTOR_TABLE = 0 // we place our own IM2 Vector Table
+#pragma output REGISTER_SP = 0xDA00     // below the CP/M CCP
+#pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
 
@@ -34,6 +34,11 @@
 
 #define TOK_BUFSIZE 32
 #define TOK_DELIM " \t\r\n\a"
+
+// GLOBALS
+
+extern uint32_t cpm_dsk0_base[4];
+extern uint8_t  bios_iobyte;
 
 static void * buffer;           /* create a scratch buffer on heap later */
 
@@ -47,8 +52,6 @@ static FILE * input;            /* defined input */
 static FILE * output;           /* defined input */
 static FILE * error;            /* defined input */
 
-extern uint32_t cpm_dsk0_base[4];
-extern uint8_t  bios_iobyte;
 
 /*
   Function Declarations for builtin shell commands:
@@ -305,14 +308,14 @@ int8_t ya_cd(char ** args)
    @param args List of args.  args[0] is "pwd".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_pwd(char ** args)      // show the current working directory
+int8_t ya_pwd(char ** args)     // show the current working directory
 {
     FRESULT res;
     uint8_t * directory;                         /* put directory buffer on heap */
 
     (void *)args;
 
-    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory buffer */
+    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory name buffer */
 
     if (directory != NULL) {
         res = f_getcwd((char *)directory, sizeof(uint8_t)*LINE_SIZE);
@@ -356,6 +359,7 @@ int8_t ya_ds(char ** args)       // disk status
     FRESULT res;
     int32_t p1;
     const uint8_t ft[] = {0, 12, 16, 32};   // FAT type
+
     (void *)args;
 
     res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
