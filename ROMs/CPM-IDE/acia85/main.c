@@ -37,8 +37,8 @@
 #endif
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDC00
-#pragma printf = "%c %s %d %02u %lu %02X %08lX"  // enables %c, %s, %d, %u, %lu, %X %lX only
+#pragma output REGISTER_SP = 0xDC00             // below the CP/M CCP
+#pragma printf = "%c %s %d %02u %lu %02X %08lX" // enables %c, %s, %d, %u, %lu, %X %lX only
 
 // DEFINES
 
@@ -55,6 +55,10 @@
 #define KEY_SPACE   32
 #define KEY_DEL     127
 
+// GLOBALS
+
+extern uint32_t cpm_dsk0_base[4];
+
 static void * buffer;           /* create a scratch buffer on heap later */
 
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
@@ -63,7 +67,6 @@ static DIR * dir;               /* Pointer to the directory object (on heap) */
 static FILINFO Finfo;           /* File Information */
 static FIL File[MAX_FILES];     /* File object needed for each open file */
 
-extern uint32_t cpm_dsk0_base[4];
 
 /*
   Function Declarations for builtin shell commands:
@@ -178,7 +181,7 @@ int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
    @param args List of args.  args[0] is "md". args[1] is the origin address.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_md(char ** args)       // dump RAM contents from nominated bank from nominated origin.
+int8_t ya_md(char ** args)              /* dump RAM contents from nominated bank from nominated origin. */
 {
     static uint8_t * origin;
     static uint8_t bank;
@@ -196,7 +199,7 @@ int8_t ya_md(char ** args)       // dump RAM contents from nominated bank from n
         put_dump(ptr, ofs, 16);
     }
 
-    origin += 0x100;                       // go to next page (next time)
+    origin += 0x100;                    /* go to next page (next time) */
     return 1;
 }
 
@@ -229,7 +232,7 @@ int8_t ya_help(char ** args)
 int8_t ya_exit(char ** args)
 {
     (void *)args;
-    f_mount(0, (const TCHAR*)"", 0);        /* Unmount the default drive */
+    f_mount(0, (const TCHAR*)"", 0);    /* Unmount the default drive */
     return 0;
 }
 
@@ -313,14 +316,14 @@ int8_t ya_cd(char ** args)
    @param args List of args.  args[0] is "pwd".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_pwd(char ** args)      // show the current working directory
+int8_t ya_pwd(char ** args)             /* show the current working directory */
 {
     FRESULT res;
     uint8_t * directory;                         /* put directory buffer on heap */
 
     (void *)args;
 
-    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory buffer */
+    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory name buffer */
 
     if (directory != NULL) {
         res = f_getcwd((char *)directory, sizeof(uint8_t)*LINE_SIZE);
@@ -364,6 +367,7 @@ int8_t ya_ds(char ** args)       // disk status
     FRESULT res;
     int32_t p1;
     const uint8_t ft[] = {0, 12, 16, 32};   // FAT type
+
     (void *)args;
 
     res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
@@ -576,7 +580,7 @@ void ya_loop(void)
         fflush(stdin);
         fprintf(stdout,"\n> ");
 
-        ya_getline(line, LINE_SIZE);
+        ya_getline(line, LINE_SIZE-1);
         args = ya_split_line(line);
 
         status = ya_execute(args);

@@ -22,8 +22,8 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDC00
-#pragma printf = "%c %s %d %u %lu %X"  // enables %c, %s, %d, %u, %lu, %X only 
+#pragma output REGISTER_SP = 0xDC00     // below the CP/M CCP
+#pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
 
@@ -34,6 +34,10 @@
 #define TOK_BUFSIZE 32
 #define TOK_DELIM " \t\r\n\a"
 
+// GLOBALS
+
+extern uint32_t cpm_dsk0_base[4];
+
 static void * buffer;           /* create a scratch buffer on heap later */
 
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
@@ -42,7 +46,6 @@ static DIR * dir;               /* Pointer to the directory object (on heap) */
 static FILINFO Finfo;           /* File Information */
 static FIL File[MAX_FILES];     /* File object needed for each open file */
 
-extern uint32_t cpm_dsk0_base[4];
 
 /*
   Function Declarations for builtin shell commands:
@@ -175,7 +178,7 @@ int8_t ya_md(char ** args)       // dump RAM contents from nominated bank from n
         put_dump(ptr, ofs, 16);
     }
 
-    origin += 0x100;                       // go to next page (next time)
+    origin += 0x100;                        // go to next page (next time)
     return 1;
 }
 
@@ -292,14 +295,14 @@ int8_t ya_cd(char ** args)
    @param args List of args.  args[0] is "pwd".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_pwd(char ** args)      // show the current working directory
+int8_t ya_pwd(char ** args)     // show the current working directory
 {
     FRESULT res;
     uint8_t * directory;                         /* put directory buffer on heap */
 
     (void *)args;
 
-    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory buffer */
+    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory name buffer */
 
     if (directory != NULL) {
         res = f_getcwd((char *)directory, sizeof(uint8_t)*LINE_SIZE);
@@ -343,6 +346,7 @@ int8_t ya_ds(char ** args)       // disk status
     FRESULT res;
     int32_t p1;
     const uint8_t ft[] = {0, 12, 16, 32};   // FAT type
+
     (void *)args;
 
     res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
