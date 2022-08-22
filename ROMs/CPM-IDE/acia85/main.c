@@ -14,8 +14,6 @@
 #include <string.h>
 #include <sys/compiler.h>
 
-#if __CLASSIC
-
 #include <../libsrc/_DEVELOPMENT/target/rc2014/config_rc2014-8085.h>
 #include <_DEVELOPMENT/sccz80/arch/rc2014.h>
 
@@ -23,18 +21,6 @@
 #include <_DEVELOPMENT/sccz80/lib/rc2014/ff.h>
 
 #include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
-
-#else
-
-#include <arch.h>
-#include <arch/rc2014.h>
-
-#include "ffconf.h"
-#include <lib/rc2014/ff.h>
-
-#include <arch/rc2014/diskio.h>
-
-#endif
 
 // PRAGMA DEFINES
 #pragma output REGISTER_SP = 0xDC00             // below the CP/M CCP
@@ -45,8 +31,8 @@
 #define MAX_FILES 1             // number of files open at any time
 #define BUFFER_SIZE 1024        // size of working buffer (on heap)
 #define LINE_SIZE 256           // size of a command line (on heap)
+#define TOK_BUFSIZE 64          // size of token pointer buffer (on heap)
 
-#define TOK_BUFSIZE 32
 #define TOK_DELIM " \t\r\n\a"
 
 #define KEY_BS      8
@@ -112,11 +98,6 @@ struct Builtin builtins[] = {
   // CP/M related functions
     { "cpm", &ya_mkcpm, "[file][][][] - initiate CP/M with up to 4 drive files"},
 
-// system related functions
-    { "md", &ya_md, "[origin] - memory dump, origin in hexadecimal"},
-    { "help", &ya_help, "- this is it"},
-    { "exit", &ya_exit, "- exit and restart"},
-
 // fat related functions
     { "mount", &ya_mount, "[option] - mount a FAT file system"},
     { "ls", &ya_ls, "[path] - directory listing"},
@@ -126,6 +107,11 @@ struct Builtin builtins[] = {
 // disk related functions
     { "ds", &ya_ds, "- disk status"},
     { "dd", &ya_dd, "[sector] - disk dump, sector in decimal"},
+
+// system related functions
+    { "md", &ya_md, "[origin] - memory dump, origin in hexadecimal"},
+    { "help", &ya_help, "- this is it"},
+    { "exit", &ya_exit, "- exit and restart"}
 };
 
 uint8_t ya_num_builtins() {
@@ -173,8 +159,9 @@ int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
     return 1;
 }
 
-
-// system related functions
+/*
+  system related functions
+ */
 
 /**
    @brief Builtin command:
@@ -214,7 +201,7 @@ int8_t ya_help(char ** args)
     uint8_t i;
     (void *)args;
 
-    fprintf(stdout,"RC2014 - CP/M IDE Monitor v2.1\n");
+    fprintf(stdout,"RC2014 - CP/M IDE Monitor v2.2\n");
     fprintf(stdout,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -232,12 +219,16 @@ int8_t ya_help(char ** args)
 int8_t ya_exit(char ** args)
 {
     (void *)args;
+
     f_mount(0, (const TCHAR*)"", 0);    /* Unmount the default drive */
     return 0;
 }
 
 
-// fat related functions
+/*
+  fat related functions
+ */
+
 
 /**
    @brief Builtin command:
@@ -319,11 +310,9 @@ int8_t ya_cd(char ** args)
 int8_t ya_pwd(char ** args)             /* show the current working directory */
 {
     FRESULT res;
-    uint8_t * directory;                         /* put directory buffer on heap */
-
     (void *)args;
 
-    directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory name buffer */
+    uint8_t * directory = (uint8_t *)malloc(sizeof(uint8_t)*LINE_SIZE);     /* Get area for directory name buffer */
 
     if (directory != NULL) {
         res = f_getcwd((char *)directory, sizeof(uint8_t)*LINE_SIZE);
@@ -355,7 +344,10 @@ int8_t ya_mount(char ** args)    // mount a FAT file system
 }
 
 
-// disk related functions
+/*
+  disk related functions
+ */
+
 
 /**
    @brief Builtin command:
@@ -408,8 +400,11 @@ int8_t ya_dd(char ** args)       // disk dump
 }
 
 
-// helper functions
+/*
+  helper functions
+ */
 
+/*  use put_rc to get a plain text interpretation of the disk return or error code. */
 static
 void put_rc (FRESULT rc)
 {
@@ -447,6 +442,11 @@ void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt)
     }
     fputc('\n', stdout);
 }
+
+
+/*
+  main loop functions
+ */
 
 
 /**
@@ -515,48 +515,24 @@ void ya_getline(char * line, uint16_t len)
 
 /**
    @brief Split a line into tokens (very naively).
-   @param line The line.
-   @return Null-terminated array of tokens.
+   @param tokens, null terminated array of token pointers.
+   @param line, the line.
  */
-char ** ya_split_line(char * line)
+void ya_split_line(char ** tokens, char * line)
 {
-    uint16_t bufsize = TOK_BUFSIZE;
     uint16_t position = 0;
     char * token;
-    char ** tokens_backup;
 
-    static char ** tokens;
+    if (tokens && line) {
+        token = strtok(line, TOK_DELIM);
 
-    tokens = (char **)malloc(bufsize * sizeof(char*));
-
-    if (tokens == NULL) {
-      fprintf(stderr, "yash: tokens allocation failed\n");
-      exit(EXIT_FAILURE);
-    }
-
-    token = strtok(line, TOK_DELIM);
-
-    while (token != NULL) {
-        tokens[position++] = token;
-
-        // If we have exceeded the tokens buffer, reallocate.
-        if (position >= bufsize) {
-            bufsize += TOK_BUFSIZE;
-            tokens_backup = tokens;
-            tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
-            if (tokens == NULL) {
-                free(tokens_backup);
-                fprintf(stderr, "yash: tokens realloc failed\n");
-                exit(EXIT_FAILURE);
-            }
+        while ((token != NULL) && (position < TOK_BUFSIZE-1)) {
+            tokens[position++] = token;
+            token = strtok(NULL, TOK_DELIM);
         }
 
-        token = strtok(NULL, TOK_DELIM);
+        tokens[position] = NULL;
     }
-
-    tokens[position] = NULL;
-
-    return tokens;
 }
 
 
@@ -565,29 +541,27 @@ char ** ya_split_line(char * line)
  */
 void ya_loop(void)
 {
-    char ** args;
-    int status;
-    char * line;
+    int8_t status;
+    uint16_t len = LINE_SIZE-1;
 
-    line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
+    char * line = (char *)malloc(LINE_SIZE * sizeof(char));    /* Get work area for the line buffer */
+    if (line == NULL) return;
 
-    if (line == NULL) {
-      fprintf(stderr, "yash: line allocation failed\n");
-      exit(EXIT_FAILURE);
-    }
+    char ** args = (char **)malloc(TOK_BUFSIZE * sizeof(char*));    /* Get tokens buffer ready */
+    if (args == NULL) return;
 
     do {
         fflush(stdin);
         fprintf(stdout,"\n> ");
 
-        ya_getline(line, LINE_SIZE-1);
-        args = ya_split_line(line);
+        ya_getline(line, len);
+        ya_split_line(args, line);
 
         status = ya_execute(args);
-        free(args);
 
     } while (status);
 
+    free(args);
     free(line);
 }
 
@@ -606,8 +580,6 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     dir = (DIR *)malloc(sizeof(DIR));                       /* Get work area for the directory */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
-
-    // Load config files, if any.
 
     fprintf(stdout, "\n\nRC2014 CP/M-IDE 8085\nfeilipu 2022\n\n> :-)\n");
 
