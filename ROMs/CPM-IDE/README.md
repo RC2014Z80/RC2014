@@ -8,9 +8,9 @@ For further reading, an additional extensive [description of CP/M-IDE can be fou
 
 This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA hard drive. And further, to do so with the minimum of modules, complexity, and expense.
 
-In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA serial interface, for the IDE disk interface, and also for the SIO/2 serial interface.
+In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA Module serial interface, for the IDE Hard Drive Module disk interface, and also for the SIO/2 Module serial interface.
 
-The serial interfaces (ACIA and SIO/2, and the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
+The serial interfaces (on the ACIA Serial Module and SIO/2 Serial Module, and the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
 
 In the ACIA builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
@@ -18,9 +18,9 @@ In the SIO/2 build, both ports are enabled. Both ports have a 255 byte software 
 
 The IDE interface driver is optimised for performance and can achieve about 100kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
-The IDE interface module supports both PATA hard drives (including magnetic platter, SSD, and DOM storage) and Compact Flash cards in native 16-bit PATA mode with buffered I/O provided by the 82C55 device.
+The IDE Module supports both PATA hard drives (including magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
 
-The CP/M-IDE system supports 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as needed, and CP/M-IDE can be started with any of 4 them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
+The CP/M-IDE system supports up to 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -73,7 +73,7 @@ To operate the RC2014 with an 8085 CPU the following CPU Module must be exchange
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-Optionally, replacing items 4. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8. Using the Memory Module (also compatible with SC108) provides access to the 64kB of shadow RAM for CP/M programs.
+Optionally, replacing items 4. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8. Using the Memory Module (also compatible with SC108) provides access to an additional 64kB of shadow RAM for CP/M programs.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
@@ -156,15 +156,15 @@ Rather than spend time on long written descriptions, one picture is worth 2kByte
 
 ## Software
 
-The CP/M-IDE is built using the z88dk compilers and libraries with a simple command shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configuration. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions and 8085 CPU undocumented instructions. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
+The CP/M-IDE is built using the z88dk compilers and libraries with a simple monitor or shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configurations. The DRI CCP and BDOS have been optimised for performance using extended Z80 CPU instructions and 8085 CPU undocumented instructions, where possible. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
 
 ### Installation
 
-Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO/2 Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
+Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO/2 Module, or 8085 CPU Module with ACIA Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
 Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
 
-Connect the hardware as shown, and then use the commands given in the Shell Command Line, below.
+Connect the hardware as shown, and then use the commands given in the shell Command Line Interface, below.
 
 ### Boot up
 
@@ -176,7 +176,7 @@ If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is
 
 Control is then passed to the command shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
-Where the SIO/2 dual serial board is being used, the shell will wait for a `:` to establish which serial interface is being used. The SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
+Where the SIO/2 Module is being used, the shell will wait for a `:` to establish which serial interface is being used. Unlike the SIOA (`con`) port, the SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
 
 CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
@@ -238,7 +238,7 @@ end
 
 ### Shell Command Interface
 
-The shell command line interface is implemented in C, with the underlying functions either in C or in assembly. The serial interfaces (ACIA and SIO/2) are configured for 115200 baud 8n2.
+The shell command line interface is implemented in C, with the underlying functions either in C or in assembly. The serial interfaces (ACIA and SIO/2, and 8085 SOD) are configured for 115200 baud 8n2.
 
 Again, here is a view of what success looks like.
 
@@ -258,11 +258,6 @@ Again, here is a view of what success looks like.
 ### CP/M Functions
 - `cpm [file][][][]` - initialise CP/M with up to 4 drive files
 
-### System Functions
-- `md [origin]` - memory dump, origin in hexadecimal
-- `help` - this is it
-- `exit` - exit and restart shell
-
 ### File System Functions
 - `ls [path]` - directory listing
 - `cd [path]` - change the current working directory
@@ -272,6 +267,11 @@ Again, here is a view of what success looks like.
 ### Disk Functions
 - `ds` - disk status
 - `dd [sector]` - disk dump, sector in decimal
+
+### System Functions
+- `md [origin]` - memory dump, origin in hexadecimal
+- `help` - this is it
+- `exit` - exit and restart shell
 
 ### CP/M CCP Extension
 
