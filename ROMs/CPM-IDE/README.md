@@ -20,7 +20,7 @@ The IDE interface driver is optimised for performance and can achieve about 100k
 
 The IDE interface module supports both PATA hard drives (including magnetic platter, SSD, and DOM storage) and Compact Flash cards in native 16-bit PATA mode with buffered I/O provided by the 82C55 device.
 
-The CP/M-IDE system supports up to 4 active drives of nominally 8 MBytes each. There can be as many CP/M "drives" stored on the FAT32 formatted disk as needed, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M "drives" can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
+The CP/M-IDE system supports 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as needed, and CP/M-IDE can be started with any of 4 them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -82,7 +82,7 @@ __NOTE:__ For use with the 8085 CPU Module, only the ACIA Serial Module is suppo
 
 - [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
-Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) is supported if a 32kB ROM is used, and Steve Cousins' [SC108 (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
+Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) hardware is supported if a 32kB ROM is used, and Steve Cousins' [SC108 (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) Module could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
 
 As noted both SD Cards and Compact Flash cards are also supported in their native 16-bit PATA mode, as shown below.
 

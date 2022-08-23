@@ -118,8 +118,6 @@ uint8_t ya_num_builtins() {
 */
 
 
-// CP/M related functions
-
 /**
    @brief Builtin command:
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
@@ -133,7 +131,7 @@ int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
     if (args[1] == NULL) {
         fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
     } else {
-        res = f_mount(fs, (const TCHAR*)"", 0);
+        res = f_mount(fs, (const TCHAR*)"0:", 0);
         if (res != FR_OK) { put_rc(res); return 1; }
 
         // set up (up to 4) CPM drive LBA locations
@@ -235,7 +233,7 @@ int8_t ya_ls(char ** args)
     uint32_t p1;
     uint16_t s1, s2;
 
-    res = f_mount(fs, (const TCHAR*)"", 0);
+    res = f_mount(fs, (const TCHAR*)"0:", 0);
     if (res != FR_OK) { put_rc(res); return 1; }
 
     if(args[1] == NULL) {
@@ -330,9 +328,9 @@ int8_t ya_pwd(char ** args)             /* show the current working directory */
 int8_t ya_mount(char ** args)    // mount a FAT file system
 {
     if (args[1] == NULL) {
-        put_rc(f_mount(fs, (const TCHAR*)"", 0));
+        put_rc(f_mount(fs, (const TCHAR*)"0:", 0));
     } else {
-        put_rc(f_mount(fs, (const TCHAR*)"", atoi(args[1])));
+        put_rc(f_mount(fs, (const TCHAR*)"0:", atoi(args[1])));
     }
     return 1;
 }
