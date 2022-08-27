@@ -44,7 +44,7 @@ extern uint8_t  bios_iobyte;
 static void * buffer;           /* create a scratch buffer on heap later */
 
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
-static DIR * dir;               /* Pointer to the directory object (on heap) */
+                                /* FatFs work area needed for each volume */
 
 static FILINFO Finfo;           /* File Information */
 static FIL File[MAX_FILES];     /* File object needed for each open file */
@@ -55,7 +55,7 @@ static FILE * error;            /* defined input */
 
 
 /*
-  Function Declarations for builtin shell commands:
+  Function Declarations for built-in shell commands:
  */
 
 // CP/M related functions
@@ -136,7 +136,7 @@ uint8_t ya_num_builtins() {
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char ** args)   // initialise CP/M with up to 4 drives
 {
     FRESULT res;
     uint8_t i = 0;
@@ -173,7 +173,7 @@ int8_t ya_mkcpm(char ** args)    // initialise CP/M with up to 4 drives
    @param args List of args.  args[0] is "md". args[1] is the origin address.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_md(char ** args)              /* dump RAM contents from nominated bank from nominated origin. */
+int8_t ya_md(char ** args)      /* dump RAM contents from nominated bank from nominated origin. */
 {
     static uint8_t * origin;
     static uint8_t bank;
@@ -197,11 +197,11 @@ int8_t ya_md(char ** args)              /* dump RAM contents from nominated bank
 
 
 /**
-   @brief Builtin command: help.
+   @brief Builtin command:
    @param args List of args.  args[0] is "help".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_help(char ** args)
+int8_t ya_help(char ** args)    // print some help
 {
     uint8_t i;
     (void *)args;
@@ -217,11 +217,11 @@ int8_t ya_help(char ** args)
 
 
 /**
-   @brief Builtin command: exit.
+   @brief Builtin command:
    @param args List of args.  args[0] is "exit".
    @return Always returns 0, to terminate execution.
  */
-int8_t ya_exit(char ** args)
+int8_t ya_exit(char ** args)    // exit and restart
 {
     (void *)args;
 
@@ -240,8 +240,9 @@ int8_t ya_exit(char ** args)
    @param args List of args.  args[0] is "ls".  args[1] is the path.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ls(char ** args)
+int8_t ya_ls(char ** args)      // print directory contents
 {
+    DIR dir;                    /* Get work area for the directory */
     FRESULT res;
     uint32_t p1;
     uint16_t s1, s2;
@@ -250,15 +251,15 @@ int8_t ya_ls(char ** args)
     if (res != FR_OK) { put_rc(res); return 1; }
 
     if(args[1] == NULL) {
-        res = f_opendir(dir, (const TCHAR*)".");
+        res = f_opendir(&dir, (const TCHAR*)".");
     } else {
-        res = f_opendir(dir, (const TCHAR*)args[1]);
+        res = f_opendir(&dir, (const TCHAR*)args[1]);
     }
     if (res != FR_OK) { put_rc(res); return 1; }
 
     p1 = s1 = s2 = 0;
     while(1) {
-        res = f_readdir(dir, &Finfo);
+        res = f_readdir(&dir, &Finfo);
         if ((res != FR_OK) || !Finfo.fname[0]) break;
         if (Finfo.fattrib & AM_DIR) {
             s2++;
@@ -283,7 +284,7 @@ int8_t ya_ls(char ** args)
         res = f_getfree( (const TCHAR*)args[1], (DWORD*)&p1, &fs);
     }
     if (res == FR_OK) {
-        fprintf(output, ", %10lu bytes free\n", p1 * fs->csize * 512);
+        fprintf(output, ", %10lu bytes free\n", p1 * (DWORD)(fs->csize * 512));
     } else {
         put_rc(res);
     }
@@ -292,7 +293,7 @@ int8_t ya_ls(char ** args)
 
 
 /**
-   @brief Builtin command: change directory.
+   @brief Builtin command:
    @param args List of args.  args[0] is "cd".  args[1] is the directory.
    @return Always returns 1, to continue executing.
  */
@@ -312,7 +313,7 @@ int8_t ya_cd(char ** args)
    @param args List of args.  args[0] is "pwd".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_pwd(char ** args)             /* show the current working directory */
+int8_t ya_pwd(char ** args)     /* show the current working directory */
 {
     FRESULT res;
     (void *)args;
@@ -359,7 +360,7 @@ int8_t ya_mount(char ** args)    // mount a FAT file system
    @param args List of args.  args[0] is "ds".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ds(char ** args)       // disk status
+int8_t ya_ds(char ** args)      // disk status
 {
     FRESULT res;
     int32_t p1;
@@ -373,7 +374,7 @@ int8_t ya_ds(char ** args)       // disk status
     fprintf(output, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
         "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
         "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
-        ft[fs->fs_type & 3], (DWORD)fs->csize * 512, fs->n_fats,
+        ft[fs->fs_type & 3], (DWORD)(fs->csize * 512), fs->n_fats,
         fs->n_rootdir, fs->fsize, (DWORD)fs->n_fatent - 2,
         fs->volbase, fs->fatbase, fs->dirbase, fs->database);
     return 1;
@@ -385,7 +386,7 @@ int8_t ya_ds(char ** args)       // disk status
    @param args List of args.  args[0] is "dd". args[1] is the sector in decimal.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_dd(char ** args)       // disk dump
+int8_t ya_dd(char ** args)      // disk dump
 {
     FRESULT res;
     static uint32_t sect;
@@ -568,19 +569,17 @@ int main(int argc, char ** argv)
     (void *)argv;
 
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
-    dir = (DIR *)malloc(sizeof(DIR));                       /* Get work area for the directory */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
     fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :?");
     fprintf(ttyout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
-    if ( fs && dir && buffer)
+    if ( fs && buffer)
         ya_loop();
 
     // Perform any shutdown/cleanup.
     free(buffer);
-    free(dir);
     free(fs);
 
     return 0;
