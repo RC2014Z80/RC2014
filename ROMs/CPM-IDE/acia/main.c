@@ -44,9 +44,7 @@ static void * buffer;           /* create a scratch buffer on heap later */
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
                                 /* FatFs work area needed for each volume */
 
-static FILINFO Finfo;           /* File Information */
 static FIL File[MAX_FILES];     /* File object needed for each open file */
-
 
 /*
   Function Declarations for built-in shell commands:
@@ -72,7 +70,7 @@ int8_t ya_dd(char ** args);     // disk dump sector
 
 // helper functions
 static void put_rc (FRESULT rc);    // print error codes to defined error IO
-static void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt);
+static void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt);
 
 // external functions
 
@@ -123,7 +121,7 @@ uint8_t ya_num_builtins() {
    @param args List of args.  args[0] is "cpm".  args[1][2][3][4] are names of drive files.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mkcpm(char ** args)   // initialise CP/M with up to 4 drives
+int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
 {
     FRESULT res;
     uint8_t i = 0;
@@ -151,34 +149,34 @@ int8_t ya_mkcpm(char ** args)   // initialise CP/M with up to 4 drives
     return 1;
 }
 
+
 /*
   system related functions
  */
+
 
 /**
    @brief Builtin command:
    @param args List of args.  args[0] is "md". args[1] is the origin address.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_md(char ** args)      /* dump RAM contents from nominated bank from nominated origin. */
+int8_t ya_md(char ** args)      /* dump RAM contents from nominated origin. */
 {
-    static uint8_t * origin;
-    static uint8_t bank;
-    uint32_t ofs;
+    static uint8_t * origin = 0;
+    uint16_t ofs;
     uint8_t * ptr;
 
     if (args[1] != NULL) {
         origin = (uint8_t *)strtoul(args[1], NULL, 16);
     }
 
-    memcpy(buffer, (void *)origin, 0x100); // grab a page
     fprintf(stdout, "\nOrigin: %04X\n", (uint16_t)origin);
 
-    for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x100; ptr += 16, ofs += 16) {
+    for (ptr=origin, ofs = 0; ofs < 0x100; ptr += 16, ofs += 16) {
         put_dump(ptr, ofs, 16);
     }
 
-    origin += 0x100;                    /* go to next page (next time) */
+    origin += 0x100;            /* go to next page (next time) */
     return 1;
 }
 
@@ -188,7 +186,7 @@ int8_t ya_md(char ** args)      /* dump RAM contents from nominated bank from no
    @param args List of args.  args[0] is "help".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_help(char ** args)    // print some help
+int8_t ya_help(char ** args)    /* print some help. */
 {
     uint8_t i;
     (void *)args;
@@ -208,7 +206,7 @@ int8_t ya_help(char ** args)    // print some help
    @param args List of args.  args[0] is "exit".
    @return Always returns 0, to terminate execution.
  */
-int8_t ya_exit(char ** args)    // exit and restart
+int8_t ya_exit(char ** args)    /* exit and restart */
 {
     (void *)args;
 
@@ -227,12 +225,14 @@ int8_t ya_exit(char ** args)    // exit and restart
    @param args List of args.  args[0] is "ls".  args[1] is the path.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ls(char ** args)      // print directory contents
+int8_t ya_ls(char ** args)      /* print directory contents */
 {
-    DIR dir;                    /* Get work area for the directory */
+    DIR dir;                    /* Stack Directory Object */
     FRESULT res;
     uint32_t p1;
     uint16_t s1, s2;
+
+    static FILINFO Finfo;       /* Static File Information */
 
     res = f_mount(fs, (const TCHAR*)"0:", 0);
     if (res != FR_OK) { put_rc(res); return 1; }
@@ -326,7 +326,7 @@ int8_t ya_pwd(char ** args)     /* show the current working directory */
    @param args List of args.  args[0] is "mount". args[1] is the option byte.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_mount(char ** args)    // mount a FAT file system
+int8_t ya_mount(char ** args)    /* mount a FAT file system */
 {
     if (args[1] == NULL) {
         put_rc(f_mount(fs, (const TCHAR*)"0:", 0));
@@ -347,7 +347,7 @@ int8_t ya_mount(char ** args)    // mount a FAT file system
    @param args List of args.  args[0] is "ds".
    @return Always returns 1, to continue executing.
  */
-int8_t ya_ds(char ** args)      // disk status
+int8_t ya_ds(char ** args)      /* disk status */
 {
     FRESULT res;
     int32_t p1;
@@ -373,11 +373,11 @@ int8_t ya_ds(char ** args)      // disk status
    @param args List of args.  args[0] is "dd". args[1] is the sector in decimal.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_dd(char ** args)      // disk dump
+int8_t ya_dd(char ** args)      /* disk dump */
 {
     FRESULT res;
     static uint32_t sect;
-    uint32_t ofs;
+    uint16_t ofs;
     uint8_t * ptr;
 
     if (args[1] != NULL) {
@@ -415,16 +415,16 @@ void put_rc (FRESULT rc)
     for (i = 0; i != res && *str; ++i) {
         while (*str++) ;
     }
-    fprintf(stderr,"\r\nrc=%u FR_%s\r\n", res, str);
+    fprintf(stderr,"\nrc=%u FR_%s\n", res, str);
 }
 
 
 static
-void put_dump (const uint8_t * buff, uint32_t ofs, uint8_t cnt)
+void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt)
 {
     uint8_t i;
 
-    fprintf(stdout,"%08lX:", ofs);
+    fprintf(stdout,"%04X:", ofs);
 
     for(i = 0; i < cnt; ++i) {
         fprintf(stdout," %02X", buff[i]);

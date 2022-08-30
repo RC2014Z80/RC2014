@@ -18,7 +18,7 @@ In the SIO/2 build, both ports are enabled. Both ports have a 255 byte software 
 
 The IDE interface driver is optimised for performance and can achieve about 100kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
-The IDE Module supports both PATA hard drives (including magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
+The IDE Module supports both PATA hard drives (including 3 1/2" magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
 
 The CP/M-IDE system supports up to 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
@@ -204,6 +204,8 @@ The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs
 
 An empty [CP/M 8 MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 8388608 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provides a new 8 MB CP/M drive which can store up to 2048 files.
 
+The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) application can be used to manage CP/M drive files without moving the PATA drive to a host computer. This application supports both read and write to the underlying FATFS file system.
+
 FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is possible to store more than that many CP/M-IDE drives on one IDE drive, but this upper limit hasn't been tested.
 
 ### CP/M TOOLS Usage
@@ -302,4 +304,5 @@ The size of the serial transmit and receive buffers are set within the z88dk RC2
 
 ## Licence
 
-["Let this paragraph represent a right to use, distribute, modify, enhance, and otherwise make available in a nonexclusive manner CP/M and its derivatives. This right comes from the company, DRDOS, Inc.'s purchase of Digital Research, the company and all assets, dating back to the mid-1990's. DRDOS, Inc. and I, Bryan Sparks, President of DRDOS, Inc. as its representative, is the owner of CP/M and the successor in interest of Digital Research assets."](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/BryanSparks-CPM-20220707.pdf)
+_"Let this paragraph represent a right to use, distribute, modify, enhance, and otherwise make available in a nonexclusive manner CP/M and its derivatives. This right comes from the company, DRDOS, Inc.'s purchase of Digital Research, the company and all assets, dating back to the mid-1990's. DRDOS, Inc. and I, Bryan Sparks, President of DRDOS, Inc. as its representative, is the owner of CP/M and the successor in interest of Digital Research assets."_
+[Reference](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/BryanSparks-CPM-20220707.pdf)
