@@ -1119,6 +1119,7 @@ sod_loop:
 .ide_write_byte
     ld a,__IO_PIO_IDE_WR
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
+.ide_write_byte_preset
     ld a,d
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
     or __IO_IDE_WR_LINE
@@ -1172,16 +1173,16 @@ sod_loop:
     pop de
     ld e,d
     ld d,__IO_IDE_LBA1
-    call ide_write_byte         ;set LBA1 8:15
+    call ide_write_byte_preset  ;set LBA1 8:15
     ld e,c
     ld d,__IO_IDE_LBA2
-    call ide_write_byte         ;set LBA2 16:23
+    call ide_write_byte_preset  ;set LBA2 16:23
     ld a,b
     and 00001111b               ;lowest 4 bits LBA address used only
     or  11100000b               ;to enable LBA address master mode
     ld e,a
     ld d,__IO_IDE_LBA3
-    call ide_write_byte         ;set LBA3 24:27 + bits 5:7=111
+    call ide_write_byte_preset  ;set LBA3 24:27 + bits 5:7=111
     ret
 
 ; How to poll (waiting for the drive to be ready to transfer data):
@@ -1240,10 +1241,10 @@ sod_loop:
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
     ld de,__IO_IDE_SEC_CNT<<8|1
-    call ide_write_byte         ;set sector count to 1
+    call ide_write_byte_preset  ;set sector count to 1
 
     ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_READ
-    call ide_write_byte         ;ask the drive to read it
+    call ide_write_byte_preset  ;ask the drive to read it
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
 
@@ -1271,10 +1272,10 @@ sod_loop:
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
     ld de,__IO_IDE_SEC_CNT<<8|1
-    call ide_write_byte         ;set sector count to 1
+    call ide_write_byte_preset  ;set sector count to 1
 
     ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_WRITE
-    call ide_write_byte         ;instruct drive to write a sector
+    call ide_write_byte_preset  ;instruct drive to write a sector
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
 
