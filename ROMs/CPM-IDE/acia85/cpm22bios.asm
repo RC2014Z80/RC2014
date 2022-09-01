@@ -900,7 +900,6 @@ tx_end:
 
 _acia_reset:                    ; interrupts should be disabled
     xor a
-    ld (aciaControl),a          ; reset the ACIA control echo
 
     ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home

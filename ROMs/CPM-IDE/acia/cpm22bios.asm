@@ -163,7 +163,7 @@ cboot:
     ld      (_cpm_cdisk),a          ;select disk zero
 
     ld      a,$01
-    ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT default ($01)
+    ld      (_cpm_iobyte),a         ;set cpm iobyte to CRT: default ($01)
 
     ld      hl,asm_shadow_copy          ;prepare current RAM copy location
     ld      (__IO_RAM_SHADOW_BASE),hl   ;write it to RAM copy base
@@ -873,7 +873,6 @@ tx_end:
 
 _acia_reset:                    ; interrupts should be disabled
     xor a
-    ld (aciaControl),a          ; reset the ACIA control echo
 
     ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home
