@@ -13,7 +13,7 @@ EXTERN _rodata_cpm_bios_head
 EXTERN _cpm_bios_head
 EXTERN _cpm_bios_rodata_tail
 EXTERN _cpm_bios_bss_head
-EXTERN _cpm_bios_bss_tail
+EXTERN _cpm_bios_bss_initialised_tail
 
 EXTERN _cpm_sio_interrupt_vector_table
 
@@ -62,7 +62,7 @@ pboot:                      ; preamble code also used by wboot
     ld (hl),a
     ld de,hl
     inc de
-    ld bc,_cpm_bios_bss_tail-_cpm_bios_bss_head-1
+    ld bc,_cpm_bios_bss_initialised_tail-_cpm_bios_bss_head-1
     ldir
 
     ; set up SIO/2 IM2 Interrupt Vector Register

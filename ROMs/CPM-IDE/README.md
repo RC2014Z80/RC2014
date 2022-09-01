@@ -6,7 +6,7 @@ For further reading, an additional extensive [description of CP/M-IDE can be fou
 
 ## Concept
 
-This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA hard drive. And further, to do so with the minimum of modules, complexity, and expense.
+This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA hard drive. And further, to do so with the minimum of additional modules, complexity, and expense.
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA Module serial interface, for the IDE Hard Drive Module disk interface, and also for the SIO/2 Module serial interface.
 

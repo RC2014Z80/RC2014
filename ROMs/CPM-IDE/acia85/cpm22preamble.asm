@@ -39,7 +39,7 @@ loop_copy_ccp:
 
     xor a
     ld hl,_cpm_bdos_bss_head
-    ld bc,_cpm_bdos_bss_tail-_cpm_bdos_bss_head-1
+    ld bc,_cpm_bdos_bss_tail-_cpm_bdos_bss_head-2
 
 loop_set_bdos:
     ld (hl+),a
@@ -68,7 +68,7 @@ loop_copy_bios:
 
     xor a
     ld hl,_cpm_bios_bss_head
-    ld bc,_cpm_bios_bss_initialised_tail-_cpm_bios_bss_head-1
+    ld bc,_cpm_bios_bss_initialised_tail-_cpm_bios_bss_head-2
 
 loop_set_bios:
     ld (hl+),a

@@ -13,7 +13,7 @@ EXTERN _rodata_cpm_bios_head
 EXTERN _cpm_bios_head
 EXTERN _cpm_bios_rodata_tail
 EXTERN _cpm_bios_bss_head
-EXTERN _cpm_bios_bss_tail
+EXTERN _cpm_bios_bss_initialised_tail
 
 EXTERN _cpm_bios_canary     ; if it matches $AA55, BIOS has been loaded, and is likely whole
 
@@ -60,7 +60,7 @@ pboot:                      ; preamble code also used by wboot
     ld (hl),a
     ld de,hl
     inc de
-    ld bc,_cpm_bios_bss_tail-_cpm_bios_bss_head-1
+    ld bc,_cpm_bios_bss_initialised_tail-_cpm_bios_bss_head-1
     ldir
 
     ; now fall through to normal _main() function and get set up for CP/M

@@ -636,13 +636,14 @@ ldi_31:
     jp ldi_15
 
 ldi_128:
-    ld bc,ldi_32
+    ld bc,ldi_16
     push bc
     push bc
     push bc
-
-ldi_32:
-    call ldi_16
+    push bc
+    push bc
+    push bc
+    push bc
 
 ldi_16:
     ld a,(hl+)
@@ -899,6 +900,7 @@ tx_end:
 
 _acia_reset:                    ; interrupts should be disabled
     xor a
+    ld (aciaControl),a          ; reset the ACIA control echo
 
     ld (aciaRxCount),a          ; reset the Rx counter (set 0)
     ld hl,aciaRxBuffer          ; load Rx buffer pointer home
