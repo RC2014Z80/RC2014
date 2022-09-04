@@ -161,11 +161,15 @@ cboot:
     ld      a,(_bios_iobyte)        ;get bios iobyte from shell
     ld      (_cpm_iobyte),a         ;set cpm iobyte to that selected by bios shell
 
+IF __IO_RAM_SHADOW_AVAILABLE = 0x01
+
     ld      hl,asm_shadow_copy          ;prepare current RAM copy location
     ld      (__IO_RAM_SHADOW_BASE),hl   ;write it to RAM copy base
 
     ld      hl,shadow_copy_addr     ;new location for shadow_copy function
     call    asm_shadow_relocate     ;move it to final (?) location
+
+ENDIF
 
     ld      hl,$AA55                ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl
@@ -1273,7 +1277,7 @@ siob_putc_buffer_tx:
     ret
 
     ;Do a write bus cycle to the drive, via the 8255
-    ;input A = ide register address
+    ;input D = ide register address
     ;input E = lsb to write to IDE drive
     ;uses AF, DE
 

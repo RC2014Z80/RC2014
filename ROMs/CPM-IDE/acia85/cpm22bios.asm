@@ -1113,7 +1113,7 @@ sod_loop:
     ret
 
     ;Do a write bus cycle to the drive, via the 8255
-    ;input A = ide register address
+    ;input D = ide register address
     ;input E = lsb to write to IDE drive
     ;uses AF, DE
 
