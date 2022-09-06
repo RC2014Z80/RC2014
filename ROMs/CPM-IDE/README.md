@@ -176,11 +176,11 @@ If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is
 
 Control is then passed to the command shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
-__NOTE__ Where the SIO/2 Module is being used, the shell will wait for a `:` to establish which serial interface is being used. Unlike the SIOA (`con`) port, the SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
+__NOTE:__ Where the SIO/2 Module is being used, the shell will wait for a `:` to establish which serial interface is being used. Unlike the SIOA (`con`) port, the SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
 
-__NOTE__ CP/M can be started by command `cpm file.a [file.b] [file.c] [file.d]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
+__NOTE:__ CP/M can be started by command `cpm file.a [file.b] [file.c] [file.d]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported. Each CP/M drive file must be contiguous, but can be located anywhere on the FATFS drive.
 
-The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
+The CLI provides some other basic functions, such as `frag`, `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM. `frag` can be used to confirm whether a file is contiguous or fragmented.
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
@@ -221,7 +221,7 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmls -f rc2014-8MB a.cpm
 > cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
-__NOTE__ To use `cpmtools`, the contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
+__NOTE:__ To use `cpmtools`, the contents of the host `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
 This default is for 8MByte drives, with up to 2048 files each.
 
 ```
@@ -248,10 +248,10 @@ Again, here is a view of what success looks like.
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev6.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev6.png"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev7.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev7.png"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE 8085 - Shell CLI<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE SIO - Shell CLI<center></th>
 </tr>
 </tbody>
 </table>
@@ -261,6 +261,7 @@ Again, here is a view of what success looks like.
 - `cpm file.a [file.b] [file.c] [file.d]` - initialise CP/M with up to 4 drive files
 
 ### File System Functions
+- `frag [file]` - check for file fragmentation (currently Z80 only)
 - `ls [path]` - directory listing
 - `cd [path]` - change the current working directory
 - `pwd` - show the current working directory
