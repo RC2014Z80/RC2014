@@ -1377,42 +1377,34 @@ _cpm_bios_canary:   defw 0  ;if it matches $AA55, bios has been loaded, and CP/M
 
 _bios_iobyte:       defb 0  ;transfer the IOBYTE from the bios to CP/M
 
-;
-;    scratch ram area for bios use
-;
+sekdsk:             defs 1  ;seek disk number
+sektrk:             defs 2  ;seek track number
+seksec:             defs 2  ;seek sector number
 
-sekdsk:     defs    1       ;seek disk number
-sektrk:     defs    2       ;seek track number
-seksec:     defs    2       ;seek sector number
+hstdsk:             defs 1  ;host disk number
+hsttrk:             defs 1  ;host track number
+hstsec:             defs 1  ;host sector number
 
-hstdsk:     defs    1       ;host disk number
-hsttrk:     defs    1       ;host track number
-hstsec:     defs    1       ;host sector number
+sekhst:             defs 1  ;seek shr secshf
+hstact:             defs 1  ;host active flag
+hstwrt:             defs 1  ;host written flag
 
-sekhst:     defs    1       ;seek shr secshf
-hstact:     defs    1       ;host active flag
-hstwrt:     defs    1       ;host written flag
+unacnt:             defs 1  ;unalloc rec cnt
 
-unacnt:     defs    1       ;unalloc rec cnt
+unadsk:             defs 1  ;last unalloc disk
+unatrk:             defs 2  ;last unalloc track
+unasec:             defs 2  ;last unalloc sector
 
-unadsk:     defs    1       ;last unalloc disk
-unatrk:     defs    2       ;last unalloc track
-unasec:     defs    2       ;last unalloc sector
+erflag:             defs 1  ;error reporting
+rsflag:             defs 1  ;read sector flag
+readop:             defs 1  ;1 if read operation
+wrtype:             defs 1  ;write operation type
+dmaadr:             defs 2  ;last direct memory address
 
-erflag:     defs    1       ;error reporting
-rsflag:     defs    1       ;read sector flag
-readop:     defs    1       ;1 if read operation
-wrtype:     defs    1       ;write operation type
-dmaadr:     defs    2       ;last direct memory address
-
-alv00:      defs    ((hstalb-1)/8)+1    ;allocation vector 0
-alv01:      defs    ((hstalb-1)/8)+1    ;allocation vector 1
-alv02:      defs    ((hstalb-1)/8)+1    ;allocation vector 2
-alv03:      defs    ((hstalb-1)/8)+1    ;allocation vector 3
-
-dirbf:      defs    128     ;scratch directory area
-hstbuf:     defs    hstsiz  ;buffer for host disk sector
-bios_stack:                 ;temporary bios stack origin
+alv00:              defs ((hstalb-1)/8)+1   ;allocation vector 0
+alv01:              defs ((hstalb-1)/8)+1   ;allocation vector 1
+alv02:              defs ((hstalb-1)/8)+1   ;allocation vector 2
+alv03:              defs ((hstalb-1)/8)+1   ;allocation vector 3
 
 PUBLIC  _cpm_bios_bss_initialised_tail
 _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
@@ -1420,6 +1412,11 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 ;------------------------------------------------------------------------------
 ; start of bss tables - uninitialised by cpm22preamble (initialised in crt)
 ;------------------------------------------------------------------------------
+
+dirbf:          defs 128                ;scratch directory area
+hstbuf:         defs hstsiz             ;buffer for host disk sector
+bios_stack:                             ;temporary bios stack origin
+
 
 PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
 PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
@@ -1436,7 +1433,7 @@ aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initial
 aciaControl:    defb 0                  ;local control echo of ACIA
 
 ;------------------------------------------------------------------------------
-; start of bss tables - aligned data
+; start of bss tables - aligned uninitialised data
 ;------------------------------------------------------------------------------
 
 ALIGN   $10000 - __IO_ACIA_TX_SIZE - __IO_ACIA_RX_SIZE

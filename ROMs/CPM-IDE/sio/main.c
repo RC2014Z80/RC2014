@@ -101,7 +101,7 @@ struct Builtin {
 
 struct Builtin builtins[] = {
   // CP/M related functions
-    { "cpm", &ya_mkcpm, "[file][][][] - initiate CP/M with up to 4 drive files"},
+    { "cpm", &ya_mkcpm, "file.a [file.b] [file.c] [file.d] - initiate CP/M with up to 4 drive files"},
 
 // fat related functions
     { "mount", &ya_mount, "[option] - mount a FAT file system"},

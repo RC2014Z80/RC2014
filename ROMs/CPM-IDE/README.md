@@ -162,7 +162,7 @@ The CP/M-IDE is built using the z88dk compilers and libraries with a simple moni
 
 Using the correct HEX file for the hardware configuration (RC2014 ACIA Module, RC2014 SIO/2 Module, or 8085 CPU Module with ACIA Module) from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
-Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Drag some of the CP/M drive files into the root directory of your drive. At least the `SYS.CPM` file is required. Check that each of the drive files are using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
+Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). __"Drag and drop"__ or __copy__ some of the example CP/M drive files into the root directory of your drive. At least the `SYS.CPM` example file is required (until you customise your own). Check that each of the drive files is using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
 
 Connect the hardware as shown, and then use the commands given in the shell Command Line Interface, below.
 
@@ -176,9 +176,9 @@ If the CP/M BIOS doesn't exist or it doesn't have a valid drive, then control is
 
 Control is then passed to the command shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be passed to CP/M, and then CP/M booted.
 
-Where the SIO/2 Module is being used, the shell will wait for a `:` to establish which serial interface is being used. Unlike the SIOA (`con`) port, the SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
+__NOTE__ Where the SIO/2 Module is being used, the shell will wait for a `:` to establish which serial interface is being used. Unlike the SIOA (`con`) port, the SIOB (`tty`) port does not have remote echo enabled, as is customary with teletype interfaces.
 
-CP/M can be started by command `cpm [file][][][]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
+__NOTE__ CP/M can be started by command `cpm file.a [file.b] [file.c] [file.d]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported.
 
 The CLI provides some other basic functions, such as `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM.
 
@@ -221,7 +221,7 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmls -f rc2014-8MB a.cpm
 > cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
-The contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
+__NOTE__ To use `cpmtools`, the contents of the `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
 This default is for 8MByte drives, with up to 2048 files each.
 
 ```
@@ -258,7 +258,7 @@ Again, here is a view of what success looks like.
 </div>
 
 ### CP/M Functions
-- `cpm [file][][][]` - initialise CP/M with up to 4 drive files
+- `cpm file.a [file.b] [file.c] [file.d]` - initialise CP/M with up to 4 drive files
 
 ### File System Functions
 - `ls [path]` - directory listing
