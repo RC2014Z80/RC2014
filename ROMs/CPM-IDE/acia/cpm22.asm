@@ -1332,7 +1332,8 @@ UNKWN4:
     LD    DE,TFCB        ;move it into place at(005Ch).
     LD    HL,FCB
     CALL    LDI_32      ;move 33 bytes in total
-    LDI
+    LD      A,(HL)
+    LD      (DE),A
     LD    HL,INBUFF+2    ;now move the remainder of the input
 UNKWN5:
     LD    A,(HL)        ;line down to (0080h). Look for a non blank.
@@ -2005,12 +2006,10 @@ HOMEDRV:
     CALL    HOME            ;home the head.
     XOR     A
     LD      HL,(SCRATCH2)   ;set our track pointer also.
-    LD      (HL),A
-    INC     HL
+    LD      (HL+),A
     LD      (HL),A
     LD      HL,(SCRATCH3)   ;and our sector pointer.
-    LD      (HL),A
-    INC     HL
+    LD      (HL+),A
     LD      (HL),A
     RET
 ;
@@ -2728,7 +2727,7 @@ BITMAP:
     RR      L
     SRL     H
     RR      L
-    INC     HL              ;at least 1 byte.
+;   INC     HL              ;at least 1 byte.
     LD      BC,HL           ;set (BC) to the allocation table length.
 ;
 ;   Initialize the bitmap for this drive. Right now, the first
@@ -2739,12 +2738,15 @@ BITMAP:
 ;   'used' in the map.
 ;
     LD      HL,(ALOCVECT)   ;now zero out the table now.
+;   DEC     BC              ;loop counters
+    INC     B
+    INC     C
+    XOR     A               ;make zero
 BITMAP1:
-    LD      (HL),0
-    INC     HL
-    DEC     BC
-    LD      A,B
-    OR      C
+    LD      (HL+),A         ;zero buffer element
+    DEC     C
+    JP      NZ,BITMAP1
+    DEC     B
     JP      NZ,BITMAP1
     LD      HL,(ALLOC0)     ;get initial space used by directory.
     EX      DE,HL
@@ -3111,19 +3113,13 @@ OPENIT2:
 ;   and (HL) are not changed. However (A) is.
 ;
 MOVEWORD:
-    LD      A,(HL)          ;check for a zero word.
-    INC     HL
-    OR      (HL)            ;both bytes zero?
-    DEC     HL
+    LD      A,(HL+)         ;check for a zero word.
+    OR      (HL-)           ;both bytes zero?
     RET     NZ              ;nope, just return.
-    LD      A,(DE)          ;yes, move two bytes from (DE) into
-    LD      (HL),A          ;this zero space.
-    INC     DE
-    INC     HL
-    LD      A,(DE)
-    LD      (HL),A
-    DEC     DE              ;don't disturb these registers.
-    DEC     HL
+    LD      A,(DE+)         ;yes, move two bytes from (DE) into
+    LD      (HL+),A         ;this zero space.
+    LD      A,(DE-)         ;don't disturb these registers.
+    LD      (HL-),A
     RET
 ;
 ;   Get here to close a file specified by (fcb).
@@ -3230,8 +3226,7 @@ GETEMPTY:
     LD      C,17            ;and clear all of this space.
     XOR     A
 GETMT1:
-    LD      (HL),A
-    INC     HL
+    LD      (HL+),A
     DEC     C
     JP      NZ,GETMT1
     LD      HL,13           ;clear the 's1' byte also.
@@ -3688,10 +3683,8 @@ SETRAN:
     CALL    COMPRAND        ;compute random position.
     LD      HL,33           ;now stuff these values into fcb.
     ADD     HL,DE
-    LD      (HL),C          ;move 'r0'.
-    INC     HL
-    LD      (HL),B          ;and 'r1'.
-    INC     HL
+    LD      (HL+),C         ;move 'r0'.
+    LD      (HL+),B         ;and 'r1'.
     LD      (HL),A          ;and lastly 'r2'.
     RET
 ;
