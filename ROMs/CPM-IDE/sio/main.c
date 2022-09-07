@@ -29,7 +29,6 @@
 
 // DEFINES
 
-#define MAX_FILES 1             // number of files open at any time
 #define BUFFER_SIZE 1024        // size of working buffer (on heap)
 #define LINE_SIZE 256           // size of a command line (on heap)
 #define TOK_BUFSIZE 64          // size of token pointer buffer (on heap)
@@ -46,7 +45,7 @@ static void * buffer;           /* create a scratch buffer on heap later */
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
                                 /* FatFs work area needed for each volume */
 
-static FIL File[MAX_FILES];     /* File object needed for each open file */
+static FIL file;                /* File object needed for each open file */
 
 static FILE * input;            /* defined input */
 static FILE * output;           /* defined output */
@@ -151,11 +150,11 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
         while(args[i+1] != NULL)
         {
             fprintf(output,"Opening \"%s\"", args[i+1]);
-            res = f_open(&File[0], (const TCHAR *)args[i+1], FA_OPEN_EXISTING | FA_READ);
+            res = f_open(&file, (const TCHAR *)args[i+1], FA_OPEN_EXISTING | FA_READ);
             if (res != FR_OK) { put_rc(res); return 1; }
-            cpm_dsk0_base[i] = (&File[0])->obj.fs->database + ((&File[0])->obj.fs->csize * ((&File[0])->obj.sclust - 2));
+            cpm_dsk0_base[i] = (&file)->obj.fs->database + ((&file)->obj.fs->csize * ((&file)->obj.sclust - 2));
             fprintf(output," at LBA %lu\n", cpm_dsk0_base[i]);
-            f_close(&File[0]);
+            f_close(&file);
             i++;                // go to next file
         }
         fprintf(output,"Initialised CP/M\n");
@@ -251,21 +250,21 @@ int8_t ya_frag(char ** args)    /* check file for fragmentation */
     } else {
 
         fprintf(output,"Checking \"%s\"", args[1]);
-        res = f_open(&File[0], (const TCHAR *)args[1], FA_OPEN_EXISTING | FA_READ);
+        res = f_open(&file, (const TCHAR *)args[1], FA_OPEN_EXISTING | FA_READ);
         if (res != FR_OK) { put_rc(res); return 1; }
 
-        fsz = f_size(&File[0]);                                 /* File size */
-        clsz = (DWORD)(&File[0])->obj.fs->csize * FF_MAX_SS;    /* Cluster size */
+        fsz = f_size(&file);                                    /* File size */
+        clsz = (DWORD)(&file)->obj.fs->csize * FF_MAX_SS;       /* Cluster size */
         if (fsz > 0) {                                          /* Check file size non-zero */
-            clst = (&File[0])->obj.sclust - 1;                  /* An initial cluster leading the first cluster for first test */
+            clst = (&file)->obj.sclust - 1;                     /* An initial cluster leading the first cluster for first test */
             while (fsz) {                                       /* Check clusters are contiguous */
                 step = (fsz >= clsz) ? clsz : (DWORD)fsz;
-                res = f_lseek((&File[0]), f_tell(&File[0]) + step);    /* Advances file pointer a cluster */
+                res = f_lseek(&file, f_tell(&file) + step);     /* Advances file pointer a cluster */
                 if (res != FR_OK) { put_rc(res); return 1; }
-                if (clst + 1 != (&File[0])->clust) break;       /* Is not the cluster next to previous one? */
-                clst = (&File[0])->clust; fsz -= step;          /* Get current cluster for next test */
+                if (clst + 1 != (&file)->clust) break;          /* Is not the cluster next to previous one? */
+                clst = (&file)->clust; fsz -= step;             /* Get current cluster for next test */
             }
-            fprintf(output," at LBA %lu", (&File[0])->obj.fs->database + ((&File[0])->obj.fs->csize * ((&File[0])->obj.sclust - 2)));
+            fprintf(output," at LBA %lu", (&file)->obj.fs->database + ((&file)->obj.fs->csize * ((&file)->obj.sclust - 2)));
             if (fsz == 0) {                                     /* All checked contiguous without fail? */
                 fprintf(output," is OK\n");
             } else {
@@ -273,7 +272,7 @@ int8_t ya_frag(char ** args)    /* check file for fragmentation */
             }
         }
 
-        f_close(&File[0]);
+        f_close(&file);
     }
     return 1;
 }

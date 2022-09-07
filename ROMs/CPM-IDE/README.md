@@ -261,7 +261,7 @@ Again, here is a view of what success looks like.
 - `cpm file.a [file.b] [file.c] [file.d]` - initialise CP/M with up to 4 drive files
 
 ### File System Functions
-- `frag [file]` - check for file fragmentation (currently Z80 only)
+- `frag [file]` - check for file fragmentation
 - `ls [path]` - directory listing
 - `cd [path]` - change the current working directory
 - `pwd` - show the current working directory
