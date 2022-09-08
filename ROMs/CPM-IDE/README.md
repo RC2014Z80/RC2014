@@ -73,7 +73,7 @@ To operate the RC2014 with an 8085 CPU the following CPU Module must be exchange
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-Optionally, replacing items 4. and 5. with the Memory Module avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8. Using the Memory Module (also compatible with SC108) provides access to an additional 64kB of shadow RAM for CP/M programs.
+Optionally, replacing items 4. and 5. with the Memory Module (also compatible with SC108) avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 

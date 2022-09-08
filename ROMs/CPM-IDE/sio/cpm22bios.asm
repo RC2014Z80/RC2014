@@ -1591,16 +1591,16 @@ alv01:              defs ((hstalb-1)/8)+1   ;allocation vector 1
 alv02:              defs ((hstalb-1)/8)+1   ;allocation vector 2
 alv03:              defs ((hstalb-1)/8)+1   ;allocation vector 3
 
+dirbf:              defs 128            ;scratch directory area
+hstbuf:             defs hstsiz         ;buffer for host disk sector
+bios_stack:                             ;temporary bios stack origin
+
 PUBLIC  _cpm_bios_bss_initialised_tail
 _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - uninitialised by cpm22preamble (initialised in crt)
 ;------------------------------------------------------------------------------
-
-dirbf:          defs 128                ;scratch directory area
-hstbuf:         defs hstsiz             ;buffer for host disk sector
-bios_stack:                             ;temporary bios stack origin
 
 PUBLIC  sioaRxCount, sioaRxIn, sioaRxOut
 PUBLIC  siobRxCount, siobRxIn, siobRxOut

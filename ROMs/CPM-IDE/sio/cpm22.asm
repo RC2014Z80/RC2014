@@ -2104,13 +2104,11 @@ TRKSEC4:
     CALL    SETTRK          ;select this track.
     POP     DE              ;reset current track pointer.
     LD      HL,(SCRATCH2)
-    LD      (HL),E
-    INC     HL
+    LD      (HL+),E
     LD      (HL),D
     POP     DE
     LD      HL,(SCRATCH3)   ;reset the first sector on this track.
-    LD      (HL),E
-    INC     HL
+    LD      (HL+),E
     LD      (HL),D
     POP     BC
     LD      A,C             ;now subtract the desired one.
@@ -2350,8 +2348,7 @@ WRTPRTD:
     INC     HL              ;remember the last one.
     EX      DE,HL
     LD      HL,(SCRATCH1)   ;and store it here.
-    LD      (HL),E          ;put low byte.
-    INC     HL
+    LD      (HL+),E          ;put low byte.
     LD      (HL),D          ;then high byte.
     RET
 ;
@@ -2434,8 +2431,7 @@ CHKNMBR:
     CALL    MOREFLS         ;SCRATCH1 too big?
     RET     C
     INC     DE              ;yes, reset it to (FILEPOS).
-    LD      (HL),D
-    DEC     HL
+    LD      (HL-),D
     LD      (HL),E
     RET
 ;
@@ -2504,8 +2500,7 @@ DIRDMA:
 ;   word containing the desired dma address.
 ;
 DIRDMA1:
-    LD      C,(HL)
-    INC     HL
+    LD      C,(HL+)
     LD      B,(HL)          ;setup (BC) and go to the bios to set it.
     JP      SETDMA
 ;
@@ -2751,16 +2746,14 @@ BITMAP1:
     LD      HL,(ALLOC0)     ;get initial space used by directory.
     EX      DE,HL
     LD      HL,(ALOCVECT)   ;and put this into map.
-    LD      (HL),E
-    INC     HL
+    LD      (HL+),E
     LD      (HL),D
 ;
 ;   End of initialization portion.
 ;
     CALL    HOMEDRV         ;now home the drive.
     LD      HL,(SCRATCH1)
-    LD      (HL),3          ;force next directory request to read
-    INC     HL              ;in a sector.
+    LD      (HL+),3         ;force next directory request to read in a sector.
     LD      (HL),0
     CALL    STFILPOS        ;clear initial file position also.
 BITMAP2:
