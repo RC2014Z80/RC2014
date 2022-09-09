@@ -260,7 +260,7 @@ RENAM:
 GETUSR:
     LD    E,0FFH
 ;
-;   Routne to get or set the current user code.
+;   Routine to get or set the current user code.
 ;   If (E) is FF then this is a GET, else it is a SET.
 ;
 GETSETUC:
@@ -2348,7 +2348,7 @@ WRTPRTD:
     INC     HL              ;remember the last one.
     EX      DE,HL
     LD      HL,(SCRATCH1)   ;and store it here.
-    LD      (HL+),E          ;put low byte.
+    LD      (HL+),E         ;put low byte.
     LD      (HL),D          ;then high byte.
     RET
 ;
