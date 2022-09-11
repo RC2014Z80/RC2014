@@ -69,6 +69,10 @@ As noted above, the complete RC2014 Pro system must include:
 6. [SIO/2 Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
 7. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or [Backplane Pro](https://rc2014.co.uk/backplanes/backplane-pro/).
 
+If your preference is to use a CF Card, or SD Card in a SD-CF Adapter, then Dylan Hall's CF Card PPIDE Module can be exchanged for item 1. This Module provides seamless and reliable CF Card (or SD Card) support, but doesn't provide a standard 40 pin or 44 pin IDE connector.
+
+- [CF Card PPIDE Module](https://oshwlab.com/dylan_3481/cf-ppide-for-rc2014_copy).
+
 To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
@@ -180,7 +184,7 @@ __NOTE:__ Where the SIO/2 Module is being used, the shell will wait for a `:` to
 
 __NOTE:__ CP/M can be started by command `cpm file.a [file.b] [file.c] [file.d]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported. Each CP/M drive file must be contiguous, but can be located anywhere on the FATFS drive.
 
-The CLI provides some other basic functions, such as `frag`, `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM. `frag` can be used to confirm whether a file is contiguous or fragmented.
+The CLI provides some other basic functions, such as `frag`, `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM. `frag` can be used to confirm whether a CP/M drive file (or any other file) is contiguous or fragmented.
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
@@ -196,7 +200,7 @@ Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP
 
 Because the CCP/BDOS and BIOS are stored in ROM, there is no CP/M-IDE "system disk". Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter.
 
-As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded into the directory structure of the IDE drive and used or augmented by the CP/M Tools noted below.
+As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below.
 
 ### CP/M Application Disks
 
@@ -222,7 +226,8 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
 __NOTE:__ To use `cpmtools`, the contents of the host `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
-This default is for 8MByte drives, with up to 2048 files each.
+
+The CP/M-IDE default is for 8MByte drives, with up to 2048 files each.
 
 ```
 diskdef rc2014-8MB
@@ -296,9 +301,9 @@ The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. T
 zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=add32,sub32,sub16,inlineints -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
 ```
 
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) files into the rc2014 library directory.
+Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) library files into the z88dk rc2014 newlib library directory.
 
-Unfortunately, due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. Also read-write version (default) of the FATFS library should be installed so that applications compiled using z88dk can read and write to the FATFS file system.
+Due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the default FATFS library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. The default (read/write) version of the [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) should be installed so that your applications compiled using z88dk can read and write to the FATFS file system.
 
 The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
 
