@@ -1127,14 +1127,14 @@ putc_buffer_tx:
 ; How to poll (waiting for the drive to be ready to transfer data):
 ; Read the Regular Status port until bit 7 (BSY, value = 0x80) clears,
 ; and bit 3 (DRQ, value = 0x08) sets.
-; Or until bit 0 (ERR, value = 0x01) or bit 5 (DFE, value = 0x20) sets.
+; Or until bit 0 (ERR, value = 0x01) or bit 5 (WFT, value = 0x20) sets.
 ; If neither error bit is set, the device is ready right then.
 ; Uses AF, DE
 
 .ide_wait_ready
     ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
-    and 00100001b               ;test for ERR or DFE
+    and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
     ld a,e                      ;get byte from alternate ide_read_byte return
@@ -1151,7 +1151,7 @@ putc_buffer_tx:
 .ide_wait_drq
     ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
-    and 00100001b               ;test for ERR or DFE
+    and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
     ld a,e                      ;get byte from alternate ide_read_byte return
