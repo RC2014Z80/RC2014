@@ -60,6 +60,8 @@ In addition to the [RC2014 Pro](https://www.tindie.com/products/semachthemonkey/
 
 1. [IDE Hard Drive Module](https://rc2014.co.uk/modules/ide-hard-drive-module/).
 
+__NOTE:__ If you are using the IDE Hard Drive Module 40-pin PATA connector, be aware that this connector does not pass power to the attached disk, DOM, or CF adapter. A 3 1/2" disk must be powered by its 4-pin MOLEX connector. A 40-pin DOM or CF adapter must be powered by its own accessory power connector. Connecting +5V power to the barrel jack on the IDE Hard Drive Module is not sufficient to power 40-pin devices.
+
 As noted above, the complete RC2014 Pro system must include:
 
 2. [CPU Module](https://rc2014.co.uk/modules/cpu/z80-cpu-v2-1/).
