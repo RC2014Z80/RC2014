@@ -16,7 +16,7 @@ In the ACIA builds, the receive interface has a 255 byte software buffer, togeth
 
 In the SIO/2 build, both ports are enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-The IDE interface driver is optimised for performance and can achieve about 100kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
+The IDE interface driver is optimised for performance and can achieve about 110kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
 The IDE Module supports both PATA hard drives (including 3 1/2" magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
 
@@ -79,7 +79,7 @@ To operate the RC2014 with an 8085 CPU the following CPU Module must be exchange
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-Optionally, replacing items 4. and 5. with the Memory Module (also compatible with SC108) avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
+Optionally, replacing items 4. and 5. with the Memory Module (also compatible with Steve Cousins' SC108) avoids the need for a flying `PAGE` wire joining RAM and ROM Modules when using the Backplane 8.
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
@@ -88,7 +88,7 @@ __NOTE:__ For use with the 8085 CPU Module, only the ACIA Serial Module is suppo
 
 - [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
 
-Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) hardware is supported if a 32kB ROM is used, and Steve Cousins' [SC108 (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) Module could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
+Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) hardware is supported if a 32kB ROM is used, and Steve Cousins' [SC108 Module (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) Module could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
 
 As noted both SD Cards and Compact Flash cards are also supported in their native 16-bit PATA mode, as shown below.
 
@@ -172,7 +172,7 @@ Use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact
 
 Connect the hardware as shown, and then use the commands given in the shell Command Line Interface, below.
 
-### Boot up
+### Boot-up Process
 
 When the RC2014 first boots, the z88dk provided [`crt0`](https://en.wikipedia.org/wiki/Crt0) configures a number of items via preamble code.
 
@@ -190,7 +190,7 @@ The CLI provides some other basic functions, such as `frag`, `ls`, `cd`, `pwd`, 
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
-In the 8085 CPU Module ACIA build the CPU Serial Output (SOD) is also supported as the CP/M `LPT:` device. It is enabled from within CP/M using `^P` from the CCP command line as normal.
+In the 8085 CPU Module ACIA build the CPU Serial Output (SOD) FTDI interface found on the CPU Module is also supported as the CP/M `LPT:` device. It is enabled from within CP/M using `^P` from the CCP command line as normal.
 
 ### CP/M System Disk
 
@@ -200,7 +200,7 @@ The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for t
 
 Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
 
-Because the CCP/BDOS and BIOS are stored in ROM, there is no CP/M-IDE "system disk". Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter.
+Because the CCP/BDOS and BIOS are stored in ROM, there are no CP/M-IDE boot sectors or special boot drive. Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter.
 
 As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below.
 
@@ -287,6 +287,17 @@ Again, here is a view of what success looks like.
 
 An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the CP/M drives. `EXIT` initialises a clean reboot of the RC2014, and returns to the command shell.
 
+## Usage
+
+When starting a new project it can be convenient to use a new clean drive in the beginning. The provided template drive can be copied and named appropriately for the project. Either the [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) shell can be used from within CP/M, or the drive can be temporarily attached to a PC and normal file management can be used to copy the template drive.
+
+Alternatively when working with a CP/M compiler, then making a copy of the compiler drive and working from that (rather than the original) can be quite useful.
+
+On first boot into CP/M, mount the `sys.cpm` system drive and the new working drive. It can then be useful to copy some useful commands onto the working drive, then the `sys.cpm` system drive does not need to be mounted on further boots. Generally `XODEM.COM` and optionally `DDIR.COM` are all that are necessary, as the CP/M CCP has `REN`, `ERA`, `TYPE`, and `EXIT` commands integrated.
+
+Then, on each subsequent boot-up of CP/M only the working drive is necessary in drive `A:`. After compiling a new project with z88dk, the work-in-progress command `.COM` can be uploaded to the RC2014 with `XMODEM` and then tested. Then repeat as needed, if the work-in-progress crashes CP/M or needs further work.
+
+Of course other development workflows are possible, as is just mounting the [ZORK](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip) games drive and playing an adventure game.
 
 ## Building Software from Source
 
@@ -303,7 +314,7 @@ The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. T
 zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
 ```
 
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) library files into the z88dk rc2014 newlib library directory.
+Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) library files into the z88dk RC2014 newlib library directory.
 
 Due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the default FATFS library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. The default (read/write) version of the [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) should be installed so that your applications compiled using z88dk can read and write to the FATFS file system.
 
