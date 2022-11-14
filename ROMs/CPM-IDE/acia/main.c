@@ -577,7 +577,7 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 CP/M-IDE\nfeilipu 2022\n\n> :-)\n");
+    fprintf(stdout, "\n\nRC2014 ACIA - CP/M-IDE\nfeilipu 2022\n\n> :-)\n");
 
     // Run command loop if we got all the memory allocations we need.
     if ( fs && buffer)

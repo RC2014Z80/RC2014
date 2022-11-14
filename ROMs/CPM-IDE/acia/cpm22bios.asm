@@ -1130,6 +1130,7 @@ putc_buffer_tx:
 ; Or until bit 0 (ERR, value = 0x01) or bit 5 (WFT, value = 0x20) sets.
 ; If neither error bit is set, the device is ready right then.
 ; Uses AF, DE
+; return carry on success
 
 .ide_wait_ready
     ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
@@ -1142,11 +1143,13 @@ putc_buffer_tx:
     xor 01000000b               ;wait for RDY to be set and BuSY to be clear
     jp NZ,ide_wait_ready
 
+    scf                         ;set carry flag on success
     ret
 
 ; Wait for the drive to be ready to transfer data.
 ; Returns the drive's status in A
 ; Uses AF, DE
+; return carry on success
 
 .ide_wait_drq
     ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
@@ -1159,6 +1162,7 @@ putc_buffer_tx:
     xor 00001000b               ;wait for DRQ to be set and BuSY to be clear
     jp NZ,ide_wait_drq
 
+    scf                         ;set carry flag on success
     ret
 
 ;------------------------------------------------------------------------------
