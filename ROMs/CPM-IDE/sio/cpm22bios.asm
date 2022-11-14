@@ -14,7 +14,7 @@ INCLUDE "config_rc2014_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF000
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -844,7 +844,12 @@ siob_rx_get:
 
     ld hl,(siobRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the siobRxIn target
-    inc l                       ; move the Rx pointer low byte along, 0xFF rollover
+
+    inc l                       ; move the Rx pointer low byte along
+    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or siobRxBuffer&0xFF        ; locate base
+    ld l,a                      ; return the low byte to l
     ld (siobRxIn),hl            ; write where the next byte should be poked
 
     ld hl,siobRxCount
@@ -937,7 +942,12 @@ sioa_rx_get:
 
     ld hl,(sioaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the sioaRxIn target
-    inc l                       ; move the Rx pointer low byte along, 0xFF rollover
+
+    inc l                       ; move the Rx pointer low byte along
+    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or sioaRxBuffer&0xFF        ; locate base
+    ld l,a                      ; return the low byte to l
     ld (sioaRxIn),hl            ; write where the next byte should be poked
 
     ld hl,sioaRxCount
@@ -1048,7 +1058,7 @@ _sioa_getc:
     ; exit     : l = char received
     ;            carry reset if Rx buffer is empty
     ;
-    ; modifies : af, hl
+    ; modifies : af, bc, hl
     ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
     ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
@@ -1064,14 +1074,20 @@ _sioa_getc:
 
 sioa_getc_clean_up:
     ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
-    inc l                       ; move the Rx pointer low byte along, 0xFF rollover
+    ld c,(hl)                   ; get the Rx byte
+
+    inc l                       ; move the Rx pointer low byte along
+    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or sioaRxBuffer&0xFF        ; locate base
+    ld l,a                      ; return the low byte to l
     ld (sioaRxOut),hl           ; write where the next byte should be popped
 
     ld hl,sioaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; put the byte in hl
+    ld l,c                      ; put the byte in hl
+    ld a,c                      ; put byte in a
     scf                         ; indicate char received
     ret
 
@@ -1079,7 +1095,7 @@ _siob_getc:
     ; exit     : l = char received
     ;            carry reset if Rx buffer is empty
     ;
-    ; modifies : af, hl
+    ; modifies : af, bc, hl
     ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
     ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
@@ -1095,14 +1111,20 @@ _siob_getc:
 
 siob_getc_clean_up:
     ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
-    inc l                       ; move the Rx pointer low byte along, 0xFF rollover
+    ld c,(hl)                   ; get the Rx byte
+
+    inc l                       ; move the Rx pointer low byte along
+    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or siobRxBuffer&0xFF        ; locate base
+    ld l,a                      ; return the low byte to l
     ld (siobRxOut),hl           ; write where the next byte should be popped
 
     ld hl,siobRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; put the byte in hl
+    ld l,c                      ; put the byte in hl
+    ld a,c                      ; put byte in a
     scf                         ; indicate char received
     ret
 
@@ -1239,7 +1261,7 @@ siob_putc_buffer_tx:
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
     ld a,d
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_IDE_RD_LINE
+    or __IO_PIO_IDE_RD_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert read pin
     in a,(__IO_PIO_IDE_LSB)     ;read the lower byte
     ld e,a                      ;save read byte to E
@@ -1257,18 +1279,18 @@ siob_putc_buffer_tx:
 .ide_read_block
     ld a,__IO_PIO_IDE_RD
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
     ld b,0                      ;keep iterative count in b
 
 .ide_rdblk
-    ld a,__IO_IDE_DATA|__IO_IDE_RD_LINE
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert read pin
     in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
     ld (hl+),a
     in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
     ld (hl+),a
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;deassert read pin
     djnz ide_rdblk              ;keep iterative count in b
 
@@ -1287,7 +1309,7 @@ siob_putc_buffer_tx:
 .ide_write_byte_preset
     ld a,d
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_IDE_WR_LINE
+    or __IO_PIO_IDE_WR_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert write pin
     ld a,e
     out (__IO_PIO_IDE_LSB),a    ;drive lower lines with lsb
@@ -1304,18 +1326,18 @@ siob_putc_buffer_tx:
 .ide_write_block
     ld a,__IO_PIO_IDE_WR
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
     ld b,0                      ;keep iterative count in b
 
 .ide_wrblk
-    ld a,__IO_IDE_DATA|__IO_IDE_WR_LINE
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert write pin
     ld a,(hl+)
     out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
     ld a,(hl+)
     out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;deassert write pin
     djnz ide_wrblk              ;keep iterative count in b
 
@@ -1333,20 +1355,20 @@ siob_putc_buffer_tx:
 
 .ide_setup_lba
     push de
-    ld d,__IO_IDE_LBA0
+    ld d,__IO_PIO_IDE_LBA0
     call ide_write_byte         ;set LBA0 0:7
     pop de
     ld e,d
-    ld d,__IO_IDE_LBA1
+    ld d,__IO_PIO_IDE_LBA1
     call ide_write_byte_preset  ;set LBA1 8:15
     ld e,c
-    ld d,__IO_IDE_LBA2
+    ld d,__IO_PIO_IDE_LBA2
     call ide_write_byte_preset  ;set LBA2 16:23
     ld a,b
     and 00001111b               ;lowest 4 bits LBA address used only
     or  11100000b               ;to enable LBA address master mode
     ld e,a
-    ld d,__IO_IDE_LBA3
+    ld d,__IO_PIO_IDE_LBA3
     call ide_write_byte_preset  ;set LBA3 24:27 + bits 5:7=111
     ret
 
@@ -1358,7 +1380,7 @@ siob_putc_buffer_tx:
 ; Uses AF, DE
 
 .ide_wait_ready
-    ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
@@ -1375,7 +1397,7 @@ siob_putc_buffer_tx:
 ; Uses AF, DE
 
 .ide_wait_drq
-    ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
@@ -1405,10 +1427,10 @@ siob_putc_buffer_tx:
     pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_IDE_SEC_CNT<<8|1
+    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
     call ide_write_byte_preset  ;set sector count to 1
 
-    ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_READ
+    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_READ
     call ide_write_byte_preset  ;ask the drive to read it
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
@@ -1436,10 +1458,10 @@ siob_putc_buffer_tx:
     pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_IDE_SEC_CNT<<8|1
+    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
     call ide_write_byte_preset  ;set sector count to 1
 
-    ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_WRITE
+    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_WRITE
     call ide_write_byte_preset  ;instruct drive to write a sector
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
@@ -1447,7 +1469,7 @@ siob_putc_buffer_tx:
     call ide_write_block        ;send the data to the drive from (HL++)
     call ide_wait_ready
 
-;   ld de, __IO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
+;   ld de, __IO_PIO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
 ;   call ide_write_byte         ;tell drive to flush its hardware cache
 ;   call ide_wait_ready         ;wait until the write is complete
 

@@ -1075,7 +1075,7 @@ sod_loop:
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
     ld a,d
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_IDE_RD_LINE
+    or __IO_PIO_IDE_RD_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert read pin
     in a,(__IO_PIO_IDE_LSB)     ;read the lower byte
     ld e,a                      ;save read byte to E
@@ -1093,18 +1093,18 @@ sod_loop:
 .ide_read_block
     ld a,__IO_PIO_IDE_RD
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
     ld b,0                      ;keep iterative count in b
 
 .ide_rdblk
-    ld a,__IO_IDE_DATA|__IO_IDE_RD_LINE
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert read pin
     in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
     ld (hl+),a
     in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
     ld (hl+),a
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;deassert read pin
     djnz ide_rdblk              ;keep iterative count in b
 
@@ -1123,7 +1123,7 @@ sod_loop:
 .ide_write_byte_preset
     ld a,d
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_IDE_WR_LINE
+    or __IO_PIO_IDE_WR_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert write pin
     ld a,e
     out (__IO_PIO_IDE_LSB),a    ;drive lower lines with lsb
@@ -1140,18 +1140,18 @@ sod_loop:
 .ide_write_block
     ld a,__IO_PIO_IDE_WR
     out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
     ld b,0                      ;keep iterative count in b
 
 .ide_wrblk
-    ld a,__IO_IDE_DATA|__IO_IDE_WR_LINE
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
     out (__IO_PIO_IDE_CTL),a    ;and assert write pin
     ld a,(hl+)
     out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
     ld a,(hl+)
     out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
-    ld a,__IO_IDE_DATA
+    ld a,__IO_PIO_IDE_DATA
     out (__IO_PIO_IDE_CTL),a    ;deassert write pin
     djnz ide_wrblk              ;keep iterative count in b
 
@@ -1169,20 +1169,20 @@ sod_loop:
 
 .ide_setup_lba
     push de
-    ld d,__IO_IDE_LBA0
+    ld d,__IO_PIO_IDE_LBA0
     call ide_write_byte         ;set LBA0 0:7
     pop de
     ld e,d
-    ld d,__IO_IDE_LBA1
+    ld d,__IO_PIO_IDE_LBA1
     call ide_write_byte_preset  ;set LBA1 8:15
     ld e,c
-    ld d,__IO_IDE_LBA2
+    ld d,__IO_PIO_IDE_LBA2
     call ide_write_byte_preset  ;set LBA2 16:23
     ld a,b
     and 00001111b               ;lowest 4 bits LBA address used only
     or  11100000b               ;to enable LBA address master mode
     ld e,a
-    ld d,__IO_IDE_LBA3
+    ld d,__IO_PIO_IDE_LBA3
     call ide_write_byte_preset  ;set LBA3 24:27 + bits 5:7=111
     ret
 
@@ -1194,7 +1194,7 @@ sod_loop:
 ; Uses AF, DE
 
 .ide_wait_ready
-    ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
@@ -1211,7 +1211,7 @@ sod_loop:
 ; Uses AF, DE
 
 .ide_wait_drq
-    ld d,__IO_IDE_ALT_STATUS    ;get IDE alt status register
+    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
     call ide_read_byte
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
@@ -1241,10 +1241,10 @@ sod_loop:
     pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_IDE_SEC_CNT<<8|1
+    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
     call ide_write_byte_preset  ;set sector count to 1
 
-    ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_READ
+    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_READ
     call ide_write_byte_preset  ;ask the drive to read it
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
@@ -1272,10 +1272,10 @@ sod_loop:
     pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_IDE_SEC_CNT<<8|1
+    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
     call ide_write_byte_preset  ;set sector count to 1
 
-    ld de,__IO_IDE_COMMAND<<8|__IDE_CMD_WRITE
+    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_WRITE
     call ide_write_byte_preset  ;instruct drive to write a sector
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
@@ -1283,7 +1283,7 @@ sod_loop:
     call ide_write_block        ;send the data to the drive from (HL++)
     call ide_wait_ready
 
-;   ld de, __IO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
+;   ld de, __IO_PIO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
 ;   call ide_write_byte         ;tell drive to flush its hardware cache
 ;   call ide_wait_ready         ;wait until the write is complete
 

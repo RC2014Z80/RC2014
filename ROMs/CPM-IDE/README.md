@@ -14,13 +14,15 @@ The serial interfaces (on the ACIA Serial Module and SIO/2 Serial Module, and th
 
 In the ACIA builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-In the SIO/2 build, both ports are enabled. Both ports have a 255 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
+In the SIO/2 build, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
 The IDE interface driver is optimised for performance and can achieve about 110kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
 
 The IDE Module supports both PATA hard drives (including 3 1/2" magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
 
 The CP/M-IDE system supports up to 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
+
+Both ACIA and SIO/2 builds provide over 56kB of free TPA RAM to user applications. The ACIA build BDOS origin is `0xE400` for both Z80 and 8085 CPUs. The SIO/2 build BDOS origin is `0xE300`.
 
 <div>
 <table style="border: 2px solid #cccccc;">
