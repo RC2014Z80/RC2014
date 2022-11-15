@@ -1276,12 +1276,11 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_ready
-    in a,(__IO_CF_IDE_ALT_STATUS)
-    ld e,a
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get status byte
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 11000000b               ;mask off BuSY and RDY bits
     xor 01000000b               ;wait for RDY to be set and BuSY to be clear
     jp NZ,ide_wait_ready
@@ -1295,12 +1294,11 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_drq
-    in a,(__IO_CF_IDE_ALT_STATUS)
-    ld e,a
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get status byte
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 10001000b               ;mask off BuSY and DRQ bits
     xor 00001000b               ;wait for DRQ to be set and BuSY to be clear
     jp NZ,ide_wait_drq
@@ -1320,10 +1318,7 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_read_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
     ld a,1
@@ -1361,10 +1356,7 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_write_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
     ld a,1
