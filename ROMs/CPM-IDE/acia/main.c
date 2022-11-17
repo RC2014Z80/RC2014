@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/compiler.h>
+#include <cpu.h>
 
 #include <arch.h>
 #include <arch/rc2014.h>
@@ -145,6 +146,7 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
             i++;                // go to next file
         }
         fprintf(stdout,"Initialised CP/M\n");
+        cpu_delay_ms(1);        // output message before queue is flushed
         cpm_boot();
     }
     return 1;

@@ -1436,6 +1436,7 @@ siob_putc_buffer_tx:
 
     ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_READ
     call ide_write_byte_preset  ;ask the drive to read it
+
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
 
@@ -1467,18 +1468,17 @@ siob_putc_buffer_tx:
 
     ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_WRITE
     call ide_write_byte_preset  ;instruct drive to write a sector
+
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
 
     call ide_write_block        ;send the data to the drive from (HL++)
-    call ide_wait_ready
 
+;   call ide_wait_ready
 ;   ld de, __IO_PIO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
 ;   call ide_write_byte         ;tell drive to flush its hardware cache
-;   call ide_wait_ready         ;wait until the write is complete
 
-    scf                         ;carry = 1 on return = operation ok
-    ret
+    jp ide_wait_ready           ;wait until the write is complete
 
 PUBLIC  _cpm_bios_tail
 _cpm_bios_tail:             ;tail of the cpm bios

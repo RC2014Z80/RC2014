@@ -1307,7 +1307,7 @@ siob_putc_buffer_tx:
     ret
 
 ;------------------------------------------------------------------------------
-; Routines that talk with the IDE drive, these should be called by
+; Routines that talk with the IDE drive, these should not be called by
 ; the main program.
 
 ; read a sector
@@ -1331,21 +1331,17 @@ siob_putc_buffer_tx:
     call ide_wait_drq           ;wait until it's got the data
 
     ;Read a block of 512 bytes (one sector) from the drive
-    ;16 bit data register and store it in memory at (HL++)
+    ;8 bit data register and store it in memory at (HL++)
 
-    ld b,0                      ;keep iterative count in b
-.ide_rdblk
-    in a,(__IO_CF_IDE_DATA)     ;read the data byte (hl++)
-    ld (hl+),a
-    in a,(__IO_CF_IDE_DATA)     ;read the data byte (hl++)
-    ld (hl+),a
-    djnz ide_rdblk              ;keep iterative count in b
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    inir
+    inir
 
     scf                         ;carry = 1 on return = operation ok
     ret
 
 ;------------------------------------------------------------------------------
-; Routines that talk with the IDE drive, these should be called by
+; Routines that talk with the IDE drive, these should not be called by
 ; the main program.
 
 ; write a sector
@@ -1369,15 +1365,11 @@ siob_putc_buffer_tx:
     call ide_wait_drq           ;wait until it wants the data
 
     ;Write a block of 512 bytes (one sector) from (HL++) to
-    ;the drive 16 bit data register
+    ;the drive 8 bit data register
 
-    ld b,0                      ;keep iterative count in b
-.ide_wrblk
-    ld a,(hl+)
-    out (__IO_CF_IDE_DATA),a    ;write the data byte (hl++)
-    ld a,(hl+)
-    out (__IO_CF_IDE_DATA),a    ;write the data byte (hl++)
-    djnz ide_wrblk              ;keep iterative count in b
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    otir
+    otir
 
 ;   call ide_wait_ready
 ;   ld a,__IDE_CMD_CACHE_FLUSH
