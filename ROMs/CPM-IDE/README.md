@@ -8,10 +8,9 @@ For further reading, an additional extensive [description of CP/M-IDE can be fou
 
 This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while using a normal FATFS formatted PATA hard drive. And further, to do so with the minimum of additional modules, complexity, and expense.
 
-
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA Module serial interface, for the SIO/2 Module serial interface, for the IDE Hard Drive Module disk interface, and also for the Compact Flash Module disk interface.
 
-The RC2014 Pro build supports the standard SIO/2 Serial Module and Compact Flash Module, in the usual configuration. The ACIA and SIO/2 builds require the IDE Hard Drive Module. The RC2014 8085 CPU build requires the ACIA Serial Module and the IDE Hard Drive Module.
+The RC2014 Pro build supports the standard SIO/2 Serial Module and Compact Flash Module, in the usual configuration. The ACIA and SIO/2 builds require the IDE Hard Drive Module in addition to a RC2014 Pro. The RC2014 8085 CPU build requires the ACIA Serial Module and the IDE Hard Drive Module.
 
 The serial interfaces (on the ACIA Serial Module and SIO/2 Serial Module, and the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
 
@@ -19,7 +18,7 @@ In the ACIA and 8085 builds, the receive interface has a 255 byte software buffe
 
 In the RC2014 Pro and SIO/2 builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-The IDE Hard Drive Module interface driver is optimised for performance and can achieve about 110kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake.
+The IDE Hard Drive Module interface driver is optimised for performance and can achieve about 110kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake. The CF Module can achieve up to 200kB/s throughput at FATFS level, and seems to provide best performance using SD Cards in SD to CF Card Adapters. Within CP/M performance is approximately half the FATFS performance, because the CP/M deblocking algorithm requires a double buffer copy process.
 
 The IDE Hard Drive Module supports both PATA hard drives (including 3 1/2" magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device.
 
@@ -329,6 +328,8 @@ Prior to running the above build commands, in addition to the normal z88dk provi
 Due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the default FATFS library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. The default (read/write) version of the [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) should be installed so that applications you compile using z88dk can read and write to the FATFS file system.
 
 The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_acia.m4) and [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_sio.m4) respectively.
+
+The disk access configuration, for either 16-bit PPIDE or 8-bit CF IDE, is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_target.m4#L22). And the availability of the shadow RAM for 128kB RAM systems is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/_DEVELOPMENT/target/rc2014/config/config_ram.m4#L10). Following changes to any of the configurations the z88dk libraries for RC2014 should be rebuilt.
 
 
 ## Licence
