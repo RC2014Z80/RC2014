@@ -3939,6 +3939,95 @@ RETMON:
     LD      B,H
     RET                     ;and go back to user.
 ;
+;   Function to load Intel HEX into TPA and launch it
+;   uses  : af, bc, de, hl
+;   (C) feilipu
+;
+EXTERN      diskchk_jp_addr ;address of jp to bios diskchk
+;
+PUBLIC      _hexload        ;load Intel HEX into TPA and launch it
+;
+_hexload:
+    LD      HL,HLD_LOADER   ;return here after the cold boot sequence
+    LD      (diskchk_jp_addr+1),HL  ;prepare a return address in rboot
+    JP      BOOT            ;do a CP/M cold boot to establish page 0
+HLD_LOADER:
+    CALL    HLD_WAIT_COLON  ;wait for first colon and address data
+    LD      HL,BC
+    LD      (diskchk_jp_addr+1),HL  ;store first address as TPA location in rboot
+    JP      HLD_READ_DATA   ;now get the first data
+;
+HLD_WAIT_COLON:
+    CALL    CONIN           ;Rx byte in A
+    JP      NC,HLD_WAIT_COLON   ;carry set if byte available
+    CP      ':'             ;wait for ':'
+    JP      NZ,HLD_WAIT_COLON
+    LD      E,0             ;reset E to compute checksum
+    CALL    HLD_READ_BYTE   ;read byte count
+    LD      D,A             ;store it in D
+    CALL    HLD_READ_BYTE   ;read upper byte of address
+    LD      B,A             ;store in B
+    CALL    HLD_READ_BYTE   ;read lower byte of address
+    LD      C,A             ;store in C
+    CALL    HLD_READ_BYTE   ;read record type
+    DEC     A               ;check if record type is 01 (end of file)
+    JP      Z,HLD_END_LOAD
+    INC     A               ;check if record type is 00 (data)
+    RET     Z
+    JP      EXIT            ;otherwise exit gracefully
+;
+HLD_READ:
+    CALL    HLD_WAIT_COLON  ;wait for the next colon and address data
+HLD_READ_DATA:
+    CALL    HLD_READ_BYTE
+    LD      (BC),A          ;write the byte at the RAM address
+    INC     BC
+    DEC     D
+    JP      NZ,HLD_READ_DATA;if d non zero, loop to get more data
+;
+HLD_READ_CHKSUM:
+    CALL    HLD_READ_BYTE   ;read checksum, but we don't need to keep it
+    LD      A,E             ;lower byte of E checksum should be 0
+    AND     A
+    JP      NZ,EXIT         ;non zero, we have an issue
+    JP      HLD_READ
+;
+HLD_END_LOAD:
+    CALL    HLD_READ_BYTE   ;read checksum, but we don't need to keep it
+    LD      A,E             ;lower byte of E checksum should be 0
+    AND     A
+    JP      NZ,EXIT         ;non zero, we have an issue
+    JP      WBOOT           ;warm boot, but divert into running from TPA location
+;
+HLD_READ_BYTE:              ;returns byte in A, checksum in E
+    CALL    HLD_READ_NIBBLE ;read the first nibble
+    RLCA                    ;shift it left by 4 bits
+    RLCA
+    RLCA
+    RLCA
+    LD      L,A             ;temporarily store the first nibble in L
+    CALL    HLD_READ_NIBBLE ;get the second (low) nibble
+    OR      L               ;assemble two nibbles into one byte in A
+    LD      L,A             ;put assembled byte back into L
+    ADD     A,E             ;add the byte read to E (for checksum)
+    LD      E,A
+    LD      A,L
+    RET                     ;return the byte read in A (L = char received too)  
+;
+HLD_READ_NIBBLE:
+    PUSH    HL
+    PUSH    BC
+HLD_READ_WAIT:
+    CALL    CONIN           ;Rx byte in A
+    JP      NC,HLD_READ_WAIT;carry set if byte available
+    POP     BC
+    POP     HL
+    SUB     '0'
+    CP      10
+    RET     C               ;if A<10 just return
+    SUB     7               ;else subtract 'A'-'0' (17) and add 10
+    RET
+;
 PUBLIC  _cpm_bdos_tail
 _cpm_bdos_tail:             ;tail of the cpm bdos
 ;

@@ -52,6 +52,7 @@ static FIL file;                /* File object needed for each open file */
 
 // CP/M related functions
 int8_t ya_mkcpm(char ** args);  // initialise CP/M with up to 4 drives
+int8_t ya_hload(char ** args);  // load an Intel HEX CP/M file and run it
 
 // system related functions
 int8_t ya_md(char ** args);     // memory dump
@@ -75,7 +76,8 @@ static void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt);
 
 // external functions
 
-extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);  // initialise cpm
+extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);   // initialise cpm
+extern void hexload(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);    // initialise cpm and launch Intel HEX program in TPA
 
 /*
   List of builtin commands.
@@ -90,6 +92,7 @@ struct Builtin {
 struct Builtin builtins[] = {
   // CP/M related functions
     { "cpm", &ya_mkcpm, "file.a [file.b] [file.c] [file.d] - initiate CP/M with up to 4 drive files"},
+    { "hload", &ya_hload, "- load an Intel HEX CP/M file and run it"},
 
 // fat related functions
     { "frag", &ya_frag, "[file] - check for file fragmentation"},
@@ -153,6 +156,24 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
 }
 
 
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "hload".
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_hload(char ** args)   /* load an Intel HEX CP/M file and run it */
+{
+    (void *)args;
+
+    fprintf(stdout,"Waiting for Intel HEX CP/M command on console\n");
+    cpu_delay_ms(1);            // output message before queue is flushed
+
+    hexload();
+
+    return 1;
+}
+
+
 /*
   system related functions
  */
@@ -194,7 +215,7 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(stdout,"RC2014 - CP/M IDE Monitor v2.2\n");
+    fprintf(stdout,"RC2014 - CP/M IDE Monitor v2.3\n");
     fprintf(stdout,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {

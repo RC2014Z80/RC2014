@@ -272,6 +272,7 @@ Again, here is a view of what success looks like.
 
 ### CP/M Functions
 - `cpm file.a [file.b] [file.c] [file.d]` - initialise CP/M with up to 4 drive files
+- `hload` - load an Intel HEX CP/M file and run it
 
 ### File System Functions
 - `frag [file]` - check for file fragmentation

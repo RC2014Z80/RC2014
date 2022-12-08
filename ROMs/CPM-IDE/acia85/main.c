@@ -57,6 +57,7 @@ static FIL file;                /* File object needed for each open file */
 
 // CP/M related functions
 int8_t ya_mkcpm(char ** args);  // initialise CP/M with up to 4 drives
+int8_t ya_hload(char ** args);  // load an Intel HEX CP/M file and run it
 
 // system related functions
 int8_t ya_md(char ** args);     // memory dump
@@ -81,6 +82,7 @@ static void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt);
 // external functions
 
 extern void cpm_boot(void);     // initialise cpm
+extern void hexload(void);      // initialise cpm and launch Intel HEX program in TPA
 
 /*
   List of builtin commands.
@@ -95,6 +97,7 @@ struct Builtin {
 struct Builtin builtins[] = {
   // CP/M related functions
     { "cpm", &ya_mkcpm, "file.a [file.b] [file.c] [file.d] - initiate CP/M with up to 4 drive files"},
+    { "hload", &ya_hload, "- load an Intel HEX CP/M file and run it"},
 
 // fat related functions
     { "frag", &ya_frag, "[file] - check for file fragmentation"},
@@ -153,6 +156,23 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
         fprintf(stdout,"Initialised CP/M\n");
         cpm_boot();
     }
+    return 1;
+}
+
+
+/**
+   @brief Builtin command:
+   @param args List of args.  args[0] is "hload".
+   @return Always returns 1, to continue executing.
+ */
+int8_t ya_hload(char ** args)   /* load an Intel HEX CP/M file and run it */
+{
+    (void *)args;
+
+    fprintf(stdout,"Waiting for Intel HEX CP/M command on console\n");
+
+    hexload();
+
     return 1;
 }
 

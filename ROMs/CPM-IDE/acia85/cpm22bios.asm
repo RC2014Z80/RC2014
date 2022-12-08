@@ -128,10 +128,11 @@ wboote:
 
 EXTERN    pboot     ;location of preamble code to load CCP/BDOS
 
-EXTERN    asm_shadow_copy       ;RAM copy function
-EXTERN    asm_shadow_relocate   ;relocate the RAM copy function
+EXTERN    asm_shadow_copy           ;RAM copy function
+EXTERN    asm_shadow_relocate       ;relocate the RAM copy function
 
-PUBLIC    qboot     ;arrival from preamble code
+PUBLIC    qboot                     ;arrival from preamble code
+PUBLIC    diskchk_jp_addr           ;address of jp to bios diskchk
 
 PUBLIC _cpm_boot
 
@@ -228,8 +229,10 @@ rboot:
 
     ld      a,(_cpm_cdisk)  ;get current disk number
     cp      _cpm_disks      ;see if valid disk number
-    jr      C,diskchk       ;disk number valid, check existence via valid LBA
 
+diskchk_jp_addr:            ;optional SMC, to void the LBA check and directly execute TPA
+
+    jp      C,diskchk       ;disk number valid, check existence via valid LBA
     xor     a               ;invalid disk, change to disk 0 (A:)
     ld      (_cpm_cdisk),a  ;reset current disk number to disk 0 (A:)
 
