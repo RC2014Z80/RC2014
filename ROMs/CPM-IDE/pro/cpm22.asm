@@ -2513,7 +2513,7 @@ MOVEDIR:
 LDI_128:                    ;(HL++)->(DE++), 128 times.
     LD      BC,LDI_32       ;do the LDI 32 times,
     PUSH    BC              ;a total of 4 times,
-    PUSH    BC              ;for a total of 128 times.
+    PUSH    BC              ;for a total of 128 bytes.
     PUSH    BC
 ;
 LDI_32:                     ;(HL++)->(DE++), 32 times.

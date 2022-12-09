@@ -2513,107 +2513,47 @@ MOVEDIR:
 LDI_128:                    ;(HL++)->(DE++), 128 times.
     LD      BC,LDI_32       ;do the LDI 32 times,
     PUSH    BC              ;a total of 4 times,
-    PUSH    BC              ;for a total of 128 times.
+    PUSH    BC              ;for a total of 128 bytes.
     PUSH    BC
 ;
 LDI_32:                     ;(HL++)->(DE++), 32 times.
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
-    LD      A,(HL+)
-    LD      (DE+),A
-;
+    CALL    LDI_16
 LDI_16:                     ;(HL++)->(DE++), 16 times.
     LD      A,(HL+)
     LD      (DE+),A
 LDI_15:                     ;(HL++)->(DE++), 15 times.
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
 LDI_8:                      ;(HL++)->(DE++), 8 times.
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
 LDI_3:                      ;(HL++)->(DE++), 3 times.
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     LD      A,(HL+)
     LD      (DE+),A
-;
     RET
 ;
 ;   Check (FILEPOS) and set the zero flag if it equals 0ffffh.
