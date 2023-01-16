@@ -12,11 +12,11 @@ In addition to other CP/M implementations, CP/M-IDE includes performance optimis
 
 The RC2014 Pro build supports the standard SIO/2 Serial Module and Compact Flash Module, in the usual configuration. The ACIA and SIO/2 builds require the IDE Hard Drive Module in addition to a RC2014 Pro. The RC2014 8085 CPU build requires the ACIA Serial Module and the IDE Hard Drive Module.
 
-The serial interfaces (on the ACIA Serial Module and SIO/2 Serial Module, and the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
+In the ACIA, ACIA85, and ACIA85CF builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
-In the ACIA and 8085 builds, the receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the RC2014 PRO and SIO builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-In the RC2014 Pro and SIO/2 builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
+The serial interfaces (on the ACIA Serial Module, on the SIO/2 Serial Module, and on the 8085 CPU Module SOD) are configured for 115200 baud 8n2.
 
 The IDE Hard Drive Module interface driver is optimised for performance and can achieve about 110kB/s throughput using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern IDE drives have their own error management and if there are errors from the IDE interface, then there are bigger issues at stake. The CF Module can achieve up to 200kB/s throughput at FATFS level, and seems to provide best performance using SD Cards in SD to CF Card Adapters. Within CP/M performance is approximately half the FATFS performance, because the CP/M deblocking algorithm requires a double buffer copy process.
 
@@ -77,11 +77,19 @@ As noted above, the complete RC2014 Pro system must include:
 6. [SIO/2 Dual Serial Module](https://rc2014.co.uk/modules/dual-serial-module-sio2/).
 7. [Backplane 8](https://rc2014.co.uk/modules/backplane-8/) or [Backplane Pro](https://rc2014.co.uk/backplanes/backplane-pro/).
 
-If your preference is to use a CF Card, or SD Card in a SD-CF Adapter, then Dylan Hall's CF Card PPIDE Module can be exchanged for item 1. This Module provides seamless and reliable CF Card (or SD Card) support, but doesn't provide a standard 40 pin or 44 pin IDE connector.
+If your preference is to use a CF Card, or SD Card in a SD-CF Adapter, then Dylan Hall's CF Card PPIDE Module can be exchanged for item 1. This Module provides seamless and reliable (CF Specification compliant) CF Card (or also SD Card Adapter) support, but doesn't provide a standard 40 pin or 44 pin IDE connector.
 
 - [CF Card PPIDE Module](https://oshwlab.com/dylan_3481/cf-ppide-for-rc2014_copy).
 
-To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3.
+It is possible to use the standard RC2014 CF Module with either the RC2014 Pro, or with the 8085 CPU Module CF Build.
+
+- [CF Module](https://rc2014.co.uk/modules/compact-flash-module/).
+
+But for greater reliability the CF Module v2.0 by Tadeusz Pycio provides a more robust (CF Specification compliant) solution that will work with large Compact Flash cards (e.g. 1GB and greater), and with SD to CF Card Adapters.
+
+- [CF Module v2.0](https://www-vtsys-pl.translate.goog/interface-compact-flash/?_x_tr_sch=http&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp).
+
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and a ACIA Serial Module installed.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
@@ -261,7 +269,7 @@ Again, here is a view of what success looks like.
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev7.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev7.png"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev8.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev8.png"/></a></td>
 </tr>
 <tr>
 <th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE SIO - Shell CLI<center></th>
@@ -308,8 +316,7 @@ Of course other development workflows are possible, as is simply mounting the [Z
 
 ## Building Software from Source
 
-The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, from within the relevant directory.
-For the RC2014 Pro build the `sio` subtype should be used.
+The z88dk command line to build the CP/M-IDE for Z80 CPU is below. Either the `acia` or `sio` subtype should be selected, from within the relevant directory. For the RC2014 Pro build the `sio` subtype should be used.
 
 ```bash
 zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-pro-cpm22 -create-app
@@ -318,10 +325,12 @@ zcc +rc2014 -subtype=acia -SO3 --opt-code-speed  -m -llib/rc2014/ff_ro --max-all
 zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 ```
 
-The z88dk command line to build the CP/M-IDE for the 8085 CPU Module is below. The `acia85` subtype should be selected, from within the relevant directory.
+The z88dk command line to build the CP/M-IDE for the 8085 CPU Module with either IDE Hard Drive Module or CF Module is below. The `acia85` subtype should be selected, from within the relevant directory.
 
 ``` bash
 zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85-cpm22 -create-app
+
+zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-acia85cf-cpm22 -create-app
 ```
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) library files into the z88dk RC2014 newlib library directory.
