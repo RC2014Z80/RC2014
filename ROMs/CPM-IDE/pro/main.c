@@ -228,7 +228,7 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(output,"RC2014 - CP/M IDE Monitor v2.3\n");
+    fprintf(output,"RC2014 - CP/M IDE Shell v2.3\n");
     fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -639,8 +639,8 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 Pro - CP/M-IDE\nfeilipu 2022\n\n> :?");
-    fprintf(ttyout, "\n\nRC2014 Pro - CP/M-IDE\nfeilipu 2022\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 Pro - CP/M-IDE\nfeilipu 2023\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 Pro - CP/M-IDE\nfeilipu 2023\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
     if ( fs && buffer)
