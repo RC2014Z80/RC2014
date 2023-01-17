@@ -125,6 +125,12 @@ def encode_hex( filename, **kwargs ):
 			_sum += abyte[0]
 			abyte = source.read(1)
 
+		# Padding to a multiple of 128 bytes with NULL
+		while (_l%128)!=0 :
+			_r.append( '%02X' % 0x00 )
+			_l += 1
+			_sum += 0x00
+
 		_r.append( ">" )
 		_r.append( '%02X' %  (_l%0x100) )
 		_r.append( '%02X' %  (_sum%0x100) )
