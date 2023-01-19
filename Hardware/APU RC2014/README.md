@@ -76,7 +76,7 @@ When complete the __WAIT__ bridge looks like this.
 
 ## Active Devices
 
-The [Pololu U3V12F12](https://www.pololu.com/product/2117) boost converter PCB can be laid directly onto the APU Module PCB. The mounting pins form a connection between the two PCBs. There is no need to "stand-off" the boost converter PCB from the APU Module PCB. The boost converter can only be installed one way. When the pins have been soldered on both sides, they can be trimmed short back and front.
+The [Pololu U3V16F12](https://www.pololu.com/product/4945) or (obsolete [Pololu U3V12F12](https://www.pololu.com/product/2117)) boost converter PCB can be laid directly onto the APU Module PCB. The mounting pins form a connection between the two PCBs. There is no need to "stand-off" the boost converter PCB from the APU Module PCB. The boost converter can only be installed one way. When the pins have been soldered on both sides, they can be trimmed short back and front.
 
 ![Pololu U3V12F12](https://github.com/RC2014Z80/RC2014/blob/master/Hardware/APU%20RC2014/0J4328.600x480.jpg)
 
