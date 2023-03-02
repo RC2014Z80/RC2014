@@ -25,7 +25,7 @@
 
 // PRAGMA DEFINES
 #pragma output CRT_ORG_VECTOR_TABLE = 0 // we place our own IM2 Vector Table
-#pragma output REGISTER_SP = 0xDA00     // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDB00     // below the CP/M CCP
 #pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
