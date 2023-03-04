@@ -175,7 +175,7 @@ Full instructions to use the Z88DK are available from the [Wiki](https://www.z88
 
 ## Normal usage
 
-Once a program has been uploaded it will be automatically started by the `hexload` program. It can be run as often as needed by typing `print usr(0)`in lowercase or uppercase `PRINT USR(0)`.
+Once a program has been uploaded it will be automatically started by the `hexload` program. It can be run as often as needed by typing `print usr(0)`in lowercase or uppercase `PRINT USR(0)`. Also the short form command `? usr(0)` or `? USR(0)` works equally well.
 
 To upload a new program version type `run` or `RUN` and `hexload` will restart, and will wait for your new Intel Hex program to be uploaded from the serial port.
 
