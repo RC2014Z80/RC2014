@@ -41,3 +41,5 @@ K - Microsoft BASIC, for 56k RAM, 68B50 ACIA, with origin 0x0000
 
 9 - Small Computer Monitor for any ROM, any RAM, any UART
 
+
+Note that files with "plus" appended are for the RC2014 Micro Plus and RC2014 Classic II Plus which use a 39SF010 (128k ROM) 
