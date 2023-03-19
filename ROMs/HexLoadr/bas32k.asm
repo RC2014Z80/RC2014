@@ -2001,7 +2001,7 @@ OPRND:  XOR     A               ; Get operand routine
         CP      'B'             ; Binary number indicated? [Searle function added]
         JP      Z,BINTFP        ; Convert Bin to FPREG
         LD      E,SN            ; If neither then a ?SN Error
-        JP      Z,ERROR         ; 
+        JP      Z,ERROR         ;
 NOTAMP: SUB     ZSGN            ; Is it a function?
         JP      NC,FNOFST       ; Yes - Evaluate function
 EVLPAR: CALL    OPNPAR          ; Evaluate expression in "()"
@@ -2246,7 +2246,7 @@ NSCFOR: XOR     A               ; Simple variable
         LD      HL,(PROGND)     ; Start of variables address
 
 FNDVAR: LD      A,H             ; End of variable list table?
-        SUB     D               ; Compare with D        
+        SUB     D               ; Compare with D
         JP      NZ,$+5          ; Different - Exit
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
@@ -2760,7 +2760,7 @@ ARRLP:  LD      DE,(ARREND)     ; End of string arrays
         SUB     E               ; Compare with E
         JP      Z,SCNEND        ; Yes - Move string if found
         CALL    LOADFP          ; Get array name to BCDE
-        LD      A,E             ; Get type of array     
+        LD      A,E             ; Get type of array
         PUSH    HL              ; Save address of num of dim'ns
         ADD     HL,BC           ; Start of next array
         OR      A               ; Test type of array
@@ -2813,15 +2813,15 @@ STRADD: LD      A,(HL)          ; Get string length
         LD      HL,BC           ; Restore variable pointer
         RET     NC              ; Outside string area - Ignore
         POP     BC              ; Get return , Throw 2 away
-        POP     AF              ; 
-        POP     AF              ; 
+        POP     AF              ;
+        POP     AF              ;
         PUSH    HL              ; Save variable pointer
         PUSH    DE              ; Save address of current
         PUSH    BC              ; Put back return address
         RET                     ; Go to it
 
 SCNEND: POP     DE              ; Addresses of strings
-        POP     HL              ; 
+        POP     HL              ;
         LD      A,L             ; HL = 0 if no more to do
         OR      H
         RET     Z               ; No more to do - Return
@@ -2850,7 +2850,7 @@ SCNEND: POP     DE              ; Addresses of strings
         JP      GARBLP          ; Look for more strings
 
 CONCAT: PUSH    BC              ; Save prec' opr & code string
-        PUSH    HL              ; 
+        PUSH    HL              ;
         LD      HL,(FPREG)      ; Get first string
         EX      (SP),HL         ; Save first string
         CALL    OPRND           ; Get second string
@@ -3219,8 +3219,7 @@ NORMAL: DEC     B               ; Count bits
         ADD     HL,HL           ; Shift HL left
         RL      D               ; Get NMSB, shift left with last bit
         RL      C               ; Get MSB, shift left with last bit
-PNORM:
-        JP      P,NORMAL        ; Not done - Keep going
+PNORM:  JP      P,NORMAL        ; Not done - Keep going
         LD      A,B             ; Number of bits shifted
         LD      E,H             ; Save HL in EB
         LD      B,L
@@ -3361,7 +3360,7 @@ FPMULT: CALL    TSTSGN          ; Test sign of FPREG
         PUSH    HL              ; Save for return
         LD      HL,MULT8        ; Address of 8 bit multiply
         PUSH    HL              ; Save for NMSB,MSB
-        PUSH    HL              ; 
+        PUSH    HL              ;
         LD      HL,FPREG        ; Point to number
 MULT8:  LD      A,(HL)          ; Get LSB of number
         INC     HL              ; Point to NMSB
@@ -3567,12 +3566,9 @@ PHLTFP: LD      DE,FPREG        ; Number at HL to FPREG
         LDI
         RET
 
-LOADFP: LD      E,(HL)          ; Get LSB of number
-        INC     HL
-        LD      D,(HL)          ; Get NMSB of number
-        INC     HL
-        LD      C,(HL)          ; Get MSB of number
-        INC     HL
+LOADFP: LD      E,(HL+)         ; Get LSB of number, increment
+        LD      D,(HL+)         ; Get NMSB of number, increment
+        LD      C,(HL+)         ; Get MSB of number, increment
         LD      B,(HL)          ; Get exponent of number
 INCHL:  INC     HL              ; Used for conditional "INC HL"
         RET
@@ -4263,13 +4259,17 @@ DOKE:   CALL    GETNUM          ; Get a number
         ; Load Intel HEX into program memory.
         ; uses  : af, bc, de, hl
         ; (C) feilipu
-        
+
 HLOAD:
-        ret NZ                  ; Return if any more on line
+        ret NZ                  ; return if any more on line
         call HLD_WAIT_COLON     ; wait for first colon and address data
+        ld hl,(ARREND)          ; start of free memory
+        or a                    ; clear carry flag
+        sbc hl,de
+        jp NC,OMERR             ; if address is below array end, out of memory
         dec de                  ; go one Byte lower
-        ld hl,(LSTRAM)          ; get last ram address       
-        xor a                   ; clear carry flag
+        ld hl,(LSTRAM)          ; get last ram address
+        or a                    ; clear carry flag
         sbc hl,de
         jp C,HLD_HIGH_RAM       ; if last ram lower leave it, otherwise
         ld (LSTRAM),de          ; store new last ram location
@@ -4280,7 +4280,7 @@ HLD_HIGH_RAM:
         inc de
         ld (USR+1),de           ; store first address as "USR(x)" location
         jp HLD_READ_DATA        ; now get the first data
-        
+
 HLD_WAIT_COLON:
         rst 10h                 ; Rx byte in A
         cp ':'                  ; wait for ':'
@@ -4303,8 +4303,7 @@ HLD_READ:
         call HLD_WAIT_COLON     ; wait for the next colon and address data
 HLD_READ_DATA:
         call HLD_READ_BYTE
-        ld (de),a               ; write the byte at the RAM address
-        inc de
+        ld (de+),a              ; write the byte at the RAM address, increment
         djnz HLD_READ_DATA      ; if b non zero, loop to get more data
 
 HLD_READ_CHKSUM:
@@ -4334,7 +4333,7 @@ HLD_READ_BYTE:                  ; returns byte in A, checksum in C
         add a,c                 ; add the byte read to C (for checksum)
         ld c,a
         ld a,l
-        ret                     ; return the byte read in A (L = char received too)  
+        ret                     ; return the byte read in A (L = char received too)
 
 HLD_READ_NIBBLE:
         rst 10h                 ; Rx byte in A
@@ -4436,10 +4435,10 @@ GETHEX: INC     DE              ; Next location
 NOSUB7: CP      $10             ; > Greater than "F"?
         CCF
         RET                     ; CY set if it wasn't valid hex
-    
+
 HEXIT:  EX      DE,HL           ; Value into DE, Code string into HL
         LD      A,D             ; Load DE into AC
-        LD      C,E             ; For prep to 
+        LD      C,E             ; For prep to
         PUSH    HL
         CALL    ACPASS          ; ACPASS to set AC as integer into FPREG
         POP     HL
@@ -4465,7 +4464,7 @@ ZEROSUP:                        ; Suppress leading zeros
         RL      D
         JP      NC,ZEROSUP
         JP      BITOUT2
-BITOUT:      
+BITOUT:
         RL      E
         RL      D               ; Top bit now in carry
 BITOUT2:
@@ -4499,7 +4498,7 @@ BINIT:  SUB     '0'
         JP      NC,BINIT        ; Process if a bin character
         EX      DE,HL           ; Value into DE, Code string into HL
         LD      A,D             ; Load DE into AC
-        LD      C,E             ; For prep to 
+        LD      C,E             ; For prep to
         PUSH    HL
         CALL    ACPASS          ; ACPASS to set AC as integer into FPREG
         POP     HL
