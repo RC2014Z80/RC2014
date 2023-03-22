@@ -45,7 +45,7 @@ INCLUDE "rc2014.inc"
 ;
 
 ;------------------------------------------------------------------------------
-SECTION acia_interrupt              ; ORG $0080
+SECTION acia_interrupt              ; ORG $0070
 
 .acia_int
         push af
@@ -125,14 +125,14 @@ SECTION acia_interrupt              ; ORG $0080
         reti
 
 ;------------------------------------------------------------------------------
-; SECTION acia_rxa_chk              ; ORG $00F0
+; SECTION acia_rxa_chk              ; ORG $00D8
 ;
 ; .RXA_CHK                          ; insert directly into JumP table
 ;       ld a,(serRxBufUsed)
 ;       ret
 
 ;------------------------------------------------------------------------------
-SECTION acia_rxa                    ; ORG $00F0
+SECTION acia_rxa                    ; ORG $00D8
 
 .RXA
         ld a,(serRxBufUsed)         ; get the number of bytes in the Rx buffer
@@ -165,7 +165,7 @@ SECTION acia_rxa                    ; ORG $00F0
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
-SECTION acia_txa                    ; ORG $0120
+SECTION acia_txa                    ; ORG $0108
 
 .TXA                                ; output a character in A via ACIA
         push hl                     ; store HL so we don't clobber it
@@ -221,11 +221,45 @@ SECTION acia_txa                    ; ORG $0120
         ret
 
 ;------------------------------------------------------------------------------
-SECTION init                        ; ORG $0170
+SECTION init                        ; ORG $0150
 
 PUBLIC  INIT
 
+.MEM_ERR
+        LD L,A                      ; preserve the error byte
+        DEFB    01H                 ; skip "LD L,' '"
 .INIT
+        LD L,' '                    ; prepare a space, to indicate normal boot
+
+        LD A,SER_RESET              ; master RESET the ACIA
+        OUT (SER_CTRL_ADDR),A
+
+        LD A,SER_TDI_RTS0|SER_8N2|SER_CLK_DIV_64
+                                    ; load the default ACIA configuration
+                                    ; 8n2 at 115200 baud
+                                    ; receive interrupt disabled
+                                    ; transmit interrupt disabled
+        OUT (SER_CTRL_ADDR),A       ; output to the ACIA control byte
+
+        LD A,L                      ; get byte to transmit
+        OUT (SER_DATA_ADDR),A       ; send it
+
+        LD HL,RAMSTART              ; do a short memory sanity check
+        LD (HL),0FFH                ; set all bits
+        LD DE,RAMSTART+1
+        LD BC,WRKSPC-RAMSTART-1
+        LDIR                        ; set all bytes
+        DEC HL                      ; revert final increment
+        DEC DE
+        EX DE,HL                    ; swap load direction
+        INC (HL)                    ; increment to 0, check all bits of all bytes were set
+        JR NZ,MEM_ERR               ; if not output errored byte and do it again
+        LD BC,WRKSPC-RAMSTART-1
+        LDDR                        ; clear all bits of all bytes
+        LD A,(HL)
+        OR A                        ; check if all bits of all bytes were cleared
+        JR NZ,MEM_ERR               ; if not output errored byte and do it again
+
         LD SP,TEMPSTACK             ; set up a temporary stack
 
         LD HL,VECTOR_PROTO          ; establish Z80 RST Vector Table
@@ -244,9 +278,6 @@ PUBLIC  INIT
         XOR A                       ; zero the RXA & TXA Buffer Counts
         LD (serRxBufUsed),A
         LD (serTxBufUsed),A
-
-        LD A,SER_RESET              ; master RESET the ACIA
-        OUT (SER_CTRL_ADDR),A
 
         LD A,SER_REI|SER_TDI_RTS0|SER_8N2|SER_CLK_DIV_64
                                     ; load the default ACIA configuration

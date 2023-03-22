@@ -24,16 +24,16 @@ SECTION     vector_nmi
 ORG         $0066
 
 SECTION     acia_interrupt
-ORG         $0080
+ORG         $0070
 
 SECTION     acia_rxa
-ORG         $00F0
+ORG         $00D8
 
 SECTION     acia_txa
-ORG         $0120
+ORG         $0108
 
 SECTION     init
-ORG         $0170
+ORG         $0150
 
 SECTION     init_strings
 ORG         $01F0
