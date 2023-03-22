@@ -322,7 +322,8 @@ SECTION init_strings                ; ORG $01F0
 ; Z80 INTERRUPT VECTOR PROTOTYPE ASSIGNMENTS
 ;
 
-EXTERN  NULL_RET, NULL_INT, NULL_NMI
+EXTERN  NULL_NMI                            ; RETN
+EXTERN  UFERR                               ; User Function undefined (RSTnn) error
 
 PUBLIC  RST_00, RST_08, RST_10; RST_18
 PUBLIC  RST_20, RST_28, RST_30
@@ -333,9 +334,9 @@ DEFC    RST_00      =       INIT            ; Initialise, should never get here
 DEFC    RST_08      =       TXA             ; TX character, loop until space
 DEFC    RST_10      =       RXA             ; RX character, loop until byte
 ;       RST_18      =       RXA_CHK         ; Check receive buffer status, return # bytes available
-DEFC    RST_20      =       NULL_RET        ; RET
-DEFC    RST_28      =       NULL_RET        ; RET
-DEFC    RST_30      =       NULL_RET        ; RET
+DEFC    RST_20      =       UFERR           ; User Function undefined (RST20)
+DEFC    RST_28      =       UFERR           ; User Function undefined (RST28)
+DEFC    RST_30      =       UFERR           ; User Function undefined (RST30)
 DEFC    INT_INT     =       acia_int        ; ACIA interrupt
 DEFC    INT_NMI     =       NULL_NMI        ; RETN
 

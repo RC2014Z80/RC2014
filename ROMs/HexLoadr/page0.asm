@@ -117,15 +117,10 @@ EXTERN          INT_INT, INT_NMI
 
 SECTION         vector_null_ret
 
-PUBLIC          NULL_NMI, NULL_INT, NULL_RET
+PUBLIC          NULL_NMI
 
 .NULL_NMI
                 RETN
-.NULL_INT
-                EI
-                RETI
-.NULL_RET
-                RET
 
 ;==============================================================================
 

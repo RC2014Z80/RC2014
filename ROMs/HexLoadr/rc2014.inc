@@ -66,9 +66,9 @@ DEFC    VECTOR_SIZE         =   $24
 ;DEFC       RST_08          =    TXA         TX a character over ACIA
 ;DEFC       RST_10          =    RXA         RX a character over ACIA, block no bytes available
 ;DEFC       RST_18          =    RXA_CHK     Check ACIA status, return # bytes available
-;DEFC       RST_20          =    NULL_RET
-;DEFC       RST_28          =    NULL_RET
-;DEFC       RST_30          =    NULL_RET
+;DEFC       RST_20          =    UFERR       User Function undefined (RSTnn) error
+;DEFC       RST_28          =    UFERR       User Function undefined (RSTnn) error
+;DEFC       RST_30          =    UFERR       User Function undefined (RSTnn) error
 ;DEFC       INT_INT         =    NULL_INT
 ;DEFC       INT_NMI         =    NULL_NMI
 

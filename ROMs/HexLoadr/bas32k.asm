@@ -37,109 +37,113 @@
 
 ; GENERAL EQUATES
 
-DEFC    CTRLC   =   03H         ; Control "C"
-DEFC    CTRLG   =   07H         ; Control "G"
-DEFC    BKSP    =   08H         ; Back space
-DEFC    LF      =   0AH         ; Line feed
-DEFC    CS      =   0CH         ; Clear screen
-DEFC    CR      =   0DH         ; Carriage return
-DEFC    CTRLO   =   0FH         ; Control "O"
-DEFC    CTRLQ   =   11H         ; Control "Q"
-DEFC    CTRLR   =   12H         ; Control "R"
-DEFC    CTRLS   =   13H         ; Control "S"
-DEFC    CTRLU   =   15H         ; Control "U"
-DEFC    ESC     =   1BH         ; Escape
-DEFC    DEL     =   7FH         ; Delete
+        DEFC    CTRLC   =   03H         ; Control "C"
+        DEFC    CTRLG   =   07H         ; Control "G"
+        DEFC    BKSP    =   08H         ; Back space
+        DEFC    LF      =   0AH         ; Line feed
+        DEFC    CS      =   0CH         ; Clear screen
+        DEFC    CR      =   0DH         ; Carriage return
+        DEFC    CTRLO   =   0FH         ; Control "O"
+        DEFC    CTRLQ   =   11H         ; Control "Q"
+        DEFC    CTRLR   =   12H         ; Control "R"
+        DEFC    CTRLS   =   13H         ; Control "S"
+        DEFC    CTRLU   =   15H         ; Control "U"
+        DEFC    ESC     =   1BH         ; Escape
+        DEFC    DEL     =   7FH         ; Delete
 
 ; BASIC WORK SPACE LOCATIONS
 
-DEFC    WRKSPC  =   8200H       ; <<<< BASIC Work space ** Rx buffer & Tx buffer located from 8080H **
-DEFC    USR     =   WRKSPC+003H ; "USR (x)" jump
-DEFC    OUTSUB  =   WRKSPC+006H ; "OUT p,n"
-DEFC    OTPORT  =   WRKSPC+007H ; Port (p)
-DEFC    DIVSUP  =   WRKSPC+009H ; Division support routine
-DEFC    DIV1    =   WRKSPC+00AH ; <- Values
-DEFC    DIV2    =   WRKSPC+00EH ; <-   to
-DEFC    DIV3    =   WRKSPC+012H ; <-   be
-DEFC    DIV4    =   WRKSPC+015H ; <-inserted
-DEFC    SEED    =   WRKSPC+017H ; Random number seed
-DEFC    LSTRND  =   WRKSPC+03AH ; Last random number
-DEFC    INPSUB  =   WRKSPC+03EH ; #INP (x)" Routine
-DEFC    INPORT  =   WRKSPC+03FH ; PORT (x)
-DEFC    NULLS   =   WRKSPC+041H ; Number of nulls
-DEFC    LWIDTH  =   WRKSPC+042H ; Terminal width
-DEFC    COMMAN  =   WRKSPC+043H ; Width for commas
-DEFC    NULFLG  =   WRKSPC+044H ; Null after input byte flag
-DEFC    CTLOFG  =   WRKSPC+045H ; Control "O" flag
-DEFC    LINESC  =   WRKSPC+046H ; Lines counter
-DEFC    LINESN  =   WRKSPC+048H ; Lines number
-DEFC    CHKSUM  =   WRKSPC+04AH ; Array load/save check sum
-DEFC    NMIFLG  =   WRKSPC+04CH ; Flag for NMI break routine
-DEFC    BRKFLG  =   WRKSPC+04DH ; Break flag
-DEFC    RINPUT  =   WRKSPC+04EH ; Input reflection
-DEFC    STRSPC  =   WRKSPC+051H ; Bottom of string space
-DEFC    LINEAT  =   WRKSPC+053H ; Current line number
-DEFC    BASTXT  =   WRKSPC+055H ; Pointer to start of program
-DEFC    BUFFER  =   WRKSPC+058H ; Input buffer
-DEFC    STACK   =   WRKSPC+05DH ; Initial stack
-DEFC    CURPOS  =   WRKSPC+0A2H ; <<<< Character position on line ** Top of Loader TEMPSTACK **
-DEFC    LCRFLG  =   WRKSPC+0A3H ; Locate/Create flag
-DEFC    TYPE    =   WRKSPC+0A4H ; Data type flag
-DEFC    DATFLG  =   WRKSPC+0A5H ; Literal statement flag
-DEFC    LSTRAM  =   WRKSPC+0A6H ; Last available RAM
-DEFC    TMSTPT  =   WRKSPC+0A8H ; Temporary string pointer
-DEFC    TMSTPL  =   WRKSPC+0AAH ; Temporary string pool
-DEFC    TMPSTR  =   WRKSPC+0B6H ; Temporary string
-DEFC    STRBOT  =   WRKSPC+0BAH ; Bottom of string space
-DEFC    CUROPR  =   WRKSPC+0BCH ; Current operator in EVAL
-DEFC    LOOPST  =   WRKSPC+0BEH ; First statement of loop
-DEFC    DATLIN  =   WRKSPC+0C0H ; Line of current DATA item
-DEFC    FORFLG  =   WRKSPC+0C2H ; "FOR" loop flag
-DEFC    LSTBIN  =   WRKSPC+0C3H ; Last byte entered
-DEFC    READFG  =   WRKSPC+0C4H ; Read/Input flag
-DEFC    BRKLIN  =   WRKSPC+0C5H ; Line of break
-DEFC    NXTOPR  =   WRKSPC+0C7H ; Next operator in EVAL
-DEFC    ERRLIN  =   WRKSPC+0C9H ; Line of error
-DEFC    CONTAD  =   WRKSPC+0CBH ; Where to CONTinue
-DEFC    PROGND  =   WRKSPC+0CDH ; End of program
-DEFC    VAREND  =   WRKSPC+0CFH ; End of variables
-DEFC    ARREND  =   WRKSPC+0D1H ; End of arrays
-DEFC    NXTDAT  =   WRKSPC+0D3H ; Next data item
-DEFC    FNRGNM  =   WRKSPC+0D5H ; Name of FN argument
-DEFC    FNARG   =   WRKSPC+0D7H ; FN argument value
-DEFC    FPREG   =   WRKSPC+0DBH ; Floating point register
-DEFC    FPEXP   =   FPREG+3     ; Floating point exponent
-DEFC    SGNRES  =   WRKSPC+0DFH ; Sign of result
-DEFC    PBUFF   =   WRKSPC+0E0H ; Number print buffer
-DEFC    MULVAL  =   WRKSPC+0EDH ; Multiplier
-DEFC    PROGST  =   WRKSPC+0F0H ; Start of program text area
-DEFC    STLOOK  =   WRKSPC+154H ; Start of memory test
+        DEFC    WRKSPC  =   8200H       ; <<<< BASIC Work space ** Rx buffer & Tx buffer located from 8080H **
+        DEFC    USR     =   WRKSPC+003H ; "USR (x)" jump
+        DEFC    OUTSUB  =   WRKSPC+006H ; "OUT p,n"
+        DEFC    OTPORT  =   WRKSPC+007H ; Port (p)
+        DEFC    DIVSUP  =   WRKSPC+009H ; Division support routine
+        DEFC    DIV1    =   WRKSPC+00AH ; <- Values
+        DEFC    DIV2    =   WRKSPC+00EH ; <-   to
+        DEFC    DIV3    =   WRKSPC+012H ; <-   be
+        DEFC    DIV4    =   WRKSPC+015H ; <-inserted
+        DEFC    SEED    =   WRKSPC+017H ; Random number seed
+        DEFC    LSTRND  =   WRKSPC+03AH ; Last random number
+        DEFC    INPSUB  =   WRKSPC+03EH ; #INP (x)" Routine
+        DEFC    INPORT  =   WRKSPC+03FH ; PORT (x)
+        DEFC    NULLS   =   WRKSPC+041H ; Number of nulls
+        DEFC    LWIDTH  =   WRKSPC+042H ; Terminal width
+        DEFC    COMMAN  =   WRKSPC+043H ; Width for commas
+        DEFC    NULFLG  =   WRKSPC+044H ; Null after input byte flag
+        DEFC    CTLOFG  =   WRKSPC+045H ; Control "O" flag
+        DEFC    LINESC  =   WRKSPC+046H ; Lines counter
+        DEFC    LINESN  =   WRKSPC+048H ; Lines number
+        DEFC    CHKSUM  =   WRKSPC+04AH ; Array load/save check sum
+        DEFC    NMIFLG  =   WRKSPC+04CH ; Flag for NMI break routine
+        DEFC    BRKFLG  =   WRKSPC+04DH ; Break flag
+        DEFC    RINPUT  =   WRKSPC+04EH ; Input reflection
+        DEFC    STRSPC  =   WRKSPC+051H ; Bottom of string space
+        DEFC    LINEAT  =   WRKSPC+053H ; Current line number
+        DEFC    BASTXT  =   WRKSPC+055H ; Pointer to start of program
+        DEFC    BUFFER  =   WRKSPC+058H ; Input buffer
+        DEFC    STACK   =   WRKSPC+05DH ; Initial stack
+        DEFC    CURPOS  =   WRKSPC+0A2H ; <<<< Character position on line ** Top of Loader TEMPSTACK **
+        DEFC    LCRFLG  =   WRKSPC+0A3H ; Locate/Create flag
+        DEFC    TYPE    =   WRKSPC+0A4H ; Data type flag
+        DEFC    DATFLG  =   WRKSPC+0A5H ; Literal statement flag
+        DEFC    LSTRAM  =   WRKSPC+0A6H ; Last available RAM
+        DEFC    TMSTPT  =   WRKSPC+0A8H ; Temporary string pointer
+        DEFC    TMSTPL  =   WRKSPC+0AAH ; Temporary string pool
+        DEFC    TMPSTR  =   WRKSPC+0B6H ; Temporary string
+        DEFC    STRBOT  =   WRKSPC+0BAH ; Bottom of string space
+        DEFC    CUROPR  =   WRKSPC+0BCH ; Current operator in EVAL
+        DEFC    LOOPST  =   WRKSPC+0BEH ; First statement of loop
+        DEFC    DATLIN  =   WRKSPC+0C0H ; Line of current DATA item
+        DEFC    FORFLG  =   WRKSPC+0C2H ; "FOR" loop flag
+        DEFC    LSTBIN  =   WRKSPC+0C3H ; Last byte entered
+        DEFC    READFG  =   WRKSPC+0C4H ; Read/Input flag
+        DEFC    BRKLIN  =   WRKSPC+0C5H ; Line of break
+        DEFC    NXTOPR  =   WRKSPC+0C7H ; Next operator in EVAL
+        DEFC    ERRLIN  =   WRKSPC+0C9H ; Line of error
+        DEFC    CONTAD  =   WRKSPC+0CBH ; Where to CONTinue
+        DEFC    PROGND  =   WRKSPC+0CDH ; End of program
+        DEFC    VAREND  =   WRKSPC+0CFH ; End of variables
+        DEFC    ARREND  =   WRKSPC+0D1H ; End of arrays
+        DEFC    NXTDAT  =   WRKSPC+0D3H ; Next data item
+        DEFC    FNRGNM  =   WRKSPC+0D5H ; Name of FN argument
+        DEFC    FNARG   =   WRKSPC+0D7H ; FN argument value
+        DEFC    FPREG   =   WRKSPC+0DBH ; Floating point register
+        DEFC    FPEXP   =   FPREG+3     ; Floating point exponent
+        DEFC    SGNRES  =   WRKSPC+0DFH ; Sign of result
+        DEFC    PBUFF   =   WRKSPC+0E0H ; Number print buffer
+        DEFC    MULVAL  =   WRKSPC+0EDH ; Multiplier
+        DEFC    PROGST  =   WRKSPC+0F0H ; Start of program text area
+        DEFC    STLOOK  =   WRKSPC+154H ; Start of memory test
 
 ; BASIC ERROR CODE VALUES
 
-DEFC    NF      =   00H         ; NEXT without FOR
-DEFC    SN      =   02H         ; Syntax error
-DEFC    RG      =   04H         ; RETURN without GOSUB
-DEFC    OD      =   06H         ; Out of DATA
-DEFC    FC      =   08H         ; Function call error
-DEFC    OV      =   0AH         ; Overflow
-DEFC    OM      =   0CH         ; Out of memory
-DEFC    UL      =   0EH         ; Undefined line number
-DEFC    BS      =   10H         ; Bad subscript
-DEFC    DD      =   12H         ; Re-DIMensioned array
-DEFC    DZ      =   14H         ; Division by zero (/0)
-DEFC    ID      =   16H         ; Illegal direct
-DEFC    TM      =   18H         ; Type miss-match
-DEFC    OS      =   1AH         ; Out of string space
-DEFC    LS      =   1CH         ; String too long
-DEFC    ST      =   1EH         ; String formula too complex
-DEFC    CN      =   20H         ; Can't CONTinue
-DEFC    UF      =   22H         ; UnDEFined FN function
-DEFC    MO      =   24H         ; Missing operand
-DEFC    HX      =   26H         ; HEX error
-DEFC    BN      =   28H         ; BIN error
+        PUBLIC  UFERR           ; User Function undefined (RSTnn) error
 
-        ORG     0240H           ; <<<< Modified to allow for ACIA Tx/Rx on RST6.5
+        DEFC    NF      =   00H ; NEXT without FOR
+        DEFC    SN      =   02H ; Syntax error
+        DEFC    RG      =   04H ; RETURN without GOSUB
+        DEFC    OD      =   06H ; Out of DATA
+        DEFC    FC      =   08H ; Function call error
+        DEFC    OV      =   0AH ; Overflow
+        DEFC    OM      =   0CH ; Out of memory
+        DEFC    UL      =   0EH ; Undefined line number
+        DEFC    BS      =   10H ; Bad subscript
+        DEFC    DD      =   12H ; Re-DIMensioned array
+        DEFC    DZ      =   14H ; Division by zero (/0)
+        DEFC    ID      =   16H ; Illegal direct
+        DEFC    TM      =   18H ; Type miss-match
+        DEFC    OS      =   1AH ; Out of string space
+        DEFC    LS      =   1CH ; String too long
+        DEFC    ST      =   1EH ; String formula too complex
+        DEFC    CN      =   20H ; Can't CONTinue
+        DEFC    UF      =   22H ; UnDEFined user function FN
+        DEFC    MO      =   24H ; Missing operand
+        DEFC    HX      =   26H ; HEX error
+        DEFC    BN      =   28H ; BIN error
+
+; BASIC CODE COMMENCES
+
+        ORG     0240H           ; <<<< Modified to allow for ACIA Tx/Rx on RST_38 (INT)
 
 COLD:   JP      CSTART          ; Jump in for cold start (0x0240)
 WARM:   JP      WARMST          ; Jump in for warm start (0x0243)
@@ -205,13 +209,13 @@ SETTOP: DEC     HL              ; Back one byte
         LD      A,L             ; Get L
         SUB     E               ; Compare with E
         JP      C,MSIZE         ; Ask again if not enough RAM
-        LD      DE,0-50         ; 50 Bytes string space
+        LD      DE,-50          ; 50 Bytes string space
         LD      (LSTRAM),HL     ; Save last available RAM
         ADD     HL,DE           ; Allocate string space
         LD      (STRSPC),HL     ; Save string space
         CALL    CLRPTR          ; Clear program area
         LD      HL,(STRSPC)     ; Get end of memory
-        LD      DE,0-17         ; Offset for free bytes
+        LD      DE,-17          ; Offset for free bytes
         ADD     HL,DE           ; Adjust HL
         LD      DE,PROGST       ; Start of program text
         LD      A,L             ; Get LSB
@@ -394,33 +398,33 @@ WORDTB: DEFW    PEND
 
 ; RESERVED WORD TOKEN VALUES
 
-DEFC    ZEND    =   080H        ; END
-DEFC    ZFOR    =   081H        ; FOR
-DEFC    ZDATA   =   083H        ; DATA
-DEFC    ZGOTO   =   088H        ; GOTO
-DEFC    ZGOSUB  =   08CH        ; GOSUB
-DEFC    ZREM    =   08EH        ; REM
-DEFC    ZPRINT  =   09CH        ; PRINT
-DEFC    ZNEW    =   0A1H        ; NEW
+        DEFC    ZEND    =   080H        ; END
+        DEFC    ZFOR    =   081H        ; FOR
+        DEFC    ZDATA   =   083H        ; DATA
+        DEFC    ZGOTO   =   088H        ; GOTO
+        DEFC    ZGOSUB  =   08CH        ; GOSUB
+        DEFC    ZREM    =   08EH        ; REM
+        DEFC    ZPRINT  =   09CH        ; PRINT
+        DEFC    ZNEW    =   0A1H        ; NEW
 
-DEFC    ZTAB    =   0A2H        ; TAB
-DEFC    ZTO     =   0A3H        ; TO
-DEFC    ZFN     =   0A4H        ; FN
-DEFC    ZSPC    =   0A5H        ; SPC
-DEFC    ZTHEN   =   0A6H        ; THEN
-DEFC    ZNOT    =   0A7H        ; NOT
-DEFC    ZSTEP   =   0A8H        ; STEP
+        DEFC    ZTAB    =   0A2H        ; TAB
+        DEFC    ZTO     =   0A3H        ; TO
+        DEFC    ZFN     =   0A4H        ; FN
+        DEFC    ZSPC    =   0A5H        ; SPC
+        DEFC    ZTHEN   =   0A6H        ; THEN
+        DEFC    ZNOT    =   0A7H        ; NOT
+        DEFC    ZSTEP   =   0A8H        ; STEP
 
-DEFC    ZPLUS   =   0A9H        ; +
-DEFC    ZMINUS  =   0AAH        ; -
-DEFC    ZTIMES  =   0ABH        ; *
-DEFC    ZDIV    =   0ACH        ; /
-DEFC    ZOR     =   0AFH        ; OR
-DEFC    ZGTR    =   0B0H        ; >
-DEFC    ZEQUAL  =   0B1H        ; =
-DEFC    ZLTH    =   0B2H        ; <
-DEFC    ZSGN    =   0B3H        ; SGN
-DEFC    ZLEFT   =   0CBH        ; LEFT$
+        DEFC    ZPLUS   =   0A9H        ; +
+        DEFC    ZMINUS  =   0AAH        ; -
+        DEFC    ZTIMES  =   0ABH        ; *
+        DEFC    ZDIV    =   0ACH        ; /
+        DEFC    ZOR     =   0AFH        ; OR
+        DEFC    ZGTR    =   0B0H        ; >
+        DEFC    ZEQUAL  =   0B1H        ; =
+        DEFC    ZLTH    =   0B2H        ; <
+        DEFC    ZSGN    =   0B3H        ; SGN
+        DEFC    ZLEFT   =   0CBH        ; LEFT$
 
 ; ARITHMETIC PRECEDENCE TABLE
 
@@ -528,7 +532,7 @@ INITBE:
 
 ERRMSG: DEFB    " Error",0
 INMSG:  DEFB    " in ",0
-DEFC    ZERBYT  =   $-1         ; A zero byte
+        DEFC    ZERBYT  =   $-1 ; A zero byte
 OKMSG:  DEFB    "Ok",CR,LF,0,0
 BRKMSG: DEFB    "Break",0
 
@@ -2490,7 +2494,7 @@ FRE:    LD      HL,(ARREND)     ; Start of free memory
         LD      HL,(STRBOT)     ; Bottom of string space
 FRENUM: LD      A,L             ; Get LSB of end
         SUB     E               ; Subtract LSB of beginning
-        LD      C,A             ; Save difference if C
+        LD      C,A             ; Save difference in C
         LD      A,H             ; Get MSB of end
         SBC     A,D             ; Subtract MSB of beginning
 ACPASS: LD      B,C             ; Return integer AC
@@ -4519,5 +4523,5 @@ CHKBIN: INC     DE
 BINERR: LD      E,BN            ; ?BIN Error
         JP      ERROR
 
-.end
+END:
 
