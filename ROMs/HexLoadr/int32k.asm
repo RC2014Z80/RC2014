@@ -165,7 +165,7 @@ SECTION acia_rxa                    ; ORG $00D8
         ret                         ; char ready in A
 
 ;------------------------------------------------------------------------------
-SECTION acia_txa                    ; ORG $0108
+SECTION acia_txa                    ; ORG $0100
 
 .TXA                                ; output a character in A via ACIA
         push hl                     ; store HL so we don't clobber it
@@ -221,7 +221,7 @@ SECTION acia_txa                    ; ORG $0108
         ret
 
 ;------------------------------------------------------------------------------
-SECTION init                        ; ORG $0150
+SECTION init                        ; ORG $0148
 
 PUBLIC  INIT
 
@@ -244,6 +244,8 @@ PUBLIC  INIT
         LD A,L                      ; get byte to transmit
         OUT (SER_DATA_ADDR),A       ; send it
 
+        LD A,(basicStarted)         ; save BASIC STARTED flag
+
         LD HL,RAMSTART              ; do a short memory sanity check
         LD (HL),0FFH                ; set all bits
         LD DE,RAMSTART+1
@@ -256,6 +258,9 @@ PUBLIC  INIT
         JR NZ,MEM_ERR               ; if not output errored byte and do it again
         LD BC,WRKSPC-RAMSTART-1
         LDDR                        ; clear all bits of all bytes
+
+        LD (basicStarted),A         ; restore BASIC STARTED flag
+
         LD A,(HL)
         OR A                        ; check if all bits of all bytes were cleared
         JR NZ,MEM_ERR               ; if not output errored byte and do it again
