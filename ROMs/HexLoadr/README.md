@@ -12,7 +12,7 @@ The goal of this extension to standard MS Basic is to load an arbitrary program 
 
 ## Start up debugging
 
-On initial power up, or on `RESET`, there is a `BEL` (`0x07`) character output from the serial port. If you have a terminal supporting `BEL` you will hear it. Otherwise check that `0x07` is being transmited by looking at the characters received. If you do not hear or see `BEL` then it is likely that your terminal is not properly configured, or that the Z80 Module, ACIA Serial Module, or ROM Module has a fault.
+On initial power up, or on `RESET`, there is a `BEL` (`0x07`) character output from the serial port. If you have a terminal supporting `BEL` you will hear it. Otherwise check that `0x07` is being transmitted by looking at the characters received. If you do not hear or see `BEL` then it is likely that your terminal is not properly configured, or that the Z80 Module, ACIA Serial Module, or ROM Module has a fault.
 
 Immediately following a RAM Module sanity check will ensure that the serial port can be fully initialised, and then BASIC loaded. If the RAM Module sanity check fails a character will be continually output, which can be used to infer what is causing the problem. Seeing either `0xFF` or `0x00` would infer that there is no RAM in the required location. Other values infer that there is a problem with the address lines or data lines.
 
