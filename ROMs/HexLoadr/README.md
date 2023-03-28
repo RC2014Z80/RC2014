@@ -1,4 +1,4 @@
-# RC2014 MS BASIC v4.7 including `HLOAD`
+# RC2014 MS BASIC v4.7, (C) 1978 Microsoft
 
 This ROM works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic.
 
@@ -6,9 +6,17 @@ __NOTE__ The `HexLoadr` Intel HEX program loader has been integrated inside MS B
 
 ACIA 6850 interrupt driven serial I/O to run modified NASCOM Basic 4.7. The receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Receive hardware (RTS) flow control is provided. The transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission. Use 115200 baud with 8n2.
 
-Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM JumP Table, starting at `0x8000`.
+Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM JumP Table, starting at `0x8000`. This allows you to upload Assembly or compiled C programs, and then run them as described below.
 
-This allows you to upload Assembly or compiled C programs, and then run them as described below.
+The goal of this extension to standard MS Basic is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
+
+## Start up debugging
+
+On initial power up, or on `RESET`, there is a `BEL` (`0x07`) character output from the serial port. If you have a terminal supporting `BEL` you will hear it. Otherwise check that `0x07` is being transmited by looking at the characters received. If you do not hear or see `BEL` then it is likely that your terminal is not properly configured, or that the Z80 Module, ACIA Serial Module, or ROM Module has a fault.
+
+Immediately following a RAM Module sanity check will ensure that the serial port can be fully initialised, and then BASIC loaded. If the RAM Module sanity check fails a character will be continually output, which can be used to infer what is causing the problem. Seeing either `0xFF` or `0x00` would infer that there is no RAM in the required location. Other values infer that there is a problem with the address lines or data lines.
+
+Otherwise, by entering `C` or `W` followed by return on your keyboard, you should see this start up message on your terminal the BASIC prompt `Ok`.
 
 ```bash
 RC2014 - MS Basic Loader
@@ -25,30 +33,21 @@ Ok
 
 ```
 
-The goal of this extension to standard MS Basic is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
+# Assembly (or compiled C) Program Usage
 
-There are are several stages to this process.
+1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler, or compile a C program using z88dk. For the RC2014 32kB suitable origins commence from `0x8400`, and the default origin for z88dk RC2014 is `0x9000`.
 
-1. At the Basic interpreter type `HLOAD`, then the command will initiate and look for your program's Intel HEX formatted information on the serial interface.
-2. Once the final line of the HEX code is read into memory, `HLOAD` will return to NASCOM Basic with `ok`.
-3. Start the new arbitrary program from Basic by entering the`USR(x)` command.
+2. At the Basic interpreter type `HLOAD`, then the command will initiate and look for your program's Intel HEX formatted information on the serial interface.
+
+3. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1, using the Linux `cat` utility or similar. If desired the python `slowprint.py` program can also be used for this purpose. `python slowprint.py > /dev/ttyUSB0 < myprogram.hex` or `cat > /dev/ttyUSB0 < myprogram.hex`. The RC2014 interface can absorb full rate uploads, so using `slowprint.py` is an unnecessary precaution.
+
+4. Once the final line of the HEX code is read into memory, `HLOAD` will return to NASCOM Basic with `ok`.
+
+5. Start your program by typing `PRINT USR(0)`, or `? USR(0)`, or other variant if you have an input parameter to pass to your program.
 
 The `HLOAD` program can be exited without uploading a valid file by typing `:` followed by `CR CR CR CR CR CR`, or any other character.
 
 The top of Basic memory can be readjusted by using the `RESET` function, when required. `RESET` is functionally equivalent to a cold start.
-
-## RST locations
-
-For convenience, because we can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx routines are reachable from your assembly program by calling the `RST` instructions from your program.
-
-* Tx: `RST 08` expects a byte to transmit in the `a` register.
-* Rx: `RST 10` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
-* Rx Check: `RST 18` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
-* Unused: `RST 20`, `RST 28`, `RST 30` are available to the user.
-* INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
-* NMI: `NMI` is unused and is available to the user.
-
-All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. By default, if not defined, `RST nn` targets return a "?UF Error" code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
 
 ## USR Jump Address & Parameter Access
 
@@ -74,21 +73,21 @@ ABPASS          .EQU    $12CC   ; Function ABPASS to put output into AB register
                 JP      ABPASS  ; return the 16 bit value to USR(x). Note JP not CALL
 ```
 
-# Program Usage
+## RST locations
 
-1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler, or compile a C program using z88dk. For the RC2014 32kB, suitable origins commence from `0x8400`, and the default z88dk origin for RC2014 is `0x9000`.
+For convenience, because we can't easily change the ROM code interrupt routines this ROM provides for the RC2014, the ACIA serial Tx and Rx routines are reachable from your assembly program by calling the `RST` instructions from your program.
 
-2. Give the `HLOAD` command within Basic.
+* Tx: `RST 08` expects a byte to transmit in the `a` register.
+* Rx: `RST 10` returns a received byte in the `a` register, and will block (loop) until it has a byte to return.
+* Rx Check: `RST 18` will immediately return the number of bytes in the Rx buffer (0 if buffer empty) in the `a` register.
+* Unused: `RST 20`, `RST 28`, `RST 30` are available to the user.
+* INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
+* NMI: `NMI` is unused and is available to the user.
 
-3. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1, using the Linux `cat` utility or similar. If desired the python `slowprint.py` program can also be used for this purpose. `python slowprint.py > /dev/ttyUSB0 < myprogram.hex` or `cat > /dev/ttyUSB0 < myprogram.hex`. The RC2014 interface can absorb full rate uploads, so using `slowprint.py` is an unnecessary precaution.
-
-4. Start your program by typing `PRINT USR(0)`, or `? USR(0)`, or other variant if you have an input parameter to pass to your program.
-
-5. Profit.
-
+All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. Check the source to see the address of each `RST xx`. By default, if not defined, `RST nn` targets return a "?UF Error" code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
 ## Notes
 
-Note that your C or assembly program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used.
+Note that your C or assembly program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent Basic from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USR(x)` jump.
 
 Any Basic programs loaded will also remain in place during a Warm Reset.
 
