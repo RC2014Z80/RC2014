@@ -131,6 +131,7 @@ DEFC    SER_RDRF        =   $01    ; Receive Data Register Full
 
 DEFC    CTRLC           =    03H     ; Control "C"
 DEFC    CTRLG           =    07H     ; Control "G"
+DEFC    BEL             =    07H     ; Bell
 DEFC    BKSP            =    08H     ; Back space
 DEFC    LF              =    0AH     ; Line feed
 DEFC    CS              =    0CH     ; Clear screen

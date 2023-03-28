@@ -229,7 +229,7 @@ PUBLIC  INIT
         LD L,A                      ; preserve the error byte
         DEFB 01H                    ; skip "LD L,BEL"
 .INIT
-        LD L,07H                    ; prepare a BEL, to indicate normal boot
+        LD L,BEL                    ; prepare a BEL, to indicate normal boot
 
         LD A,SER_RESET              ; master RESET the ACIA
         OUT (SER_CTRL_ADDR),A
