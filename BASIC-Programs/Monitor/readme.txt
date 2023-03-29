@@ -27,7 +27,7 @@ BIN$(nn) - convert a SIGNED integer (-32768 to +32767) to a string containing th
 &Bnn - interpret the value after the &B as a BINARY value (signed 16 bit)
 
 
-Functions for a BASIC Monitor
+Functions for a BASIC Monitor (Borrowed from NASBUG)
 
 A – hexadecimal arithmetic
 

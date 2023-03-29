@@ -1,4 +1,4 @@
-01   REM Copywrite feilipu 2023
+01   REM Copyright feilipu 2023
 02   REM MIT LICENCE
 
 10   LET T=0: LET D=0
@@ -41,7 +41,7 @@
 3020 IF LEN(COMND$)<8 THEN GOTO 9700
 3030 DESTN=VAL(MID$(COMND$,8))
 3040 DOKE UADDR,SRC: REM set usrloc to point to assembly program
-3050 REM USR(DESTN): REM run the program
+3050 PRINT USR(DESTN): REM run the program
 3100 GOTO 100
 
 4000 REM I intelligent copy
