@@ -28,6 +28,7 @@ BIN$(nn) - convert a SIGNED integer (-32768 to +32767) to a string containing th
 
 
 Functions for a BASIC Monitor (Borrowed from NASBUG)
+http://www.nascomhomepage.com/pdf/NASBUG_T4_MANUAL.pdf
 
 
 A – hexadecimal arithmetic
@@ -50,7 +51,7 @@ E – execute
 
 E xxxx yy
 
-Execute program at xxxx, supplying integer signed integer input parameter yy. Values in hexadecimal.
+Execute program at xxxx, supplying signed integer input parameter yy. Values in hexadecimal.
 
 
 I – intelligent copy
