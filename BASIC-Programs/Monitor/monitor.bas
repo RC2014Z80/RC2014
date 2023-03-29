@@ -1,7 +1,7 @@
 01   REM Copyright feilipu 2023
 02   REM MIT LICENCE
 
-10   LET T=0: LET D=0
+10   C=0: D=0: P=0: T=0
 20   DIM COMND$(16): REM 16 character input string
 30   DIM H$(4): REM 4 character hex string
 
@@ -9,11 +9,12 @@
 50   LET UADDR=&H8204
 
 100  REM Command Loop
-120  LET FUNCT=0: REM required function as ascii code
-130  LET SRC=0: LET DESTN=0: LET LGTH=0: REM input parameters
+120  SRC=0: DESTN=0: LGTH=0: REM input parameters
+130  COMND$="": FUNCT=0: REM required function as ascii code
 140  INPUT "Command: ";COMND$
-150  FUNCT=ASC(COMND$)
-160  IF FUNCT>90 THEN FUNCT=FUNCT-32: REM allow lower case command
+150  IF LEN(COMND$)=0 THEN GOTO 100
+160  FUNCT=ASC(COMND$)
+170  IF FUNCT>90 THEN FUNCT=FUNCT-32: REM allow lower case command
 
 200  IF FUNCT=65 THEN GOTO 1000: REM A hex arithmetic
 210  IF FUNCT=67 THEN GOTO 2000: REM C copy
@@ -26,7 +27,7 @@
 
 1000 REM A hex arithmetic
 1010 GOSUB 8100: REM convert 2 hex strings to 2 signed integers
-1020 PRINT HEX$((DESTN+SRC));"h ";HEX$((DESTN-SRC));"h ";SRC-DESTN
+1020 PRINT HEX$(DESTN+SRC);"h ";HEX$(DESTN-SRC);"h ";SRC-DESTN
 1100 GOTO 100
 
 2000 REM C copy
@@ -63,16 +64,18 @@
 
 5000 REM M modify store
 5010 GOSUB 8200: REM convert 1 hex string to signed integer
-5020 PRINT HEX$(SRC);"h is ";HEX$(PEEK(SRC))
-5030 INPUT "New";H$
-5040 GOSUB 9000
-5050 IF T>=0 AND T<=255 THEN POKE SRC,T
+5020 PRINT HEX$(SRC);"h is ";HEX$(PEEK(SRC));
+5030 H$=""
+5040 INPUT " new";H$
+5050 IF LEN(H$)=0 THEN GOTO 100
+5060 GOSUB 9000
+5070 IF T>=0 AND T<=255 THEN POKE SRC,T: SRC=SRC+1: GOTO 5020
 5200 GOTO 100
 
 6000 REM T tabulate print
 6010 GOSUB 8300: REM 2 hex strings to 1 signed int, 1 unsigned int
 6020 FOR S=SRC TO SRC+LGTH-1 STEP 16
-6030 PRINT HEX$(S);"h ";
+6030 PRINT HEX$(S);"h  ";
 6040 FOR L=0 TO 15
 6050 PRINT " ";HEX$(PEEK(S+L));
 6060 NEXT L
@@ -115,7 +118,7 @@
 8390 GOTO 8200
 
 9000 REM convert hex string to positive integer
-9020 LET T=0: LET D=1
+9020 T=0: D=1
 9030 FOR P=LEN(H$)-1 TO 0 STEP -1
 9040 C=ASC(MID$(H$,D,1))
 9050 D=D+1
