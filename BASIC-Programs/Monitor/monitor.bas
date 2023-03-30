@@ -27,7 +27,7 @@
 
 1000 REM A hex arithmetic
 1010 GOSUB 8100: REM convert 2 hex strings to 2 signed integers
-1020 PRINT HEX$(DESTN+SRC);"h ";HEX$(DESTN-SRC);"h ";SRC-DESTN
+1020 PRINT HEX$(DESTN+SRC);"h ";HEX$(DESTN-SRC);"h ";DESTN-SRC
 1100 GOTO 100
 
 2000 REM C copy
