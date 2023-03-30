@@ -39,7 +39,7 @@
 2100 GOTO 100
 
 3000 REM E execute
-3010 GOSUB 8200: REM convert 1 hex string to signed integer
+3010 GOSUB 8200: REM convert 1 hex string to 1 signed integer
 3020 IF LEN(COMND$)<8 THEN GOTO 9700
 3030 DESTN=VAL(MID$(COMND$,8))
 3040 DOKE UADDR,SRC: REM set usrloc to point to assembly program
@@ -63,14 +63,14 @@
 4300 GOTO 100
 
 5000 REM M modify store
-5010 GOSUB 8200: REM convert 1 hex string to signed integer
+5010 GOSUB 8200: REM convert 1 hex string to 1 signed integer
 5020 PRINT HEX$(SRC);"h is ";HEX$(PEEK(SRC));
 5030 H$=""
 5040 INPUT " new";H$
 5050 IF LEN(H$)=0 THEN GOTO 100
 5060 GOSUB 9000
 5070 IF T>=0 AND T<=255 THEN POKE SRC,T: SRC=SRC+1: GOTO 5020
-5200 GOTO 100
+5100 GOTO 100
 
 6000 REM T tabulate print
 6010 GOSUB 8300: REM 2 hex strings to 1 signed int, 1 unsigned int

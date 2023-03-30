@@ -65,7 +65,7 @@ M – modify store
 
 M xxxx
 
-Modify memory starting at address xxxx. The address is displayed followed by the current data. This value may be changed. Enter a “.” at the end of the line to end the command. If you enter several values then the successive address values are changed. This allows several values to be entered at once. All data is, of course, entered in hexadecimal notation. Values in hexadecimal.
+Modify memory starting at address xxxx. The address is displayed followed by the current data. This value may be changed. Enter at the end of the line to end the command. You can enter several values as the successive address values are changed. This allows successive values to be entered at once. All data is, of course, entered in hexadecimal notation. Values in hexadecimal.
 
 
 T – tabulate
@@ -81,7 +81,7 @@ Tokenise it maximum of 4 tokens, separated by spaces
     ASC returns ascii code of first character in string
     MID$ returns characters from some point in string
     VAL returns numerical value of string
-    LEN$ returns length of a string
+    LEN returns length of a string
 Execute the routine based on the first token
 Repeat
 
