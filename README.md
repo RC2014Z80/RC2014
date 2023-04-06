@@ -2,7 +2,7 @@
 
 Official RC2014 repository for hardware schematics / software and more!
 
-- - - - - R - - - - - - - - - 
+o o o o o R o o o o o o o o o 
 
 ## New to the RC2014
 
