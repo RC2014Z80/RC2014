@@ -2,8 +2,6 @@
 
 Official RC2014 repository for hardware schematics / software and more!
 
-o o o o o R o o o o o o o o o 
-
 ## New to the RC2014
 
 Want to get started with Assembly and C programming, but don't have a EEPROM burner?
