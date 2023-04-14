@@ -4187,14 +4187,14 @@ MOKELP: PUSH    HL              ; Save address
         CALL    PRHL            ; Print address in HEX
         LD      A,' '           ; Space
         CALL    OUTC            ; Output character
-        LD      A,(HL)          ; Get byte
+        LD      A,(HL)          ; Read byte at address
         CALL    PRHEX           ; Print byte in HEX
         CALL    PROMPT          ; Output "? ", get input RINPUT
-        JP      C,INPBRK        ; Break pressed
+        JP      C,BRKRET        ; Return to command line
         CALL    HLHEX           ; Get (HL) HEX into HL
         POP     DE              ; Restore address
         EX      DE,HL
-        LD      (HL),E          ; Save byte
+        LD      (HL),E          ; Save byte in address
         INC     HL              ; Next address
         JP      MOKELP          ; Do another address
 
@@ -4207,10 +4207,10 @@ PRHL:   LD      A,H
         CALL    PRHEX
         LD      A,L
 PRHEX:  PUSH    AF
-        RRA
-        RRA
-        RRA
-        RRA
+        RRCA
+        RRCA
+        RRCA
+        RRCA
         CALL    PRHEXN
         POP     AF
 PRHEXN: AND     0FH
@@ -4230,7 +4230,7 @@ HLHEX:  EX      DE,HL           ; Move code string pointer to DE
         CALL    GETHEX          ; Check the number for valid hex
         JP      C,HXERR         ; First value wasn't hex, HX error
         JP      HLHEXL          ; Convert first character
-HLHEXH: CALL    GETHEX          ; Get second and addtional characters
+HLHEXH: CALL    GETHEX          ; Get second and additional characters
         RET     C               ; Exit if not a hex character
 HLHEXL :ADD     HL,HL           ; Rotate 4 bits to the left
         ADD     HL,HL
@@ -4395,7 +4395,7 @@ HEXTFP: EX      DE,HL           ; Move code string pointer to DE
         CALL    GETHEX          ; Check the number for valid hex
         JP      C,HXERR         ; First value wasn't hex, HX error
         JP      HEXLP1          ; Convert first character
-HEXLP:  CALL    GETHEX          ; Get second and addtional characters
+HEXLP:  CALL    GETHEX          ; Get second and additional characters
         JP      C,HEXIT         ; Exit if not a hex character
 HEXLP1: ADD     HL,HL           ; Rotate 4 bits to the left
         ADD     HL,HL
