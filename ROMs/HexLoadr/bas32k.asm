@@ -507,7 +507,7 @@ INITAB: JP      WARMST          ; Warm start jump
 
         DEFB    1               ; POS (x) number (1)
         DEFB    255             ; Terminal width (255 = no auto CRLF)
-        DEFB    28              ; Width for commas (3 columns)
+        DEFB    8               ; Width for commas (10 columns)
         DEFB    0               ; No nulls after input bytes
         DEFB    0               ; Output enabled (^O off)
 
@@ -4115,9 +4115,12 @@ CLS:    LD      A,CS            ; ASCII Clear screen
 ARET:   RET                     ; A RETurn instruction
 ARETN:  RETN                    ; A RETurN from NMI
 
-WIDTH:  CALL    GETINT          ; Get integer 0-255
-        LD      A,E             ; Width to A
+WIDTH:  CALL    GETINT          ; Get integer 0-255 in A
         LD      (LWIDTH),A      ; Set width
+        CALL    CHKSYN          ; Make sure ',' follows
+        DEFB    ','
+        CALL    GETINT          ; Get integer 0-255 in A
+        LD      (COMMAN),A      ; Set comma width
         RET
 
 LINES:  CALL    GETNUM          ; Get a number
