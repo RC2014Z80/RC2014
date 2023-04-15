@@ -2943,12 +2943,8 @@ VAL:    CALL    GETLEN          ; Get length of string
         EX      (SP),HL         ; Save string end,get start
         PUSH    BC              ; Save end+1 byte
         LD      A,(HL)          ; Get starting byte
-        CP      '$'             ; Hex number indicated?
-        JP      NZ,VAL1
-        CALL    HEXTFP          ; Convert Hex to FPREG
-        JP      VAL2
-VAL1:   CALL    ASCTFP          ; Convert ASCII string to FPREG
-VAL2:   POP     BC              ; Restore end+1 byte
+        CALL    ASCTFP          ; Convert ASCII string to FP
+        POP     BC              ; Restore end+1 byte
         POP     HL              ; Restore end+1 address
         LD      (HL),B          ; Put back original byte
         RET
@@ -4152,8 +4148,8 @@ DOKE:   CALL    GETNUM          ; Get a number
 MEEK:   CALL    GETNUM          ; Get address
         CALL    DEINT           ; Get integer -32768 to 32767 to DE
         PUSH    DE              ; Save address
-        CALL    CHKSYN          ; Make sure "," follows
-        DB      ","
+        CALL    CHKSYN          ; Make sure ',' follows
+        DEFB    ','
         CALL    GETINT          ; Get integer 0-255 in A
         LD      C,A             ; Get blocks (of 16 bytes) to C
         OR      A               ; Check for zero blocks
@@ -4228,16 +4224,16 @@ HLHEX:  EX      DE,HL           ; Move code string pointer to DE
         LD      HL,0            ; Zero out the value
         CALL    GETHEX          ; Check the number for valid hex
         JP      C,HXERR         ; First value wasn't hex, HX error
-        JP      HLHEXL          ; Convert first character
-HLHEXH: CALL    GETHEX          ; Get second and additional characters
+        JP      HLHEXH          ; Convert first character
+HLHEXL: CALL    GETHEX          ; Get second and additional characters
         RET     C               ; Exit if not a hex character
-HLHEXL :ADD     HL,HL           ; Rotate 4 bits to the left
+HLHEXH :ADD     HL,HL           ; Rotate 4 bits to the left
         ADD     HL,HL
         ADD     HL,HL
         ADD     HL,HL
         OR      L               ; Add in D0-D3 into L
         LD      L,A             ; Save new value
-        JP      HLHEXH          ; And continue until all hex characters are in HL
+        JP      HLHEXL          ; And continue until all hex characters are in HL
 
 
         ; Load Intel HEX into program memory.
@@ -4327,7 +4323,7 @@ HLD_READ_NIBBLE:
         sub 7                   ; else subtract 'A'-'0' (17) and add 10
         ret
 
-        ; HEX$(nn) Convert 16 bit number to Hexadecimal string
+        ; HEX$(nn) Convert signed 16 bit number to Hexadecimal string
         ; (C) Searle
 
 HEX:    CALL    DEINT           ; Get integer -32768 to 32767
@@ -4384,8 +4380,8 @@ ADD301: ADD     A,$30           ; And make it full ASCII
         LD      B,A             ; Store high order byte
         RET
 
-        ; Convert "&Hnnnn" to FPREG
-        ; Gets a character from (HL) checks for Hexadecimal ASCII numbers "&Hnnnn"
+        ; Convert "&nnnn" ASCII HEX to FPREG
+        ; Gets a character from (HL) checks for Hexadecimal ASCII numbers "&nnnn"
         ; Char is in A, NC if char is ;<=>?@ A-z, CY is set if 0-9
         ; (C) Searle
 
