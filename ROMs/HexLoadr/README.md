@@ -35,6 +35,10 @@ Ok
 
 # Assembly (or compiled C) Program Usage
 
+The `MEEK I,J` and `MOKE I` keywords can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 Byte blocks to display. `MOKE` Byte entry can be exited with `CTRL C` or just carriage return. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`. Address entry can also be converted from HEX to signed integer using the `&` HEX prefix, i.e. in `MOKE &9000` `&9000` is converted to `−28672`.
+
+## Using `HLOAD` for uploading compiled and assembled programs.
+
 1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler, or compile a C program using z88dk. For the RC2014 32kB suitable origins commence from `0x8400`, and the default origin for z88dk RC2014 is `0x9000`.
 
 2. At the Basic interpreter type `HLOAD`, then the command will initiate and look for your program's Intel HEX formatted information on the serial interface.
@@ -53,16 +57,16 @@ The top of Basic memory can be readjusted by using the `RESET` function, when re
 
 For the RC2014 with 32k Basic the `USR(x)` loaded user program address is located at `0x8204`.
 
-Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0AE1`. The parameter is stored in register pair `DE`.
+Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0AE5`. The parameter is stored in register pair `DE`.
 
-When your assembly program is finished it can return a 16 bit parameter stored in `A` (MSB) and `B` (LSB) by jumping to `ABPASS` which is located at `0x1281`.
+When your assembly program is finished it can return a 16 bit parameter stored in `A` (MSB) and `B` (LSB) by jumping to `ABPASS` which is located at `0x1278`.
 
 Note that these address of these functions can also be read from `0x024B` for `DEINT` and `0x024D` for `ABPASS`, as noted in the NASCOM Basic Manual.
 
 ``` asm
                                 ; from Nascom Basic Symbol Tables
-DEINT           .EQU    $0AE1   ; Function DEINT to get USR(x) into DE registers
-ABPASS          .EQU    $1281   ; Function ABPASS to put output into AB register for return
+DEINT           .EQU    $0AE5   ; Function DEINT to get USR(x) into DE registers
+ABPASS          .EQU    $1278   ; Function ABPASS to put output into AB register for return
 
 
                 .ORG    9000H   ; your code origin, for example

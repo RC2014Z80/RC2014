@@ -317,12 +317,13 @@ WORDS:  DEFB    'E'+80H,"ND"    ; 80h
         DEFB    'N'+80H,"OT"
         DEFB    'S'+80H,"TEP"
 
+        DEFB    '&'+80H
         DEFB    '+'+80H
         DEFB    '-'+80H
         DEFB    '*'+80H
         DEFB    '/'+80H
-        DEFB    '^'+80H
-        DEFB    'A'+80H,"ND"    ; B0h
+        DEFB    '^'+80H        ; B0h
+        DEFB    'A'+80H,"ND"
         DEFB    'O'+80H,"R"
         DEFB    '>'+80H
         DEFB    '='+80H
@@ -338,8 +339,8 @@ WORDS:  DEFB    'E'+80H,"ND"    ; 80h
         DEFB    'S'+80H,"QR"
         DEFB    'R'+80H,"ND"
         DEFB    'L'+80H,"OG"
-        DEFB    'E'+80H,"XP"
-        DEFB    'C'+80H,"OS"    ; C0h
+        DEFB    'E'+80H,"XP"    ; C0h
+        DEFB    'C'+80H,"OS"
         DEFB    'S'+80H,"IN"
         DEFB    'T'+80H,"AN"
         DEFB    'A'+80H,"TN"
@@ -414,16 +415,17 @@ WORDTB: DEFW    PEND
         DEFC    ZNOT    =   0A9H        ; NOT
         DEFC    ZSTEP   =   0AAH        ; STEP
 
-        DEFC    ZPLUS   =   0ABH        ; +
-        DEFC    ZMINUS  =   0ACH        ; -
-        DEFC    ZTIMES  =   0ADH        ; *
-        DEFC    ZDIV    =   0AEH        ; /
-        DEFC    ZOR     =   0B1H        ; OR
-        DEFC    ZGTR    =   0B2H        ; >
-        DEFC    ZEQUAL  =   0B3H        ; =
-        DEFC    ZLTH    =   0B4H        ; <
-        DEFC    ZSGN    =   0B5H        ; SGN
-        DEFC    ZLEFT   =   0CCH        ; LEFT$
+        DEFC    ZAMP    =   0ABH        ; &
+        DEFC    ZPLUS   =   0ACH        ; +
+        DEFC    ZMINUS  =   0ADH        ; -
+        DEFC    ZTIMES  =   0AEH        ; *
+        DEFC    ZDIV    =   0AFH        ; /
+        DEFC    ZOR     =   0B2H        ; OR
+        DEFC    ZGTR    =   0B3H        ; >
+        DEFC    ZEQUAL  =   0B4H        ; =
+        DEFC    ZLTH    =   0B5H        ; <
+        DEFC    ZSGN    =   0B6H        ; SGN
+        DEFC    ZLEFT   =   0CDH        ; LEFT$
 
 ; ARITHMETIC PRECEDENCE TABLE
 
@@ -605,6 +607,8 @@ UFERR:  LD      E,UF            ; ?UF Error
 OVERR:  LD      E,OV            ; ?OV Error
         DEFB    01H             ; Skip "LD E,TM"
 TMERR:  LD      E,TM            ; ?TM Error
+        DEFB    01H             ; Skip "LD E,HX"
+HXERR:  LD      E,HX            ; ?HEX Error
 
 ERROR:  CALL    CLREG           ; Clear registers and stack
         LD      (CTLOFG),A      ; Enable output (A is 0)
@@ -1954,14 +1958,9 @@ OPRND:  XOR     A               ; Get operand routine
         JP      Z,EVNOT         ; Yes - Eval NOT expression
         CP      ZFN             ; "FN" Token ?
         JP      Z,DOFN          ; Yes - Do FN routine
-        CP      '&'             ; &H = HEX
-        JP      NZ,NOTAMP       ; No - Skip to functions
-        CALL    GETCHR          ; Get next character
-        CP      'H'             ; Hex number indicated? [Searle function added]
+        CP      ZAMP            ; &H = HEX
         JP      Z,HEXTFP        ; Convert Hex to FPREG
-        LD      E,SN            ; If neither then a ?SN Error
-        JP      Z,ERROR         ;
-NOTAMP: SUB     ZSGN            ; Is it a function?
+        SUB     ZSGN            ; Is it a function?
         JP      NC,FNOFST       ; Yes - Evaluate function
 EVLPAR: CALL    OPNPAR          ; Evaluate expression in "()"
         CALL    CHKSYN          ; Make sure ")" follows
@@ -2944,7 +2943,7 @@ VAL:    CALL    GETLEN          ; Get length of string
         EX      (SP),HL         ; Save string end,get start
         PUSH    BC              ; Save end+1 byte
         LD      A,(HL)          ; Get starting byte
-        CP      '$'             ; Hex number indicated? [Searle function added]
+        CP      '$'             ; Hex number indicated?
         JP      NZ,VAL1
         CALL    HEXTFP          ; Convert Hex to FPREG
         JP      VAL2
@@ -4407,6 +4406,8 @@ HEXLP1: ADD     HL,HL           ; Rotate 4 bits to the left
 
 GETHEX: INC     DE              ; Next location
         LD      A,(DE)          ; Load character at pointer
+        CP      'H'
+        JP      Z,GETHEX        ; Skip "H"
         CP      ' '
         JP      Z,GETHEX        ; Skip spaces
         SUB     $30             ; Get absolute value
@@ -4427,9 +4428,6 @@ HEXIT:  EX      DE,HL           ; Value into DE, Code string into HL
         CALL    ACPASS          ; ACPASS to set AC as integer into FPREG
         POP     HL
         RET
-
-HXERR:  LD      E,HX            ; ?HEX Error
-        JP      ERROR
 
 END:
 
