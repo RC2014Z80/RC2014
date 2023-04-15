@@ -35,7 +35,9 @@ Ok
 
 # Assembly (or compiled C) Program Usage
 
-The `MEEK I,J` and `MOKE I` keywords can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 Byte blocks to display. `MOKE` Byte entry can be exited with `CTRL C` or just carriage return. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`. Address entry can also be converted from HEX to signed integer using the `&` HEX prefix, i.e. in `MOKE &9000` `&9000` is converted to `−28672`.
+The `MEEK I,J` and `MOKE I` statements can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 Byte blocks to display. `MOKE` Byte entry can be exited with `CTRL C` or just carriage return. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`.
+
+Address entry can also be converted from HEX to signed integer using the `&` HEX prefix, i.e. in `MOKE &9000` `0x9000` is converted to `−28672` which is simpler than calculating this signed 16 bit integer by hand, and `MEEK &2000,&10` will tabulate and print 16 blocks of 16 bytes of memory from memory address `0x2000`.
 
 ## Using `HLOAD` for uploading compiled and assembled programs.
 
@@ -51,7 +53,7 @@ The `MEEK I,J` and `MOKE I` keywords can be used to hand edit assembly programs,
 
 The `HLOAD` program can be exited without uploading a valid file by typing `:` followed by `CR CR CR CR CR CR`, or any other character.
 
-The top of BASIC memory can be readjusted by using the `RESET` function, when required. `RESET` is functionally equivalent to a cold start.
+The top of BASIC memory can be readjusted by using the `RESET` statement, when required. `RESET` is functionally equivalent to a cold start.
 
 ## USR Jump Address & Parameter Access
 
@@ -88,7 +90,8 @@ For convenience, because we can't easily change the ROM code interrupt routines 
 * INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
 * NMI: `NMI` is unused and is available to the user.
 
-All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. Check the source to see the address of each `RST xx`. By default, if not defined, `RST nn` targets return a "?UF Error" code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
+All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. Check the source to see the address of each `RST xx`. By default, if not defined, the unused `RST nn` targets return a "?UF Error" code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
+
 ## Notes
 
 Note that your C or assembly program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent BASIC from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USR(x)` jump.
@@ -96,6 +99,8 @@ Note that your C or assembly program and the `USR(x)` jump address setting will 
 Any BASIC programs loaded will also remain in place during a Warm Reset.
 
 Issuing the `RESET` keyword will clear the RC2014 RAM, and provide an option to return the original memory size. `RESET` is functionally equivalent to a cold start.
+
+The standard `WIDTH` statement has been extended to support setting the column width using `WIDTH I,J` where `I` is the screen width, and `J` is the comma column width.
 
 # Credits
 
