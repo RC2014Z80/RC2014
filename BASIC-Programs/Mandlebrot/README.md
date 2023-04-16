@@ -17,7 +17,6 @@ Omitting blank space makes it run faster.
 _MS Basic 4.7_
 
 - Searle  Std       - 4.7b  11'46"  - 100%<br>
-<br>
 - feilipu Z80       - 4.7c  10'44"  -  91%<br>
 - feilipu Z80+APU   - 4.7c  10'10"  -  86%<br>
 - feilipu 8085      - 4.7c  10'55"  -  92%<br>
