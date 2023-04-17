@@ -81,12 +81,9 @@ If your preference is to use a CF Card, or SD Card in a SD-CF Adapter, then Dyla
 
 - [CF Card PPIDE Module](https://oshwlab.com/dylan_3481/cf-ppide-for-rc2014_copy).
 
-It is possible to use the standard RC2014 CF Module with either the RC2014 Pro, or with the 8085 CPU Module CF Build.
+It is possible to use the standard RC2014 CF Module with either the RC2014 Pro, or with the 8085 CPU Module CF Build. As a supported RC2014 Module, the CF Module v2.0 by Tadeusz Pycio provides a very robust (CF Specification compliant) solution that will work with large Compact Flash cards (e.g. 1GB and greater), and with SD to CF Card Adapters.
 
 - [CF Module](https://rc2014.co.uk/modules/compact-flash-module/).
-
-But for greater reliability the CF Module v2.0 by Tadeusz Pycio provides a more robust (CF Specification compliant) solution that will work with large Compact Flash cards (e.g. 1GB and greater), and with SD to CF Card Adapters.
-
 - [CF Module v2.0](https://www-vtsys-pl.translate.goog/interface-compact-flash/?_x_tr_sch=http&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp).
 
 To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and a ACIA Serial Module installed.
