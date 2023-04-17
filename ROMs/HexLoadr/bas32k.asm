@@ -509,7 +509,7 @@ INITAB: JP      WARMST          ; Warm start jump
 
         DEFB    1               ; POS (x) number (1)
         DEFB    255             ; Terminal width (255 = no auto CRLF)
-        DEFB    8               ; Width for commas (10 columns)
+        DEFB    70              ; Width for commas (6 columns of 14 width)
         DEFB    0               ; No nulls after input bytes
         DEFB    0               ; Output enabled (^O off)
 

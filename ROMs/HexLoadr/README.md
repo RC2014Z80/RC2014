@@ -100,7 +100,7 @@ Any BASIC programs loaded will also remain in place during a Warm Reset.
 
 Issuing the `RESET` keyword will clear the RC2014 RAM, and provide an option to return the original memory size. `RESET` is functionally equivalent to a cold start.
 
-The standard `WIDTH` statement has been extended to support setting the column width using `WIDTH I,J` where `I` is the screen width, and `J` is the comma column width.
+The standard `WIDTH` statement has been extended to support setting the column width using `WIDTH I,J` where `I` is the screen width, and `J` is the comma column screen width.
 
 # Credits
 
