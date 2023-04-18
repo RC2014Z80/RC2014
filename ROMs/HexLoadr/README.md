@@ -16,7 +16,7 @@ On initial power up, or on `RESET`, there is a `BEL` (`0x07`) character output f
 
 Immediately following a RAM Module sanity check will ensure that the serial port can be fully initialised, and then BASIC loaded. If the RAM Module sanity check fails a character will be continually output, which can be used to infer what is causing the problem. Seeing either `0xFF` or `0x00` would infer that there is no RAM in the required location. Other values infer that there is a problem with the address lines or data lines.
 
-Otherwise, by entering `C` or `W` followed by return on your keyboard, you should see this start up message on your terminal the BASIC prompt `Ok`.
+Otherwise, by entering `C` or `W` on your keyboard, you should see this start up message on your terminal the BASIC prompt `Ok`.
 
 ```bash
 RC2014 - MS Basic Loader
@@ -57,7 +57,7 @@ The top of BASIC memory can be readjusted by using the `RESET` statement, when r
 
 ## USR Jump Address & Parameter Access
 
-For the RC2014 with 32k Nascom Basic the `USR(x)` loaded user program address is located at `0x8204`.
+For the RC2014 with 32k Nascom Basic the `USRLOC` loaded user program address is located at `0x8204`.
 
 Your assembly program can receive a 16 bit parameter passed in from the function by calling `DEINT` at `0x0AE5`. The parameter is stored in register pair `DE`.
 
@@ -90,11 +90,11 @@ For convenience, because we can't easily change the ROM code interrupt routines 
 * INT: `RST 38` is used by the ACIA 68B50 Serial Device through the IM1 `INT` location.
 * NMI: `NMI` is unused and is available to the user.
 
-All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. Check the source to see the address of each `RST xx`. By default, if not defined, the unused `RST nn` targets return a "?UF Error" code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
+All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in RAM. This allows the use of debugging tools and reorganising the efficient `RST` instructions as needed. Check the source to see the address of each `RST xx`. By default, if not defined, the unused `RST nn` targets return a `?UF Error` code. For more information on configuring and using the `RST nn` targets [refer to the example in the Wiki](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK#basic-subtype).
 
 ## Notes
 
-Note that your C or assembly program and the `USR(x)` jump address setting will remain in place through a RC2014 Warm Reset, provided you prevent BASIC from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USR(x)` jump.
+Note that your C or assembly program and the `USRLOC` address setting will remain in place through a RC2014 Warm Reset, provided you prevent BASIC from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USRLOC` jump.
 
 Any BASIC programs loaded will also remain in place during a Warm Reset.
 
