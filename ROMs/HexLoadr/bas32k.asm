@@ -4154,11 +4154,12 @@ MEEK:   CALL    GETNUM          ; Get address
         LD      C,A             ; Get blocks (of 16 bytes) to C
         OR      A               ; Check for zero blocks
         EX      (SP),HL         ; Recover address, save code string address
-MEEKLP: JP      Z,MEEKRET       ; Return
+MEEKLP: JP      Z,POPHL         ; Return
         CALL    PRNTCRLF        ; New line
         CALL    PRHL            ; Print address
         LD      A,':'           ; Load colon
         CALL    OUTC            ; Output character
+        PUSH    HL              ; Preserve block base address
         LD      B,16            ; 16 byte blocks
 MEEKLLP:LD      A,' '           ; Load space
         CALL    OUTC            ; Output character
@@ -4167,14 +4168,26 @@ MEEKLLP:LD      A,' '           ; Load space
         INC     HL              ; Get next address
         DJNZ    MEEKLLP         ; Do 16 byte blocks
 
+        LD      A,' '           ; Load space
+        CALL    OUTC            ; Output character
+        POP     HL              ; Recover block base address
+        LD      B,16            ; 16 byte blocks
+MEEKASC:LD      A,' '           ; Load space
+        CALL    OUTC            ; Output character
+        LD      A,(HL)          ; Read byte at address
+        CP      DEL             ; Is it DEL?
+        JP      NZ,MEEKSPC
+        LD      A,'.'
+MEEKSPC:CP      ' '             ; Less than ASCII space?
+        JP      NC,MEEKOUT
+        LD      A,'.'
+MEEKOUT:CALL    OUTC            ; Output ASCII character
+        INC     HL              ; Get next address
+        DJNZ    MEEKASC         ; Do 16 byte blocks
+
         DEC     C               ; Decrement block count
         JP      MEEKLP
 
-MEEKRET:LD      B,L
-        LD      A,H
-        CALL    ABPASS          ; Return final address
-        POP     HL              ; Restore code string address
-        RET
 
         ; MOKE I where I is signed integer
         ; uses  : af, de, hl
@@ -4190,11 +4203,16 @@ MOKELP: PUSH    HL              ; Save address
         LD      A,(HL)          ; Read byte at address
         CALL    PRHEX           ; Print byte in HEX
         CALL    PROMPT          ; Output "? ", get input RINPUT
-        JP      C,BRKRET        ; Return to command line
+        JP      C,BRKRET        ; CTRLC - break to command line
+        JP      Z,MOKESKP       ; CR - skip byte storing
         CALL    HLHEX           ; Get (HL) HEX into HL
         POP     DE              ; Restore address
         EX      DE,HL
         LD      (HL),E          ; Save byte in address
+        INC     HL              ; Next address
+        JP      MOKELP          ; Do another address
+
+MOKESKP:POP     HL              ; Restore address
         INC     HL              ; Next address
         JP      MOKELP          ; Do another address
 
