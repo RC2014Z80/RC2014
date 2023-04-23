@@ -174,7 +174,6 @@ MSIZE:  LD      HL,MEMMSG       ; Point to message
         CALL    PRS             ; Output "Memory size"
         CALL    PROMPT          ; Get input with '?'
         CALL    GETCHR          ; Get next character
-        OR      A               ; Set flags
         JP      NZ,TSTMEM       ; If number - Test if RAM there
         LD      HL,STLOOK       ; Point to start of RAM
 MLOOP:  INC     HL              ; Next byte
@@ -645,8 +644,6 @@ GETCMD: LD      HL,-1           ; Flag direct mode
         CALL    RINPUT          ; Get an input line
         JP      C,GETCMD        ; Get line again if break
         CALL    GETCHR          ; Get first character
-        INC     A               ; Test if end of line
-        DEC     A               ; Without affecting Carry
         JP      Z,GETCMD        ; Nothing entered - Get another
         PUSH    AF              ; Save Carry status
         CALL    ATOH            ; Get line number into DE
@@ -661,8 +658,7 @@ GETCMD: LD      HL,-1           ; Flag direct mode
         XOR     A
         LD      (LSTBIN),A      ; Clear last byte input
         CALL    GETCHR          ; Get next character
-        OR      A               ; Set flags
-        PUSH    AF              ; And save them
+        PUSH    AF              ; Save flags
         CALL    SRCHLN          ; Search for line number in DE
         JP      C,LINFND        ; Jump if line found
         POP     AF              ; Get status
