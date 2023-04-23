@@ -37,7 +37,7 @@ Ok
 
 Please refer to [Appendix D of the NASCOM 2 Basic Manual](https://github.com/feilipu/NASCOM_BASIC_4.7/blob/master/NASCOM_Basic_Manual.pdf) for information on loading and running Assembly Language programs.
 
-The `MEEK I,J` and `MOKE I` statements can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 Byte blocks to display. `MOKE` Byte entry can be skipped with carriage return, and is exited with `CTRL C`. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`.
+The `MEEK I,J` and `MOKE I` statements can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 byte blocks to display. `MOKE` byte entry can be skipped with carriage return, and is exited with `CTRL C`. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`.
 
 Address entry can also be converted from HEX to signed integer using the `&` HEX prefix, i.e. in `MOKE &9000` `0x9000` is converted to `−28672` which is simpler than calculating this signed 16 bit integer by hand, and `MEEK &2000,&10` will tabulate and print 16 blocks of 16 bytes of memory from memory address `0x2000`.
 

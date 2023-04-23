@@ -4142,10 +4142,11 @@ DOKE:   CALL    GETNUM          ; Get a number
 
 
         ; MEEK I,J where I is signed integer and J is 16 byte blocks
-        ; uses  : af, hl
+        ; uses  : af, bc, de, hl
         ; (C) feilipu
 
-MEEK:   CALL    GETNUM          ; Get address
+MEEK:
+        CALL    GETNUM          ; Get address
         CALL    DEINT           ; Get integer -32768 to 32767 to DE
         PUSH    DE              ; Save address
         CALL    CHKSYN          ; Make sure ',' follows
@@ -4154,14 +4155,18 @@ MEEK:   CALL    GETNUM          ; Get address
         LD      C,A             ; Get blocks (of 16 bytes) to C
         OR      A               ; Check for zero blocks
         EX      (SP),HL         ; Recover address, save code string address
-MEEKLP: JP      Z,POPHL         ; Return
+MEEKLP:
+        JP      Z,POPHL         ; Return
         CALL    PRNTCRLF        ; New line
         CALL    PRHL            ; Print address
         LD      A,':'           ; Load colon
         CALL    OUTC            ; Output character
+        LD      A,' '           ; Load space
+        CALL    OUTC            ; Output character
         PUSH    HL              ; Preserve block base address
         LD      B,16            ; 16 byte blocks
-MEEKLLP:LD      A,' '           ; Load space
+MEEKLLP:
+        LD      A,' '           ; Load space
         CALL    OUTC            ; Output character
         LD      A,(HL)          ; Read byte at address
         CALL    PRHEX           ; Print byte in HEX
@@ -4170,18 +4175,20 @@ MEEKLLP:LD      A,' '           ; Load space
 
         LD      A,' '           ; Load space
         CALL    OUTC            ; Output character
+        LD      A,' '           ; Load space
+        CALL    OUTC            ; Output character
         POP     HL              ; Recover block base address
         LD      B,16            ; 16 byte blocks
-MEEKASC:LD      A,' '           ; Load space
-        CALL    OUTC            ; Output character
+MEEKASC:
         LD      A,(HL)          ; Read byte at address
-        CP      DEL             ; Is it DEL?
-        JP      NZ,MEEKSPC
-        LD      A,'.'
-MEEKSPC:CP      ' '             ; Less than ASCII space?
-        JP      NC,MEEKOUT
-        LD      A,'.'
-MEEKOUT:CALL    OUTC            ; Output ASCII character
+        CP      DEL             ; Greater than ASCII DEL?
+        JP      NC,MEEKDOT
+        CP      ' '             ; Less than ASCII space?
+        JP      C,MEEKDOT
+        DEFB    11H             ; Skip "LD A,'.'"
+MEEKDOT:
+        LD      A,'.'           ; Load an ASCII dot
+        CALL    OUTC            ; Output ASCII character
         INC     HL              ; Get next address
         DJNZ    MEEKASC         ; Do 16 byte blocks
 
@@ -4193,10 +4200,12 @@ MEEKOUT:CALL    OUTC            ; Output ASCII character
         ; uses  : af, de, hl
         ; (C) feilipu
 
-MOKE:   CALL    GETNUM          ; Get address
+MOKE:
+        CALL    GETNUM          ; Get address
         CALL    DEINT           ; Get integer -32768 to 32767
         EX      DE,HL           ; Move address
-MOKELP: PUSH    HL              ; Save address
+MOKELP:
+        PUSH    HL              ; Save address
         CALL    PRHL            ; Print address in HEX
         LD      A,' '           ; Space
         CALL    OUTC            ; Output character
@@ -4204,7 +4213,9 @@ MOKELP: PUSH    HL              ; Save address
         CALL    PRHEX           ; Print byte in HEX
         CALL    PROMPT          ; Output "? ", get input RINPUT
         JP      C,BRKRET        ; CTRLC - break to command line
-        JP      Z,MOKESKP       ; CR - skip byte storing
+        CALL    GETCHR          ; Get next character
+        JP      Z,MOKESKP       ; CR - skip byte store
+        DEC     HL              ; DEC 'cos GETCHR INCs
         CALL    HLHEX           ; Get (HL) HEX into HL
         POP     DE              ; Restore address
         EX      DE,HL
@@ -4212,7 +4223,8 @@ MOKELP: PUSH    HL              ; Save address
         INC     HL              ; Next address
         JP      MOKELP          ; Do another address
 
-MOKESKP:POP     HL              ; Restore address
+MOKESKP:
+        POP     HL              ; Restore address
         INC     HL              ; Next address
         JP      MOKELP          ; Do another address
 
@@ -4221,17 +4233,20 @@ MOKESKP:POP     HL              ; Restore address
         ; uses  : af, hl
         ; (C) feilipu
 
-PRHL:   LD      A,H             ; Load high byte
+PRHL:
+        LD      A,H             ; Load high byte
         CALL    PRHEX
         LD      A,L             ; Load low byte
-PRHEX:  PUSH    AF
+PRHEX:
+        PUSH    AF
         RRCA
         RRCA
         RRCA
         RRCA
         CALL    PRHEXN
         POP     AF
-PRHEXN: AND     0FH
+PRHEXN:
+        AND     0FH
         ADD     A,90H           ; Standard HEX to ASCII routine
         DAA
         ADC     A,40H
@@ -4243,14 +4258,17 @@ PRHEXN: AND     0FH
         ; uses  : af, de, hl
         ; (C) feilipu
 
-HLHEX:  EX      DE,HL           ; Move address to DE
+HLHEX:
+        EX      DE,HL           ; Move address to DE
         LD      HL,0            ; Zero out the value
         CALL    GETHEX          ; Check the address (DE) for valid hex
         JP      C,HXERR         ; First value wasn't hex, HX error
         JP      HLHEXH          ; Convert first character
-HLHEXL: CALL    GETHEX          ; Get second and additional characters
+HLHEXL:
+        CALL    GETHEX          ; Get second and additional characters
         RET     C               ; Exit if not a hex character
-HLHEXH :ADD     HL,HL           ; Shift 4 bits to the left
+HLHEXH:
+        ADD     HL,HL           ; Shift 4 bits to the left
         ADD     HL,HL
         ADD     HL,HL
         ADD     HL,HL
