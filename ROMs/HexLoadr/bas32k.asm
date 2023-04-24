@@ -920,9 +920,9 @@ ECHDEL: DEC     B               ; Count bytes in buffer
         CALL    OUTC            ; Echo it
         JP      MORINP          ; Get more input
 
-DELCHR: DEC     B               ; Count bytes in buffer
+DELCHR: CALL    OUTC            ; Output character in A
         DEC     HL              ; Back space buffer
-        CALL    OUTC            ; Output character in A
+        DEC     B               ; Count bytes in buffer
         JP      NZ,MORINP       ; Not end - Get more
 OTKLN:  CALL    OUTC            ; Output character in A
 KILIN:  CALL    PRNTCRLF        ; Output CRLF
@@ -4093,12 +4093,11 @@ ATNTAB: DEFB    9                       ; Table used by ATN
         DEFB    06CH,0AAH,0AAH,07FH     ;-1/3
         DEFB    000H,000H,000H,081H     ; 1/1
 
-MONITR: JP      $0000           ; Cold Start (Normally Monitor Start)
-
-CLS:    LD      A,CS            ; ASCII Clear screen
-        RST     08H             ; Output character
 ARET:   RET                     ; A RETurn instruction
 ARETN:  RETN                    ; A RETurN from NMI
+
+CLS:    LD      A,CS            ; ASCII Clear screen
+        JP      $0008           ; Output character
 
 WIDTH:  CALL    GETINT          ; Get integer 0-255 in A
         LD      (LWIDTH),A      ; Set width
@@ -4135,6 +4134,8 @@ DOKE:   CALL    GETNUM          ; Get a number
         LD      (HL),D          ; Save MSB of value
         POP     HL              ; Restore code string address
         RET
+
+MONITR: JP      $0000           ; Cold Start (Normally Monitor Start)
 
 
         ; MEEK I,J where I is signed integer and J is 16 byte blocks
