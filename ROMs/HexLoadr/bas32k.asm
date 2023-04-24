@@ -41,7 +41,7 @@
         DEFC    CTRLG   =   07H         ; Control "G"
         DEFC    BKSP    =   08H         ; Back space
         DEFC    LF      =   0AH         ; Line feed
-        DEFC    CS      =   0CH         ; Clear screen
+        DEFC    FF      =   0CH         ; Form feed
         DEFC    CR      =   0DH         ; Carriage return
         DEFC    CTRLO   =   0FH         ; Control "O"
         DEFC    CTRLQ   =   11H         ; Control "Q"
@@ -4096,8 +4096,14 @@ ATNTAB: DEFB    9                       ; Table used by ATN
 ARET:   RET                     ; A RETurn instruction
 ARETN:  RETN                    ; A RETurN from NMI
 
-CLS:    LD      A,CS            ; ASCII Clear screen
-        JP      $0008           ; Output character
+CLS:    PUSH    HL              ; Save code string address
+        LD      HL,CLRSCRN      ; ASCII Clear screen
+        CALL    PRS             ; Output string
+        POP     HL              ; Restore code string address
+        RET
+
+CLRSCRN:
+        DEFB    ESC,"[2J",0     ; VT100 Clear screen escape code
 
 WIDTH:  CALL    GETINT          ; Get integer 0-255 in A
         LD      (LWIDTH),A      ; Set width
