@@ -4210,10 +4210,16 @@ MOKE:
 MOKELP:
         PUSH    HL              ; Save address
         CALL    PRHL            ; Print address in HEX
+        LD      A,':'           ; Load colon
+        CALL    OUTC            ; Output character
+        LD      A,' '           ; Space
+        CALL    OUTC            ; Output character
         LD      A,' '           ; Space
         CALL    OUTC            ; Output character
         LD      A,(HL)          ; Read byte at address
         CALL    PRHEX           ; Print byte in HEX
+        LD      A,' '           ; Space
+        CALL    OUTC            ; Output character
         CALL    PROMPT          ; Output "? ", get input RINPUT
         JP      C,BRKRET        ; CTRLC - break to command line
         CALL    GETCHR          ; Get next character
