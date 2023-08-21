@@ -10,13 +10,13 @@ This CP/M-IDE is designed to provide support for CP/M on Z80 and 8085 CPUs while
 
 In addition to other CP/M implementations, CP/M-IDE includes performance optimised drivers from the z88dk RC2014 support package for the ACIA Module serial interface, for the SIO Module serial interface, for the IDE Hard Drive Module disk interface, and also for the Compact Flash Module disk interface.
 
-The RC2014 Pro build supports the RC2014 Pro standard SIO/2 Serial Module and Compact Flash Module in their usual configuration.
+- The RC2014 Pro build supports the RC2014 Pro standard SIO/2 Serial Module and Compact Flash Module in their usual configuration.
 
-The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II in their usual configuration.
+- The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II in their usual configuration.
 
-The RC2014 8085 CPU Module builds requires the ACIA Serial Module and either the IDE Hard Drive Module or the Compact Flash Module.
+- The RC2014 8085 CPU Module builds requires the ACIA Serial Module and use either the IDE Hard Drive Module or the Compact Flash Module.
 
-The RC2014 SIO Module build requires the IDE Hard Drive Module in addition to a standard RC2014 Pro.
+- The RC2014 SIO Module build requires the IDE Hard Drive Module in addition to a standard RC2014 Pro.
 
 In the MINI, 8085, and 8085CF builds, the receive interface has a 255 byte software buffer, together with optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
@@ -30,7 +30,7 @@ The IDE Hard Drive Module supports both PATA hard drives (including 3 1/2" magne
 
 The CP/M-IDE system supports up to 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
-All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M applications. The ACIA build BDOS origin is `0xE400` for both Z80 and 8085 CPUs. The RC2014 Pro build (CF Module) and the SIO Module build (with IDE Hard Drive Module) BDOS origin is `0xE300`.
+All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M applications. The RC2014 Mini and RC2014 8085 build (& RC2014 8085CF) BDOS origin is `0xE400`. The RC2014 Pro build (CF Module) and the SIO Module build (with IDE Hard Drive Module) BDOS origin is `0xE300`.
 
 <div>
 <table style="border: 2px solid #cccccc;">
