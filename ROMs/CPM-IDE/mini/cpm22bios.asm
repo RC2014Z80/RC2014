@@ -1101,7 +1101,7 @@ putc_buffer_tx:
     ret
 
 ;------------------------------------------------------------------------------
-; start of common area driver - IDE functions
+; start of common area driver - Compact Flash IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers
@@ -1109,22 +1109,16 @@ putc_buffer_tx:
 ; LBA is contained in BCDE registers
 
 .ide_setup_lba
-    push de
-    ld d,__IO_PIO_IDE_LBA0
-    call ide_write_byte         ;set LBA0 0:7
-    pop de
-    ld e,d
-    ld d,__IO_PIO_IDE_LBA1
-    call ide_write_byte_preset  ;set LBA1 8:15
-    ld e,c
-    ld d,__IO_PIO_IDE_LBA2
-    call ide_write_byte_preset  ;set LBA2 16:23
+    ld a,e
+    out (__IO_CF_IDE_LBA0),a    ;set LBA0 0:7
+    ld a,d
+    out (__IO_CF_IDE_LBA1),a    ;set LBA1 8:15
+    ld a,c
+    out (__IO_CF_IDE_LBA2),a    ;set LBA2 16:23
     ld a,b
     and 00001111b               ;lowest 4 bits LBA address used only
     or  11100000b               ;to enable LBA address master mode
-    ld e,a
-    ld d,__IO_PIO_IDE_LBA3
-    call ide_write_byte_preset  ;set LBA3 24:27 + bits 5:7=111
+    out (__IO_CF_IDE_LBA3),a    ;set LBA3 24:27 + bits 5:7=111
     ret
 
 ; How to poll (waiting for the drive to be ready to transfer data):
@@ -1136,12 +1130,11 @@ putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_ready
-    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
-    call ide_read_byte
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get byte from alternate ide_read_byte return
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 11000000b               ;mask off BuSY and RDY bits
     xor 01000000b               ;wait for RDY to be set and BuSY to be clear
     jp NZ,ide_wait_ready
@@ -1155,12 +1148,11 @@ putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_drq
-    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
-    call ide_read_byte
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get byte from alternate ide_read_byte return
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 10001000b               ;mask off BuSY and DRQ bits
     xor 00001000b               ;wait for DRQ to be set and BuSY to be clear
     jp NZ,ide_wait_drq
@@ -1180,22 +1172,24 @@ putc_buffer_tx:
 ; return carry on success
 
 .ide_read_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
-    call ide_write_byte_preset  ;set sector count to 1
+    ld a,1
+    out (__IO_CF_IDE_SEC_CNT),a ;set sector count to 1
 
-    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_READ
-    call ide_write_byte_preset  ;ask the drive to read it
+    ld a,__IDE_CMD_READ
+    out (__IO_CF_IDE_COMMAND),a ;ask the drive to read it
 
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
 
-    call ide_read_block         ;grab the data into (HL++)
+    ;Read a block of 512 bytes (one sector) from the drive
+    ;8 bit data register and store it in memory at (HL++)
+
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    inir
+    inir
 
     scf                         ;carry = 1 on return = operation ok
     ret
@@ -1212,26 +1206,28 @@ putc_buffer_tx:
 ; return carry on success
 
 .ide_write_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
-    call ide_write_byte_preset  ;set sector count to 1
+    ld a,1
+    out (__IO_CF_IDE_SEC_CNT),a ;set sector count to 1
 
-    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_WRITE
-    call ide_write_byte_preset  ;instruct drive to write a sector
+    ld a,__IDE_CMD_WRITE
+    out (__IO_CF_IDE_COMMAND),a ;instruct drive to write a sector
 
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
 
-    call ide_write_block        ;send the data to the drive from (HL++)
+    ;Write a block of 512 bytes (one sector) from (HL++) to
+    ;the drive 8 bit data register
+
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    otir
+    otir
 
 ;   call ide_wait_ready
-;   ld de, __IO_PIO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
-;   call ide_write_byte         ;tell drive to flush its hardware cache
+;   ld a,__IDE_CMD_CACHE_FLUSH
+;   out (__IO_CF_IDE_COMMAND),a ;tell drive to flush its hardware cache
 
     jp ide_wait_ready           ;wait until the write is complete
 
