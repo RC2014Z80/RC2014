@@ -30,7 +30,7 @@ The IDE Hard Drive Module supports both PATA hard drives (including 3 1/2" magne
 
 The CP/M-IDE system supports up to 4 active CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds of CP/M drives can be stored in any number of sub-directories on the FAT32 disk. Knock yourself out.
 
-All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M applications. The RC2014 Mini and RC2014 8085 build (& RC2014 8085CF) BDOS origin is `0xE400`. The RC2014 Pro build (CF Module) and the SIO Module build (with IDE Hard Drive Module) BDOS origin is `0xE300`.
+All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M applications. For the RC2014 Mini and RC2014 8085 buildS the BDOS origin is `0xE400`. The RC2014 Pro build (CF Module) and the SIO Module build (with IDE Hard Drive Module) BDOS origin is `0xE300`.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -66,9 +66,9 @@ All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M application
 
 ## Hardware
 
-For the [RC2014 Pro](https://www.tindie.com/products/semachthemonkey/rc2014-pro-homebrew-z80-computer-kit/) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
+For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
 
-For other builds, in addition to the [RC2014 Pro](https://www.tindie.com/products/semachthemonkey/rc2014-pro-homebrew-z80-computer-kit/) which contains the CPU and SIO Serial modules, just the IDE Hard Drive Module is necessary.
+For the RC2014 SIO Build, in addition to the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) which contains the CPU and SIO Serial modules, just the IDE Hard Drive Module is necessary.
 
 1. [IDE Hard Drive Module](https://rc2014.co.uk/modules/ide-hard-drive-module/).
 
@@ -132,7 +132,7 @@ As noted, when used with the IDE Hard Drive Module, both SD Cards and Compact Fl
 
 The modules are configured in their normal settings for CP/M. A jumper for the `PAGE` signal is shown on pin 39, although this can be done in any alternative way.
 
-Rather than spend time on long written descriptions, one picture is worth 2kByte. To configure the the RC2014 Pro see the jumper settings on the RAM Module and ROM Module.
+Rather than spend time on long written descriptions, one picture is worth 2kByte. To configure the RC2014 Pro see the jumper settings on the RAM Module and ROM Module, below.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -211,19 +211,19 @@ In the 8085 CPU Module build the CPU Serial Output (SOD) FTDI interface found on
 
 ### CP/M System Disk
 
-The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M.
+Because the CCP/BDOS and BIOS are stored in ROM, there are no CP/M-IDE boot sectors or special boot drive. Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter. There is no special System Disk, except that system utilities are commonly stored on one drive, and this is usually called `system.cpm` for convenience.
+
+The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M. Typically, by convention only, this disk will be loaded as drive `A:`.
 
 The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like operations, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to return to the shell.
 
 Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
 
-Because the CCP/BDOS and BIOS are stored in ROM, there are no CP/M-IDE boot sectors or special boot drive. Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is in which drive letter. Except that the drive file in the `A:` drive will always be selected as the default drive, when you try to select a nonexistent drive letter.
-
 As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below. The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) CP/M application can create drive files using `mkdrv` command.
 
 ### CP/M Application Disks
 
-The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09-15](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/MSBASCOM.CPM.zip). MS Basic (Interpreter) 5.29 is available in the [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
+The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09-15](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/MSBASCOM.CPM.zip). MS Basic (Interpreter) 5.22 is available in the [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
 
 An empty [CP/M 8 MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 8388608 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provides a new 8 MB CP/M drive which can store up to 2048 files.
 
@@ -235,7 +235,7 @@ FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is po
 
 CP/M drive files can be read and written using a host computer with any operating system, by using the [`cpmtools`](http://www.moria.de/~michael/cpmtools/) utilities, simply by inserting the PATA IDE drive into a USB drive caddy.
 
-The CP/M TOOLS package v2.20 is available from [debian repositories](https://packages.debian.org/sid/cpmtools).
+The CP/M TOOLS package v2.23 is available from [debian repositories](https://packages.debian.org/sid/cpmtools).
 
 Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com`).
 
@@ -244,7 +244,7 @@ Check the disk image, `ls` a CP/M image, copy a file (in this case `bbcbasic.com
 > cpmls -f rc2014-8MB a.cpm
 > cpmcp -f rc2014-8MB a.cpm ~/Desktop/CPM/bbcbasic.com 0:BBCBASIC.COM
 ```
-__NOTE:__ To use `cpmtools`, the contents of the host `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 before use.
+__NOTE:__ Before use of the `cpmtools`, the contents of the host `/etc/cpmtools/diskdefs` file need to be augmented with disk information specific to the RC2014 by appending it to the end of the file.
 
 The CP/M-IDE default is for 8MByte drives, with up to 2048 files each.
 
