@@ -12,7 +12,7 @@ In addition to other CP/M implementations, CP/M-IDE includes performance optimis
 
 - The RC2014 Pro build supports the RC2014 Pro standard SIO/2 Serial Module and Compact Flash Module in their usual configuration.
 
-- The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II in their usual configuration.
+- The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II with CP/M Expansion Kit in their usual configuration.
 
 - The RC2014 8085 CPU Module builds requires the ACIA Serial Module and use either the IDE Hard Drive Module or the Compact Flash Module.
 
@@ -66,7 +66,7 @@ All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M application
 
 ## Hardware
 
-For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
+For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) plus CP/M Expansion Kit no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
 
 For the RC2014 SIO Build, in addition to the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) which contains the CPU and SIO Serial modules, just the IDE Hard Drive Module is necessary.
 
