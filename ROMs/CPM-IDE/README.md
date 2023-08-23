@@ -12,7 +12,7 @@ In addition to other CP/M implementations, CP/M-IDE includes performance optimis
 
 - The RC2014 Pro build supports the RC2014 Pro standard SIO/2 Serial Module and Compact Flash Module in their usual configuration.
 
-- The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II with CP/M Expansion Kit in their usual configuration.
+- The RC2014 Mini build supports the standard RC2014 Mini or RC2014 Mini II with CP/M Expansion Kit, when modified to support 32kb ROM Pages.
 
 - The RC2014 8085 CPU Module builds requires the ACIA Serial Module and use either the IDE Hard Drive Module or the Compact Flash Module.
 
@@ -66,7 +66,7 @@ All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M application
 
 ## Hardware
 
-For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) plus CP/M Expansion Kit no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
+For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) plus CP/M Expansion Kit (modified for 32kB Pages) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
 
 For the RC2014 SIO Build, in addition to the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) which contains the CPU and SIO Serial modules, just the IDE Hard Drive Module is necessary.
 
@@ -203,7 +203,7 @@ __NOTE:__ Where the SIO Module is being used, the shell will wait for a `:` to e
 
 __NOTE:__ CP/M can be started by command `cpm file.a [file.b] [file.c] [file.d]` At least one valid file name must be provided. Up to 4 CP/M drive files are supported. Each CP/M drive file must be contiguous, but can be located anywhere on the FATFS drive.
 
-The CLI provides some other basic functions, such as `frag`, `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM. `frag` can be used to confirm whether a CP/M drive file (or any other file) is contiguous or fragmented.
+The shell provides some other basic functions, such as `frag`, `hload`, `ls`, `cd`, `pwd`, `mount` file, `ds`, and `dd` disk functions. And `md` to show the contents of the ROM and RAM. `frag` can be used to confirm whether a CP/M drive file (or any other file) is contiguous or fragmented. `hload` can be used to upload and directly run a CP/M application, rather than from a drive.
 
 Once the CP/M BIOS has established that it has a valid CP/M drive available, simply because the LBA passed to it is non-zero, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
 
@@ -219,7 +219,9 @@ The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for t
 
 Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
 
-As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below. The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) CP/M application can create drive files using `mkdrv` command.
+As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below.
+
+The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) CP/M application can be uploaded using the shell `hload` and it can then create drive files using `mkdrv` command.
 
 ### CP/M Application Disks
 
