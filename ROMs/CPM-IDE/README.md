@@ -18,7 +18,7 @@ In addition to other CP/M implementations, CP/M-IDE includes performance optimis
 
 - The RC2014 SIO Module build requires the IDE Hard Drive Module in addition to a standard RC2014 Pro.
 
-In the MINI, 8085, and 8085CF builds, the receive interface has a 255 byte software buffer, together with optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
+In the Mini, 8085, and 8085CF builds, the receive interface has a 255 byte software buffer, together with optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware (RTS) flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission.
 
 In the RC2014 PRO and SIO builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware (RTS) flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
@@ -66,7 +66,7 @@ All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M application
 
 ## Hardware
 
-For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) plus CP/M Expansion Kit (modified for 32kB Pages) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
+For the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) or for the [RC2014 Mini II](https://z80kits.com/shop/rc2014-mini-ii/) plus CP/M Expansion Kit (modified for 32kB ROM) no additional hardware is required. It is recommended to use a modern Compact Flash card of 1GB (or greater) to allow unrestricted storage of multiple CP/M drives.
 
 For the RC2014 SIO Build, in addition to the [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) which contains the CPU and SIO Serial modules, just the IDE Hard Drive Module is necessary.
 
@@ -90,7 +90,7 @@ If your preference is to use a CF Card, or SD Card in a SD-CF Adapter, then Dyla
 It is possible to use the standard RC2014 CF Module with either the RC2014 Pro, or with the 8085 CPU Module CF Build. As a supported RC2014 Module, the CF Module v2.0 by Tadeusz Pycio provides a very robust (CF Specification compliant) solution that will work with large Compact Flash cards (e.g. 1GB and greater), and with SD to CF Card Adapters.
 
 - [CF Module](https://rc2014.co.uk/modules/compact-flash-module/).
-- [CF Module v2.0](https://www-vtsys-pl.translate.goog/interface-compact-flash/?_x_tr_sch=http&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp).
+- [CF Module v2.0](https://z80kits.com/shop/compact-flash-module/).
 
 To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and a ACIA Serial Module installed.
 
@@ -100,10 +100,10 @@ Optionally, replacing items 4. and 5. with the Memory Module (also compatible wi
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
-Additionally, the ACIA Serial Module from the [RC2014 Classic II](https://rc2014.co.uk/full-kits/rc2014-classic-ii/) could be substituted for item 6. the SIO Serial Module.<br>
+Additionally, the ACIA Serial Module from the [RC2014 Classic II](https://rc2014.co.uk/modules/serial-io/) could be substituted for item 6. the SIO Serial Module.<br>
 __NOTE:__ For use with both the RC2014 Mini and the 8085 CPU Module, only the ACIA Serial Module is supported.
 
-- [ACIA Serial Module](https://rc2014.co.uk/modules/serial-io/).
+- [ACIA Serial Module](https://z80kits.com/shop/tynemouth-68b50-clocked-serial-port/).
 
 Also Grant Searle's [CP/M on breadboard](http://searle.x10host.com/cpm/index.html) hardware is supported if a 32kB ROM is used, and Steve Cousins' [SC108 Module (Z80, 128k RAM, 32k ROM)](https://smallcomputercentral.com/projects/z80-processor-module-for-rc2014/) Module could be exchanged for items 2., 3., 4., and 5., because Richard Deane cared enough to ask. Thanks Richard.
 
