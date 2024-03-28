@@ -13,4 +13,4 @@ Decode these clues and it will give you a discount code worth 15% off of checkou
 
 The clues will all be live from midnight Thursday 28th March through to midnight Monday 1st April GMT, and the discount code will be valid until Monday 8th April.
 
-* * * * * O * * * * * * * * * 1 * * 
+xxxxxOxxxxxxxxx1xx
