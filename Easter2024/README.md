@@ -1,5 +1,5 @@
 Easter Egg Hunt Is Back
-Once again the ever popular RC2014 Easter Egg Hunt is back, and this year it is bigger than ever!  The Easter Bunnie has sprinkled a selection of clues have been spread across the internet.  In particular; 
+Once again the ever popular RC2014 Easter Egg Hunt is back, and this year it is bigger than ever!  The Easter Bunny has sprinkled a selection of clues have been spread across the internet.  In particular; 
 - https://www.tindie.com/stores/semachthemonkey/
 - https://twitter.com/ZxSpectROM
 - https://www.instagram.com/rc2014z80/
