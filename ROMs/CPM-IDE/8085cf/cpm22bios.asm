@@ -221,10 +221,11 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
+    call    _acia_reset     ;reset and empty the ACIA Tx & Rx buffers
+
     ld      a,$DD           ;set SOD high, set MSE to mask int 75 & int 55
     sim
 
-    call    _acia_reset     ;reset and empty the ACIA Tx & Rx buffers
     ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
@@ -810,6 +811,8 @@ getLBAbase:
 ; start of common area driver - acia functions
 ;------------------------------------------------------------------------------
 
+PUBLIC acia_interrupt
+
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_putc
@@ -825,6 +828,7 @@ PUBLIC _acia1_getc
 PUBLIC _acia1_putc
 PUBLIC _acia1_pollc
 
+acia_interrupt:
 _acia_interrupt:
     push af
     push hl
@@ -837,7 +841,7 @@ rx_get:
     in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
     ld l,a                      ; Move Rx byte to l
 
-    ld a,(aciaRxCount)          ; Get the number of bytes in the Rx buffer
+    ld a,(aciaRxCount)          ; get the number of bytes in the Rx buffer
     cp __IO_ACIA_RX_SIZE-1      ; check whether there is space in the buffer
     jr NC,rx_check              ; buffer full, check if we can send something
 
@@ -856,9 +860,9 @@ rx_get:
 
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS1    ; Set RTS high, and disable Tx Interrupt
+    or __IO_ACIA_CR_TDI_RTS1    ; set RTS high, and disable Tx Interrupt
     ld (aciaControl),a          ; write the ACIA control echo byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
+    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
 
 rx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
@@ -893,7 +897,7 @@ tx_tei_clear:
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_RTS0  ; mask out (disable) the Tx Interrupt, keep RTS low
     ld (aciaControl),a          ; write the ACIA control byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
+    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
 
 tx_end:
     pop hl
