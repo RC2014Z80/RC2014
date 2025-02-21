@@ -945,8 +945,8 @@ ENDIF
 
 ._uarta_reset                    ; interrupts should be disabled
 
-    ; enable and reset the Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTA_FCR_REGISTER),a
 
     xor a
@@ -960,8 +960,8 @@ ENDIF
 
 ._uartb_reset                    ; interrupts should be disabled
 
-    ; enable and reset the Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTB_FCR_REGISTER),a
 
     xor a
