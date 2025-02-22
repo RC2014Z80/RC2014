@@ -286,63 +286,55 @@ dataEmpty:
     xor     a
     ret
 
+DEFC        conin0 = _uarta_getc
+DEFC        conin1 = _uartb_getc
+
 conin:    ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
-
-conin0:
-   call     _uarta_getc     ;check whether any characters are in CRT Rx A buffer
-   jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
-
-conin1:
-   call     _uartb_getc     ;check whether any characters are in TTY Rx B buffer
-   jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
+    rrca
+    jp      C,conin0        ;------01b CRT:
+    jp      conin1          ;------00b TTY:
 
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
     cp      00000100b
-    jr      Z,conin0
+    jp      Z,conin0
     cp      00000000b
-    jr      Z,conin1
+    jp      Z,conin1
     ld      a,$1A           ;CTRL-Z if not uarta or uart b
     ret
 
+DEFC        conout0 = _uarta_putc
+DEFC        conout1 = _uartb_putc
+
 conout:    ;console character output from register c
-    ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
     and     00000011b
-    cp      00000010b
+    cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
-    cp      00000001b
-    jp      NZ,_uartb_putc
-    jp      _uarta_putc
+    rrca
+    jp      C,conout0       ;------01b CRT:
+    jp      conout1         ;------00b TTY:
 
 list:
-    ld      l,c             ;store character
     ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
     rlca
-    jp      C,_uartb_putc   ;01------b CRT:
-    jp      _uarta_putc     ;00------b TTY:
+    jp      C,conout0       ;01------b CRT:
+    jp      conout1         ;00------b TTY:
 
 punch:
-    ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
-    cp      00010000b
-    jp      Z,_uarta_putc
+    cp      00010000b       ;--x1----b PTP: or UL1:
+    jp      Z,_sod_putc     ;output to SOD on 8085 CPU Module
     cp      00000000b
-    jp      Z,_uartb_putc
+    jp      Z,conout1
     ret
 
 listst:     ;return list status
@@ -812,6 +804,8 @@ getLBAbase:
 ; start of common area driver - uart functions
 ;------------------------------------------------------------------------------
 
+PUBLIC uart_interrupt
+
 PUBLIC _uarta_reset
 PUBLIC _uarta_getc
 PUBLIC _uarta_putc
@@ -822,6 +816,7 @@ PUBLIC _uartb_getc
 PUBLIC _uartb_putc
 PUBLIC _uartb_pollc
 
+.uart_interrupt
 ._uart_interrupt
     push af
     push hl
@@ -974,15 +969,13 @@ ENDIF
     ret
 
 ._uarta_getc
-    ; exit     : l = char received
-    ;            carry reset if Rx buffer is empty
+    ; exit     : a = char received, wait for available character
     ;
     ; modifies : af, hl
 
     ld a,(uartaRxCount)         ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
+    jp Z,_uarta_getc            ; if the count is zero, then wait
 
     sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
     jp C,uarta_getc_clean_up    ; if the buffer is too full, don't change the RTS
@@ -1008,21 +1001,16 @@ ENDIF
 
     ld hl,uartaRxCount
     dec (hl)                    ; atomically decrement Rx count
-
-    ld l,a                      ; and put it in hl
-    scf                         ; indicate char received
     ret
 
 ._uartb_getc
-    ; exit     : l = char received
-    ;            carry reset if Rx buffer is empty
+    ; exit     : a = char received, wait for available character
     ;
     ; modifies : af, hl
 
     ld a,(uartbRxCount)         ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
+    jp Z,_uartb_getc            ; if the count is zero, then wait
 
     sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
     jp C,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
@@ -1048,19 +1036,15 @@ ENDIF
 
     ld hl,uartbRxCount
     dec (hl)                    ; atomically decrement Rx count
-
-    ld l,a                      ; and put it in hl
-    scf                         ; indicate char received
     ret
 
 ._uarta_pollc
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
     ld a,(uartaRxCount)	        ; load the Rx bytes in buffer
-    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1068,13 +1052,12 @@ ENDIF
     ret
 
 ._uartb_pollc
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
     ld a,(uartbRxCount)	        ; load the Rx bytes in buffer
-    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1082,9 +1065,9 @@ ENDIF
     ret
 
 ._uarta_putc
-    ; enter    : l = char to output
+    ; enter    : c = char to output
     ;            carry reset
-    ; modifies : af, hl
+    ; modifies : af
 
     ; check the UART A channel exists
     ld a,(uartaControl)         ; load the control flag
@@ -1093,17 +1076,17 @@ ENDIF
 
     ; check space is available in the Tx FIFO
     in a,(__IO_UARTA_LSR_REGISTER)      ; read the line status register
-    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THRE is available
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
     jp Z,_uarta_putc                    ; keep trying until THR has space
 
-    ld a,l                              ; retrieve Tx character
+    ld a,c                              ; retrieve Tx character
     out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
     ret                                 ; and just complete
 
 ._uartb_putc
-    ; enter    : l = char to output
+    ; enter    : c = char to output
     ;            carry reset
-    ; modifies : af, hl
+    ; modifies : af
 
     ; check the UART B channel exists
     ld a,(uartbControl)         ; load the control flag
@@ -1112,10 +1095,10 @@ ENDIF
 
     ; check space is available in the Tx FIFO
     in a,(__IO_UARTB_LSR_REGISTER)      ; read the line status register
-    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THRE is available
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
     jp Z,_uartb_putc                    ; keep trying until THR has space
 
-    ld a,l                              ; retrieve Tx character
+    ld a,c                              ; retrieve Tx character
     out (__IO_UARTB_DATA_REGISTER),a    ; output the Tx byte to the UART B
     ret                                 ; and just complete
 
@@ -1126,12 +1109,12 @@ ENDIF
 PUBLIC _sod_putc
 
 _sod_putc:
-    ; output a character in l via SOD at 115200 baud 8n2
-    ; enter    : l = char to output
+    ; output a character in c via SOD at 115200 baud 8n2
+    ; enter    : c = char to output
     ;
-    ; modifies : af, hl
+    ; modifies : af, bc
 
-    ld h,9                      ;10 bits per byte (1 start, 1 active stop bits)
+    ld b,9                      ;10 bits per byte (1 start, 1 active stop bits)
 
     ld a,$40                    ; 7 clear start and set SOD enable bits
     di
@@ -1143,18 +1126,21 @@ sod_loop:
     nop                         ; 4 delay
     ld a,0                      ; 7 delay
 
-    ld a,l                      ; 4
+    ld a,c                      ; 4
     scf                         ; 4 set eventual stop bit(s)
     rra                         ; 4 get bit into carry
-    ld l,a                      ; 4
+    ld c,a                      ; 4
 
     ld a,$80                    ; 7 set eventual SOD enable bit
     rra                         ; 4 move carry into SOD bit
 
-    dec h                       ; 4 loop 8 + 1 bits
+    dec b                       ; 4 loop 8 + 1 bits
     sim                         ; 4 output bit data
     jp NZ,sod_loop              ;10/7
                                 ;loop total 64 cycles for correct timing
+
+    ld a,$DD                    ;restore original interrupt status
+    sim
     ei
     ret
 
@@ -1428,29 +1414,27 @@ PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
 PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
 PUBLIC  uartaControl, uartbControl
 
+uartaControl:       defb 0              ;local control of UART A
 uartaRxCount:       defb 0              ;space for Rx Buffer Management
 uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
-uartaControl:       defb 0              ;local control echo of UART A
 
+uartbControl:       defb 0              ;local control of UART B
 uartbRxCount:       defb 0              ;space for Rx Buffer Management
 uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
 uartbRxOut:         defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
-uartbControl:       defb 0              ;local control echo of UART B
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned uninitialised data
 ;------------------------------------------------------------------------------
 
+ALIGN   $10000 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundary
 
 PUBLIC  uartaRxBuffer
 PUBLIC  uartbRxBuffer
 
-ALIGN   $10000 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundary
-                                        ;when finally locating
-
-uartaRxBuffer:   defs __IO_UART_RX_SIZE ;space for the Rx Buffer
-uartbRxBuffer:   defs __IO_UART_RX_SIZE ;space for the Rx Buffer
+uartaRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART A Rx Buffer
+uartbRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART B Rx Buffer
 
 ;------------------------------------------------------------------------------
 ; end of bss tables

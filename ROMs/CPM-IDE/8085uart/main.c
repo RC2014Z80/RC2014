@@ -23,7 +23,7 @@
 #include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDC00         // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDB00         // below the CP/M CCP
 #pragma printf = "%c %s %d %02u %lu %04X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
@@ -337,9 +337,9 @@ int8_t ya_ls(char ** args)      /* print directory contents */
     fprintf(stdout, "%4u File(s),%10lu bytes total\n%4u Dir(s)", s1, p1, s2);
 
     if(args[1] == NULL) {
-        res = f_getfree( (const TCHAR*)".", (DWORD*)&p1, &fs);
+        res = f_getfree((const TCHAR*)".", (DWORD*)&p1, &fs);
     } else {
-        res = f_getfree( (const TCHAR*)args[1], (DWORD*)&p1, &fs);
+        res = f_getfree((const TCHAR*)args[1], (DWORD*)&p1, &fs);
     }
     if (res == FR_OK) {
         fprintf(stdout, ", %10lu bytes free\n", p1 * (DWORD)(fs->csize * 512));
@@ -426,7 +426,7 @@ int8_t ya_ds(char ** args)      /* disk status */
 
     (void *)args;
 
-    res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
+    res = f_getfree((const TCHAR*)"", (DWORD*)&p1, &fs);
     if (res != FR_OK) { put_rc(res); return 1; }
 
     fprintf(stdout, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
@@ -455,7 +455,7 @@ int8_t ya_dd(char ** args)      /* disk dump */
         sect = strtoul(args[1], NULL, 10);
     }
 
-    res = disk_read( 0, buffer, sect, 1);
+    res = disk_read(0, buffer, sect, 1);
     if (res != FR_OK) { fprintf(stdout, "rc=%d\n", (WORD)res); return 1; }
     fprintf(stdout, "PD#:0 LBA:%lu\n", sect++);
     for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x200; ptr += 16, ofs += 16)
@@ -646,8 +646,10 @@ int main(int argc, char ** argv)
 
     fprintf(stdout, "\n\nRC2014 8085 UART - CP/M-IDE\nfeilipu 2025\n\n> :-)\n");
 
+    put_rc(f_mount(fs, (const TCHAR*)"0:", 0));
+
     // Run command loop if we got all the memory allocations we need.
-    if ( fs && buffer)
+    if (fs && buffer)
         ya_loop();
 
     // Perform any shutdown/cleanup.
