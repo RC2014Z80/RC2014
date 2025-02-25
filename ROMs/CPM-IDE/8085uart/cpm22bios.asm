@@ -828,8 +828,8 @@ PUBLIC _uartb_pollc
     jp Z,uartb                  ; try UART B
 
     in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
-    rrca                        ; check whether an interrupt was generated
-    jp C,uartb                  ; if not, go check UART B
+    rrca                            ; check whether an interrupt was generated
+    jp C,uartb                      ; if not, go check UART B
 
 .rxa_get
     ; read the IIR to access the relevant interrupts
@@ -839,13 +839,6 @@ PUBLIC _uartb_pollc
     jp Z,uartb                  ; if not, go check UART B
 
     in a,(__IO_UARTA_DATA_REGISTER) ; Get the received byte from the UART A
-    ld l,a                      ; move Rx byte to l
-
-    ld a,(uartaRxCount)         ; Get the number of bytes in the Rx buffer
-    cp __IO_UART_RX_SIZE-1      ; check whether there is space in the buffer
-    jp NC,rxa_dtr               ; buffer full, check DTR
-
-    ld a,l                      ; get Rx byte from l
     ld hl,(uartaRxIn)           ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the uartaRxIn address
 
@@ -861,19 +854,18 @@ ENDIF
     ld hl,uartaRxCount
     inc (hl)                    ; atomically increment Rx buffer count
 
-.rxa_dtr
     ld a,(uartaRxCount)         ; get the current Rx count
     sub __IO_UART_RX_FULLISH    ; compare the count with the preferred full size
-    jp C,rxa_check              ; leave the DTR low, and check for Rx/Tx possibility
+    jp C,rxa_check              ; leave the RTS low, and check for Rx/Tx possibility
 
-    in a,(__IO_UARTA_MCR_REGISTER)              ; get the UART A MODEM Control Register
-    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS & DTR high
-    out (__IO_UARTA_MCR_REGISTER),a             ; set the MODEM Control Register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    and ~__IO_UART_MCR_RTS          ; set RTS high
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxa_check
     in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
-    rrca                        ; check whether an interrupt remains
-    jp NC,rxa_get               ; another byte received, go get it
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxa_get                   ; another byte received, go get it
 
     ; now do the same with the UART B channel, because the interrupt is shared
 
@@ -884,8 +876,8 @@ ENDIF
     jp Z,end
 
     in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
-    rrca                        ; check whether an interrupt was generated
-    jp C,end                    ; if not, exit interrupt
+    rrca                            ; check whether an interrupt was generated
+    jp C,end                        ; if not, exit interrupt
 
 .rxb_get
     ; read the IIR to access the relevant interrupts
@@ -895,13 +887,6 @@ ENDIF
     jp Z,end                    ; if not exit
 
     in a,(__IO_UARTB_DATA_REGISTER) ; Get the received byte from the UART B
-    ld l,a                      ; move Rx byte to l
-
-    ld a,(uartbRxCount)         ; Get the number of bytes in the Rx buffer
-    cp __IO_UART_RX_SIZE-1      ; check whether there is space in the buffer
-    jp NC,rxb_dtr               ; buffer full, check DTR
-
-    ld a,l                      ; get Rx byte from l
     ld hl,(uartbRxIn)           ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the uartbRxIn address
 
@@ -917,19 +902,18 @@ ENDIF
     ld hl,uartbRxCount
     inc (hl)                    ; atomically increment Rx buffer count
 
-.rxb_dtr
     ld a,(uartbRxCount)         ; get the current Rx count
     sub __IO_UART_RX_FULLISH    ; compare the count with the preferred full size
-    jp C,rxb_check              ; leave the DTR low, and check for Rx/Tx possibility
+    jp C,rxb_check              ; leave the RTS low, and check for Rx/Tx possibility
 
-    in a,(__IO_UARTB_MCR_REGISTER)              ; get the UART B MODEM Control Register
-    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS & DTR high
-    out (__IO_UARTB_MCR_REGISTER),a             ; set the MODEM Control Register
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    and ~__IO_UART_MCR_RTS          ; set RTS high
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxb_check
     in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
-    rrca                        ; check whether an interrupt remains
-    jp NC,rxb_get               ; another byte received, go get it
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxb_get                   ; another byte received, go get it
 
 .end
     pop hl
@@ -978,11 +962,11 @@ ENDIF
     jp Z,_uarta_getc            ; if the count is zero, then wait
 
     sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
-    jp C,uarta_getc_clean_up    ; if the buffer is too full, don't change the RTS
+    jp NC,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
 
-    in a,(__IO_UARTA_MCR_REGISTER)          ; get the UART A MODEM Control Register
-    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS & DTR low
-    out (__IO_UARTA_MCR_REGISTER),a         ; set the MODEM Control Register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    or __IO_UART_MCR_RTS            ; set RTS low
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
 .uarta_getc_clean_up
     ld hl,(uartaRxOut)          ; get the pointer to place where we pop the Rx byte
@@ -1013,11 +997,11 @@ ENDIF
     jp Z,_uartb_getc            ; if the count is zero, then wait
 
     sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
-    jp C,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
+    jp NC,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
 
-    in a,(__IO_UARTB_MCR_REGISTER)          ; get the UART B MODEM Control Register
-    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS & DTR low
-    out (__IO_UARTB_MCR_REGISTER),a         ; set the MODEM Control Register
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    or __IO_UART_MCR_RTS            ; set RTS low
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
 .uartb_getc_clean_up
     ld hl,(uartbRxOut)          ; get the pointer to place where we pop the Rx byte

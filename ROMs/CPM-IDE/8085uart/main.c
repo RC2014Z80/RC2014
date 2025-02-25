@@ -89,9 +89,9 @@ extern void hexload(void);      // initialise cpm and launch Intel HEX program i
  */
 
 struct Builtin {
-  const char * name;
-  int8_t (*func) (char ** args);
-  const char * help;
+    const char * name;
+    int8_t (*func) (char ** args);
+    const char * help;
 };
 
 struct Builtin builtins[] = {
@@ -116,8 +116,8 @@ struct Builtin builtins[] = {
     { "exit", &ya_exit, "- exit and restart"}
 };
 
-uint8_t ya_num_builtins() {
-  return sizeof(builtins) / sizeof(struct Builtin);
+uint8_t ya_num_builtins(void) {
+    return sizeof(builtins) / sizeof(struct Builtin);
 }
 
 
