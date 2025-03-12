@@ -56,16 +56,10 @@ SECTION acia_interrupt              ; ORG $0070
         jr NC,acia_tx_send          ; if not, go check for bytes to transmit
 
 .acia_rx_get
-        in a,(SER_DATA_ADDR)        ; Get the received byte from the ACIA
-        ld l,a                      ; Move Rx byte to l
-
-        ld a,(serRxBufUsed)         ; Get the number of bytes in the Rx buffer
-        cp SER_RX_BUFSIZE-1         ; check whether there is space in the buffer
-        jr NC,acia_tx_check         ; buffer full, check if we can send something
-
-        ld a,l                      ; get Rx byte from l
+        in a,(SER_DATA_ADDR)        ; get the received byte from the ACIA
         ld hl,(serRxInPtr)          ; get the pointer to where we poke
         ld (hl),a                   ; write the Rx byte to the serRxInPtr address
+
         inc l                       ; move the Rx pointer low byte along, 0xFF rollover
         ld (serRxInPtr),hl          ; write where the next byte should be poked
 
@@ -74,7 +68,7 @@ SECTION acia_interrupt              ; ORG $0070
 
         ld a,(serRxBufUsed)         ; get the current Rx count
         cp SER_RX_FULLSIZE          ; compare the count with the preferred full size
-        jp NZ,acia_tx_check         ; leave the RTS low, and check for Rx/Tx possibility
+        jp NZ,acia_rx_check         ; leave the RTS low, and check for Rx/Tx possibility
 
         ld a,(serControl)           ; get the ACIA control echo byte
         and ~SER_TEI_MASK           ; mask out the Tx interrupt bits
@@ -82,7 +76,7 @@ SECTION acia_interrupt              ; ORG $0070
         ld (serControl),a           ; write the ACIA control echo byte back
         out (SER_CTRL_ADDR),a       ; set the ACIA CTRL register
 
-.acia_tx_check
+.acia_rx_check
         in a,(SER_STATUS_ADDR)      ; get the status of the ACIA
         rrca                        ; check whether a byte has been received, via SER_RDRF
         jr C,acia_rx_get            ; another byte received, go get it

@@ -6,7 +6,7 @@ ACIA 6850 interrupt driven serial I/O to run modified NASCOM Microsoft Basic 4.7
 
 Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM Jump Table, starting at `0x8000`. This allows you to upload Assembly or compiled C programs, and then run them as described below.
 
-The goal of this extension to standard MS Basic is to load an arbitrary program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
+The goal of this extension to standard MS Basic is to load an arbitrary C or assembly program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
 
 Additional BASIC statements `MEEK I,J` and `MOKE I` allow convenient editing of small assembly programs from the BASIC command line.
 
