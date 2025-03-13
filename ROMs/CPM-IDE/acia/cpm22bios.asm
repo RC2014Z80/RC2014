@@ -288,16 +288,16 @@ conin:    ;console character into register a
     jr      NZ,conin1
 
 conin0:
-   call     _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
-   jr       NC,conin0       ;if Rx buffer is empty
+   jp       _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
+;  jr       NC,conin0       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
+;  ret
 
 conin1:
-   call     _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
-   jr       NC,conin1       ;if Rx buffer is empty
+   jp       _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
+;  jr       NC,conin1       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
+;  ret
 
 reader:
     ld      a,(_cpm_iobyte)
@@ -313,27 +313,25 @@ conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
     and     00000011b
-    cp      00000010b
+    cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
-    cp      00000001b
-    jp      NZ,_acia1_putc
-    jp      _acia0_putc
+    rrca
+    jp      C,_acia0_putc   ;------01b CRT:
+    jp      _acia1_putc     ;------00b TTY:
 
 list:
     ld      l,c             ;store character
-    ld      a,(_cpm_iobyte)
-    and     11000000b
-    cp      01000000b
-    jp      Z,_acia0_putc
-    cp      00000000b
-    jp      Z,_acia1_putc
-    ret
+    ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
+    rlca
+    rlca
+    jp      C,_acia0_putc   ;01------b CRT:
+    jp      _acia1_putc     ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
-    cp      00010000b
+    cp      00010000b       ;--x1----b PTP: or UL1:
     jp      Z,_acia0_putc
     cp      00000000b
     jp      Z,_acia1_putc
@@ -787,6 +785,8 @@ getLBAbase:
 ; start of common area driver - acia functions
 ;------------------------------------------------------------------------------
 
+PUBLIC acia_interrupt
+
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_putc
@@ -802,6 +802,7 @@ PUBLIC _acia1_getc
 PUBLIC _acia1_putc
 PUBLIC _acia1_pollc
 
+acia_interrupt:
 _acia_interrupt:
     push af
     push hl
@@ -811,16 +812,10 @@ _acia_interrupt:
     jr NC,tx_check              ; if not, go check for bytes to transmit
 
 rx_get:
-    in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
-    ld l,a                      ; Move Rx byte to l
-
-    ld a,(aciaRxCount)          ; Get the number of bytes in the Rx buffer
-    cp __IO_ACIA_RX_SIZE-1      ; check whether there is space in the buffer
-    jr NC,rx_check              ; buffer full, check if we can send something
-
-    ld a,l                      ; get Rx byte from l
+    in a,(__IO_ACIA_DATA_REGISTER)  ; get the received byte from the ACIA
     ld hl,(aciaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the aciaRxIn address
+
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (aciaRxIn),hl            ; write where the next byte should be poked
 
@@ -833,9 +828,9 @@ rx_get:
 
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS1    ; Set RTS high, and disable Tx Interrupt
+    or __IO_ACIA_CR_TDI_RTS1    ; set RTS high, and disable Tx Interrupt
     ld (aciaControl),a          ; write the ACIA control echo byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
+    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
 
 rx_check:
     in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
@@ -870,7 +865,7 @@ tx_tei_clear:
     ld a,(aciaControl)          ; get the ACIA control echo byte
     and ~__IO_ACIA_CR_TEI_RTS0  ; mask out (disable) the Tx Interrupt, keep RTS low
     ld (aciaControl),a          ; write the ACIA control byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; Set the ACIA CTRL register
+    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
 
 tx_end:
     pop hl
@@ -893,15 +888,13 @@ _acia_reset:                    ; interrupts should be disabled
     ret
 
 _acia_getc:
-    ; exit     : l = char received
-    ;            carry reset if Rx buffer is empty
+    ; exit     : a, l = char received, wait for available character
     ;
     ; modifies : af, hl
 
     ld a,(aciaRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
+    jp Z,_acia_getc             ; if the count is zero, then wait
 
     cp __IO_ACIA_RX_EMPTYISH    ; compare the count with the preferred empty size
     jp NZ,getc_clean_up_rx      ; if the buffer not emptyish, don't change the RTS
@@ -917,14 +910,14 @@ _acia_getc:
 getc_clean_up_rx:
     ld hl,(aciaRxOut)           ; get the pointer to place where we pop the Rx byte
     ld a,(hl)                   ; get the Rx byte
+
     inc l                       ; move the Rx pointer low byte along
     ld (aciaRxOut),hl           ; write where the next byte should be popped
 
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; and put it in hl
-    scf                         ; indicate char received
+    ld l,a                      ; and put char in hl
     ret
 
 _acia_pollc:

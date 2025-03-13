@@ -20,13 +20,6 @@
 ;
 ;==============================================================================
 ;
-; HexLoadr option by @feilipu,
-; derived from the work of @fbergama and @foxweb at RC2014
-; https://github.com/RC2014Z80
-;
-
-;==============================================================================
-;
 ; INCLUDES SECTION
 ;
 
@@ -41,12 +34,12 @@ DEFC    ROMSTART        =   $0000   ; Bottom of ROM
 
 DEFC    RAMSTOP         =   $FFFF   ; Top of RAM
 
-DEFC    SER_RX_BUFSIZE  =   $100    ; FIXED Rx buffer size, 256 Bytes, no range checking
-DEFC    SER_RX_FULLSIZE =   SER_RX_BUFSIZE - $10
+DEFC    SER_RX_BUFSIZE      = $100  ; FIXED Rx buffer size, 256 Bytes, no range checking
+DEFC    SER_RX_FULLSIZE     = SER_RX_BUFSIZE - $10
                                     ; Fullness of the Rx Buffer, when not_RTS is signalled
-DEFC    SER_RX_EMPTYSIZE =  $08     ; Fullness of the Rx Buffer, when RTS is signalled
+DEFC    SER_RX_EMPTYSIZE    = $08   ; Fullness of the Rx Buffer, when RTS is signalled
 
-DEFC    SER_TX_BUFSIZE  =   $40     ; Size of the Tx Buffer, 2^n Bytes, n = 6 here
+DEFC    SER_TX_BUFSIZE      = $40   ; Size of the Tx Buffer, 2^n Bytes, n = 6 here
 
 ;==============================================================================
 ;

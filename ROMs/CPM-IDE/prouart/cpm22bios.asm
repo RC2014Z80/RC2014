@@ -4,6 +4,8 @@
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
+; Adapted to Compact Flash Module & UART - March 2025
+;
 
 SECTION rodata_driver               ;read only driver (code)
 
@@ -154,7 +156,11 @@ cboot:
     ld      ($0020),a               ;rst 20
     ld      ($0028),a               ;rst 28
     ld      ($0030),a               ;rst 30
-    ld      ($0038),a               ;rst 38
+
+    ld      a,$C3                   ;C3 is a jmp instruction for:
+    ld      ($0038),a               ;jmp _uart_interrupt
+    ld      hl,_uart_interrupt
+    ld      ($0039),hl              ;enable uart interrupt at rst 38
 
     xor     a                       ;zero in the accum
     ld      (_cpm_cdisk),a          ;select disk zero
@@ -215,8 +221,8 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
-    call    _sioa_reset     ;reset and empty the SIOA Tx & Rx buffers
-    call    _siob_reset     ;reset and empty the SIOB Tx & Rx buffers
+    call    _uarta_reset    ;reset UART A and empty the Rx buffer
+    call    _uartb_reset    ;reset UART B and empty the Rx buffer
 
     ei
 
@@ -254,9 +260,9 @@ diskchk:
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
     and     00001011b       ;mask off console and high bit of reader
-    cp      00001010b       ;redirected to siob
+    cp      00001010b       ;redirected to uartb
     jr      Z,const1
-    cp      00000010b       ;redirected to siob
+    cp      00000010b       ;redirected to uartb
     jr      Z,const1
 
     and     00000011b       ;remove the reader from the mask - only console bits then remain
@@ -264,77 +270,70 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     jr      NZ,const1
 
 const0:
-    call    _sioa_pollc     ;check whether any characters are in CRT (Rx0) buffer
+    call    _uarta_pollc    ;check whether any characters are in CRT (RxA) buffer
     jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
     ret
 
 const1:
-    call    _siob_pollc     ;check whether any characters are in TTY (Rx1) buffer
+    call    _uartb_pollc    ;check whether any characters are in TTY (RxB) buffer
     jr      C,dataReady
 dataEmpty:
     xor     a
     ret
+
+DEFC        conin0 = _uarta_getc
+DEFC        conin1 = _uartb_getc
 
 conin:    ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
-
-conin0:
-   call     _sioa_getc      ;check whether any characters are in CRT Rx0 buffer
-   jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
-
-conin1:
-   call     _siob_getc      ;check whether any characters are in TTY Rx1 buffer
-   jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-   ret
+    rrca
+    jp      C,conin0        ;------01b CRT:
+    jp      conin1          ;------00b TTY:
 
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
     cp      00000100b
-    jr      Z,conin0
+    jp      Z,conin0
     cp      00000000b
-    jr      Z,conin1
-    ld      a,$1A           ;CTRL-Z if not sioa or siob
+    jp      Z,conin1
+    ld      a,$1A           ;CTRL-Z if not uarta or uart b
     ret
+
+DEFC        conout0 = _uarta_putc
+DEFC        conout1 = _uartb_putc
 
 conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
     and     00000011b
-    cp      00000010b
+    cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
-    cp      00000001b
-    jp      NZ,_siob_putc
-    jp      _sioa_putc
+    rrca
+    jp      C,conout0       ;------01b CRT:
+    jp      conout1         ;------00b TTY:
 
 list:
     ld      l,c             ;store character
-    ld      a,(_cpm_iobyte)
-    and     11000000b
-    cp      01000000b
-    jp      Z,_sioa_putc
-    cp      00000000b
-    jp      Z,_siob_putc
-    ret
+    ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
+    rlca
+    rlca
+    jp      C,conout0       ;01------b CRT:
+    jp      conout1         ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
-    cp      00010000b
-    jp      Z,_sioa_putc
+    cp      00010000b       ;--x1----b PTP: or UL1:
+    jp      Z,conout0
     cp      00000000b
-    jp      Z,_siob_putc
+    jp      Z,conout1
     ret
 
 listst:     ;return list status
@@ -782,346 +781,239 @@ getLBAbase:
 
 
 ;------------------------------------------------------------------------------
-; start of common area driver - sio functions
+; start of common area driver - uart functions
 ;------------------------------------------------------------------------------
 
-PUBLIC _sioa_reset
-PUBLIC _sioa_flush_rx_di
-PUBLIC _sioa_getc
-PUBLIC _sioa_putc
-PUBLIC _sioa_pollc
+PUBLIC _uart_interrupt
 
-PUBLIC _siob_reset
-PUBLIC _siob_flush_rx_di
-PUBLIC _siob_getc
-PUBLIC _siob_putc
-PUBLIC _siob_pollc
+PUBLIC _uarta_reset
+PUBLIC _uarta_getc
+PUBLIC _uarta_putc
+PUBLIC _uarta_pollc
 
-__siob_interrupt_tx_empty:      ; start doing the SIOB Tx stuff
-    push af
-    ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether it is zero
-    jr Z,siob_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
+PUBLIC _uartb_reset
+PUBLIC _uartb_getc
+PUBLIC _uartb_putc
+PUBLIC _uartb_pollc
 
-    push hl
-    ld hl,(siobTxOut)           ; get the pointer to place where we pop the Tx byte
-    ld a,(hl)                   ; get the Tx byte
-    out (__IO_SIOB_DATA_REGISTER),a ; output the Tx byte to the SIOB
-
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
-    and l                       ; range check
-    or siobTxBuffer&0xFF        ; locate base
-    ld l,a                      ; return the low byte to l
-    ld (siobTxOut),hl           ; write where the next byte should be popped
-
-    ld hl,siobTxCount
-    dec (hl)                    ; atomically decrement current Tx count
-
-    pop hl
-    jr NZ,siob_tx_end
-
-siob_tx_int_pend:
-    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
-    out (__IO_SIOB_CONTROL_REGISTER),a      ; into the SIOB register R0
-
-siob_tx_end:                    ; if we've more Tx bytes to send, we're done for now
-    pop af
-
-__siob_interrupt_ext_status:
-    ei
-    reti
-
-__siob_interrupt_rx_char:
+._uart_interrupt
     push af
     push hl
 
-siob_rx_get:
-    in a,(__IO_SIOB_DATA_REGISTER)  ; move Rx byte from the SIOB to A
-    ld hl,(siobRxIn)            ; get the pointer to where we poke
-    ld (hl),a                   ; write the Rx byte to the siobRxIn target
+.uarta
+    ; check the UART A channel exists
+    ld a,(uartaControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    jp Z,uartb                  ; try UART B
+
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    rrca                            ; check whether an interrupt was generated
+    jp C,uartb                      ; if not, go check UART B
+
+.rxa_get
+    ; read the IIR to access the relevant interrupts
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    and __IO_UART_IIR_DATA      ; Rx data is available
+                                ; XXX To do handle line errors
+    jp Z,uartb                  ; if not, go check UART B
+
+    in a,(__IO_UARTA_DATA_REGISTER) ; Get the received byte from the UART A
+    ld hl,(uartaRxIn)           ; get the pointer to where we poke
+    ld (hl),a                   ; write the Rx byte to the uartaRxIn address
 
     inc l                       ; move the Rx pointer low byte along
-    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+IF __IO_UART_RX_SIZE != 0x100
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
-    or siobRxBuffer&0xFF        ; locate base
+    or uartaRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    ld (siobRxIn),hl            ; write where the next byte should be poked
+ENDIF
+    ld (uartaRxIn),hl           ; write where the next byte should be poked
 
-    ld hl,siobRxCount
+    ld hl,uartaRxCount
     inc (hl)                    ; atomically increment Rx buffer count
 
-    ld a,(siobRxCount)          ; get the current Rx count
-    cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-    jp NZ,siob_rx_check         ; if the buffer is fullish reset the RTS line
+    ld a,(uartaRxCount)         ; get the current Rx count
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxa_check             ; leave the RTS low, and check for Rx/Tx possibility
 
-    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE    ; clear RTS
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
-siob_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
-    in a,(__IO_SIOB_CONTROL_REGISTER)   ; get the SIOB register R0
-    rrca                        ; test whether we have received on SIOB
-    jr C,siob_rx_get            ; if still more bytes in H/W FIFO, get them
+.rxa_check
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxa_get                   ; another byte received, go get it
 
-    pop hl                      ; or clean up
-    pop af
-    ei
-    reti
+    ; now do the same with the UART B channel, because the interrupt is shared
 
-__siob_interrupt_rx_error:
-    push af
-    ld a,__IO_SIO_WR0_R1                ; set request for SIOB Read Register 1
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; into the SIOB control register
-    in a,(__IO_SIOB_CONTROL_REGISTER)   ; load Read Register 1
-                                        ; test whether we have error on SIOB
-    and __IO_SIO_RR1_RX_FRAMING_ERROR|__IO_SIO_RR1_RX_OVERRUN|__IO_SIO_RR1_RX_PARITY_ERROR
-    jr Z,siob_interrupt_rx_exit         ; clear error, and exit
-    in a,(__IO_SIOB_DATA_REGISTER)      ; remove errored Rx byte from the SIOB
+.uartb
+    ; check the UART B channel exists
+    ld a,(uartbControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    jp Z,end
 
-siob_interrupt_rx_exit:
-    ld a,__IO_SIO_WR0_ERROR_RESET       ; otherwise reset the Error flags
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; in the SIOB Write Register 0
-    pop af                              ; and clean up
-    ei
-    reti
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    rrca                            ; check whether an interrupt was generated
+    jp C,end                        ; if not, exit interrupt
 
-__sioa_interrupt_tx_empty:          ; start doing the SIOA Tx stuff
-    push af
-    ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether it is zero
-    jr Z,sioa_tx_int_pend       ; if the count is zero, disable the Tx Interrupt and exit
+.rxb_get
+    ; read the IIR to access the relevant interrupts
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    and __IO_UART_IIR_DATA      ; Rx data is available
+                                ; XXX To do handle line errors
+    jp Z,end                    ; if not exit
 
-    push hl
-    ld hl,(sioaTxOut)           ; get the pointer to place where we pop the Tx byte
-    ld a,(hl)                   ; get the Tx byte
-    out (__IO_SIOA_DATA_REGISTER),a ; output the Tx byte to the SIOA
-
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
-    and l                       ; range check
-    or sioaTxBuffer&0xFF        ; locate base
-    ld l,a                      ; return the low byte to l
-    ld (sioaTxOut),hl           ; write where the next byte should be popped
-
-    ld hl,sioaTxCount
-    dec (hl)                    ; atomically decrement current Tx count
-
-    pop hl
-    jr NZ,sioa_tx_end
-
-sioa_tx_int_pend:
-    ld a,__IO_SIO_WR0_TX_INT_PENDING_RESET  ; otherwise pend the Tx interrupt
-    out (__IO_SIOA_CONTROL_REGISTER),a      ; into the SIOA register R0
-
-sioa_tx_end:                    ; if we've more Tx bytes to send, we're done for now
-    pop af
-
-__sioa_interrupt_ext_status:
-    ei
-    reti
-
-__sioa_interrupt_rx_char:
-    push af
-    push hl
-
-sioa_rx_get:
-    in a,(__IO_SIOA_DATA_REGISTER)  ; move Rx byte from the SIOA to A
-    ld hl,(sioaRxIn)            ; get the pointer to where we poke
-    ld (hl),a                   ; write the Rx byte to the sioaRxIn target
+    in a,(__IO_UARTB_DATA_REGISTER) ; Get the received byte from the UART B
+    ld hl,(uartbRxIn)           ; get the pointer to where we poke
+    ld (hl),a                   ; write the Rx byte to the uartbRxIn address
 
     inc l                       ; move the Rx pointer low byte along
-    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+IF __IO_UART_RX_SIZE != 0x100
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
-    or sioaRxBuffer&0xFF        ; locate base
+    or uartbRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    ld (sioaRxIn),hl            ; write where the next byte should be poked
+ENDIF
+    ld (uartbRxIn),hl           ; write where the next byte should be poked
 
-    ld hl,sioaRxCount
+    ld hl,uartbRxCount
     inc (hl)                    ; atomically increment Rx buffer count
 
-    ld a,(sioaRxCount)          ; get the current Rx count
-    cp __IO_SIO_RX_FULLISH      ; compare the count with the preferred full size
-    jp NZ,sioa_rx_check         ; if the buffer is fullish reset the RTS line
+    ld a,(uartbRxCount)         ; get the current Rx count
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxb_check             ; leave the RTS low, and check for Rx/Tx possibility
 
-    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-    out (__IO_SIOA_CONTROL_REGISTER),a   ; write to SIOA control register
-    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE    ; clear RTS
-    out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
-sioa_rx_check:                  ; SIO has 4 byte Rx H/W FIFO
-    in a,(__IO_SIOA_CONTROL_REGISTER)   ; get the SIOA register R0
-    rrca                        ; test whether we have received on SIOA
-    jr C,sioa_rx_get            ; if still more bytes in H/W FIFO, get them
+.rxb_check
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxb_get                   ; another byte received, go get it
 
-    pop hl                      ; or clean up
+.end
+    pop hl
     pop af
+
     ei
     reti
 
-__sioa_interrupt_rx_error:
-    push af
-    ld a,__IO_SIO_WR0_R1                ; set request for SIOA Read Register 1
-    out (__IO_SIOA_CONTROL_REGISTER),a  ; into the SIOA control register
-    in a,(__IO_SIOA_CONTROL_REGISTER)   ; load Read Register 1
-                                        ; test whether we have error on SIOA
-    and __IO_SIO_RR1_RX_FRAMING_ERROR|__IO_SIO_RR1_RX_OVERRUN|__IO_SIO_RR1_RX_PARITY_ERROR
-    jr Z,sioa_interrupt_rx_exit         ; clear error, and exit
+._uarta_reset                    ; interrupts should be disabled
 
-    in a,(__IO_SIOA_DATA_REGISTER)      ; remove errored Rx byte from the SIOA
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    out (__IO_UARTA_FCR_REGISTER),a
 
-sioa_interrupt_rx_exit:
-    ld a,__IO_SIO_WR0_ERROR_RESET       ; otherwise reset the Error flags
-    out (__IO_SIOA_CONTROL_REGISTER),a  ; in the SIOA Write Register 0
-    pop af                              ; and clean up
-    ei
-    reti
-
-_sioa_reset:
-    ; interrupts should be disabled
-    call _sioa_flush_rx
-    call _sioa_flush_tx
-    ret
-
-_siob_reset:
-    ; interrupts should be disabled
-    call _siob_flush_rx
-    call _siob_flush_tx
-    ret
-
-_sioa_flush_rx:
     xor a
-    ld (sioaRxCount),a          ; reset the Rx counter (set 0)
-    ld hl,sioaRxBuffer          ; load Rx buffer pointer home
-    ld (sioaRxIn),hl
-    ld (sioaRxOut),hl
+    ld (uartaRxCount),a          ; reset the Rx counter (set 0)
+
+    ld hl,uartaRxBuffer          ; load Rx buffer pointer home
+    ld (uartaRxIn),hl
+    ld (uartaRxOut),hl
+
     ret
 
-_siob_flush_rx:
+._uartb_reset                    ; interrupts should be disabled
+
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    out (__IO_UARTB_FCR_REGISTER),a
+
     xor a
-    ld (siobRxCount),a          ; reset the Rx counter (set 0)
-    ld hl,siobRxBuffer          ; load Rx buffer pointer home
-    ld (siobRxIn),hl
-    ld (siobRxOut),hl
+    ld (uartbRxCount),a          ; reset the Rx counter (set 0)
+
+    ld hl,uartbRxBuffer          ; load Rx buffer pointer home
+    ld (uartbRxIn),hl
+    ld (uartbRxOut),hl
+
     ret
 
-_sioa_flush_tx:
-    xor a
-    ld (sioaTxCount),a          ; reset the Tx counter (set 0)
-    ld hl,sioaTxBuffer          ; load Tx buffer pointer home
-    ld (sioaTxIn),hl
-    ld (sioaTxOut),hl
-    ret
-
-_siob_flush_tx:
-    xor a
-    ld (siobTxCount),a          ; reset the Tx counter (set 0)
-    ld hl,siobTxBuffer          ; load Tx buffer pointer home
-    ld (siobTxIn),hl
-    ld (siobTxOut),hl
-    ret
-
-_sioa_flush_rx_di:
-    push af
-    push hl
-    di
-    call _sioa_flush_rx
-    ei
-    pop hl
-    pop af
-    ret
-
-_siob_flush_rx_di:
-    push af
-    push hl
-    di
-    call _siob_flush_rx
-    ei
-    pop hl
-    pop af
-    ret
-
-_sioa_getc:
-    ; exit     : l = char received
-    ;            carry reset if Rx buffer is empty
+._uarta_getc
+    ; exit     : a, l = char received, wait for available character
     ;
-    ; modifies : af, bc, hl
-    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
+    ; modifies : af, hl
+
+    ld a,(uartaRxCount)         ; get the number of bytes in the Rx buffer
     or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
+    jp Z,_uarta_getc            ; if the count is zero, then wait
 
-    cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-    jp NZ,sioa_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
 
-    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-    out (__IO_SIOA_CONTROL_REGISTER),a  ; write to SIOA control register
-    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS   ; set the RTS
-    out (__IO_SIOA_CONTROL_REGISTER),a  ; write the SIOA R5 register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
-sioa_getc_clean_up:
-    ld hl,(sioaRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld c,(hl)                   ; get the Rx byte
+.uarta_getc_clean_up
+    ld hl,(uartaRxOut)          ; get the pointer to place where we pop the Rx byte
+    ld a,(hl)                   ; get the Rx byte
 
     inc l                       ; move the Rx pointer low byte along
-    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+IF __IO_UART_RX_SIZE != 0x100
+    push af
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
-    or sioaRxBuffer&0xFF        ; locate base
+    or uartaRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    ld (sioaRxOut),hl           ; write where the next byte should be popped
+    pop af
+ENDIF
+    ld (uartaRxOut),hl          ; write where the next byte should be popped
 
-    ld hl,sioaRxCount
+    ld hl,uartaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,c                      ; put the byte in hl
-    ld a,c                      ; put byte in a
+    ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
 
-_siob_getc:
-    ; exit     : l = char received
-    ;            carry reset if Rx buffer is empty
+._uartb_getc
+    ; exit     : a, l = char received, wait for available character
     ;
-    ; modifies : af, bc, hl
-    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
-    ld l,a                      ; and put it in hl
+    ; modifies : af, hl
+
+    ld a,(uartbRxCount)         ; get the number of bytes in the Rx buffer
     or a                        ; see if there are zero bytes available
-    ret Z                       ; if the count is zero, then return
+    jp Z,_uartb_getc            ; if the count is zero, then wait
 
-    cp __IO_SIO_RX_EMPTYISH     ; compare the count with the preferred empty size
-    jp NZ,siob_getc_clean_up    ; if the buffer NOT emptyish, don't change the RTS
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
 
-    ld a,__IO_SIO_WR0_R5        ; prepare for a write to R5
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; write to SIOB control register
-    ld a,__IO_SIO_WR5_TX_DTR|__IO_SIO_WR5_TX_8BIT|__IO_SIO_WR5_TX_ENABLE|__IO_SIO_WR5_RTS   ; set the RTS
-    out (__IO_SIOB_CONTROL_REGISTER),a  ; write the SIOB R5 register
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
-siob_getc_clean_up:
-    ld hl,(siobRxOut)           ; get the pointer to place where we pop the Rx byte
-    ld c,(hl)                   ; get the Rx byte
+.uartb_getc_clean_up
+    ld hl,(uartbRxOut)          ; get the pointer to place where we pop the Rx byte
+    ld a,(hl)                   ; get the Rx byte
 
     inc l                       ; move the Rx pointer low byte along
-    ld a,__IO_SIO_RX_SIZE-1     ; load the buffer size, (n^2)-1
+IF __IO_UART_RX_SIZE != 0x100
+    push af
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
-    or siobRxBuffer&0xFF        ; locate base
+    or uartbRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    ld (siobRxOut),hl           ; write where the next byte should be popped
+    pop af
+ENDIF
+    ld (uartbRxOut),hl          ; write where the next byte should be popped
 
-    ld hl,siobRxCount
+    ld hl,uartbRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,c                      ; put the byte in hl
-    ld a,c                      ; put byte in a
+    ld l,a                      ; put the byte in hl
     scf                         ; indicate char received
     ret
 
-_sioa_pollc:
-    ; exit     : l = number of characters in Rx buffer
+._uarta_pollc
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
-    ld a,(sioaRxCount)          ; load the Rx bytes in buffer
+
+    ld a,(uartaRxCount)	        ; load the Rx bytes in buffer
     ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
@@ -1129,12 +1021,13 @@ _sioa_pollc:
     scf                         ; set carry to indicate char received
     ret
 
-_siob_pollc:
-    ; exit     : l = number of characters in Rx buffer
+._uartb_pollc
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
-    ld a,(siobRxCount)          ; load the Rx bytes in buffer
+
+    ld a,(uartbRxCount)	        ; load the Rx bytes in buffer
     ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
@@ -1142,199 +1035,46 @@ _siob_pollc:
     scf                         ; set carry to indicate char received
     ret
 
-_sioa_putc:
+._uarta_putc
     ; enter    : l = char to output
-    ;
-    ; modifies : af, hl
+    ;            carry reset
+    ; modifies : af
 
-    di
-    ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether the buffer is empty
-    jr NZ,sioa_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
+    ; check the UART A channel exists
+    ld a,(uartaControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    ret Z                       ; return if it doesn't exist
 
-    in a,(__IO_SIOA_CONTROL_REGISTER)   ; get the SIOA register R0
-    and __IO_SIO_RR0_TX_EMPTY   ; test whether we can transmit on SIOA
-    jr Z,sioa_putc_buffer_tx    ; if not, so abandon immediate Tx
+    ; check space is available in the Tx FIFO
+    in a,(__IO_UARTA_LSR_REGISTER)      ; read the line status register
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
+    jp Z,_uarta_putc                    ; keep trying until THR has space
 
-    ld a,l                      ; retrieve Tx character for immediate Tx
-    out (__IO_SIOA_DATA_REGISTER),a ; immediately output the Tx byte to the SIOA
-
-    ei
+    ld a,l                              ; retrieve Tx character
+    out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
     ret                         ; and just complete
 
-sioa_putc_buffer_tx_overflow:
-    ei
-
-sioa_putc_buffer_tx:
-    ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
-    cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jr NC,sioa_putc_buffer_tx_overflow   ; buffer full, so keep trying
-
-    ld a,l                      ; Tx byte
-
-    ld hl,sioaTxCount
-    di
-    inc (hl)                    ; atomic increment of Tx count
-    ld hl,(sioaTxIn)            ; get the pointer to where we poke
-    ei
-    ld (hl),a                   ; write the Tx byte to the sioaTxIn
-
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
-    and l                       ; range check
-    or sioaTxBuffer&0xFF        ; locate base
-    ld l,a                      ; return the low byte to l
-    ld (sioaTxIn),hl            ; write where the next byte should be poked
-
-    ret
-
-_siob_putc:
+._uartb_putc
     ; enter    : l = char to output
-    ;
-    ; modifies : af, hl
+    ;            carry reset
+    ; modifies : af
 
-    di
-    ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether the buffer is empty
-    jr NZ,siob_putc_buffer_tx   ; buffer not empty, so abandon immediate Tx
+    ; check the UART B channel exists
+    ld a,(uartbControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    ret Z                       ; return if it doesn't exist
 
-    in a,(__IO_SIOB_CONTROL_REGISTER)   ; get the SIOB register R0
-    and __IO_SIO_RR0_TX_EMPTY   ; test whether we can transmit on SIOB
-    jr Z,siob_putc_buffer_tx    ; if not, so abandon immediate Tx
+    ; check space is available in the Tx FIFO
+    in a,(__IO_UARTB_LSR_REGISTER)      ; read the line status register
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
+    jp Z,_uartb_putc                    ; keep trying until THR has space
 
-    ld a,l                      ; retrieve Tx character for immediate Tx
-    out (__IO_SIOB_DATA_REGISTER),a ; immediately output the Tx byte to the SIOB
-
-    ei
-    ret                         ; and just complete
-
-siob_putc_buffer_tx_overflow:
-    ei
-
-siob_putc_buffer_tx:
-    ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
-    cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
-    jr NC,siob_putc_buffer_tx_overflow   ; buffer full, so keep trying
-
-    ld a,l                      ; Tx byte
-
-    ld hl,siobTxCount
-    di
-    inc (hl)                    ; atomic increment of Tx count
-    ld hl,(siobTxIn)            ; get the pointer to where we poke
-    ei
-    ld (hl),a                   ; write the Tx byte to the siobTxIn
-
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_SIO_TX_SIZE-1     ; load the buffer size, (n^2)-1
-    and l                       ; range check
-    or siobTxBuffer&0xFF        ; locate base
-    ld l,a                      ; return the low byte to l
-    ld (siobTxIn),hl            ; write where the next byte should be poked
-
-    ret
+    ld a,l                              ; retrieve Tx character
+    out (__IO_UARTB_DATA_REGISTER),a    ; output the Tx byte to the UART B
+    ret                                 ; and just complete
 
 ;------------------------------------------------------------------------------
-; start of common area driver - 8255 functions
-;------------------------------------------------------------------------------
-
-    ;Do a read bus cycle to the drive, using the 8255
-    ;input D = ide register address
-    ;output E = lower byte read from IDE drive
-    ;output A = lower byte read from IDE drive
-    ;uses AF, DE
-
-.ide_read_byte
-    ld a,__IO_PIO_IDE_RD
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_PIO_IDE_RD_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
-    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte
-    ld e,a                      ;save read byte to E
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ld a,e
-    ret
-
-    ;Read a block of 512 bytes (one sector) from the drive
-    ;16 bit data register and store it in memory at (HL++)
-    ;uses AF, BC, HL
-
-.ide_read_block
-    ld a,__IO_PIO_IDE_RD
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_rdblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
-    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
-    ld (hl+),a
-    in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
-    ld (hl+),a
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
-    djnz ide_rdblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
-
-    ;Do a write bus cycle to the drive, via the 8255
-    ;input D = ide register address
-    ;input E = lsb to write to IDE drive
-    ;uses AF, DE
-
-.ide_write_byte
-    ld a,__IO_PIO_IDE_WR
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-.ide_write_byte_preset
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_PIO_IDE_WR_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
-    ld a,e
-    out (__IO_PIO_IDE_LSB),a    ;drive lower lines with lsb
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
-
-    ;Write a block of 512 bytes (one sector) from (HL++) to
-    ;the drive 16 bit data register
-    ;uses AF, BC, HL
-
-.ide_write_block
-    ld a,__IO_PIO_IDE_WR
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_wrblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
-    ld a,(hl+)
-    out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
-    ld a,(hl+)
-    out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
-    djnz ide_wrblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
-
-;------------------------------------------------------------------------------
-; start of common area driver - IDE functions
+; start of common area driver - Compact Flash IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers
@@ -1342,22 +1082,16 @@ siob_putc_buffer_tx:
 ; LBA is contained in BCDE registers
 
 .ide_setup_lba
-    push de
-    ld d,__IO_PIO_IDE_LBA0
-    call ide_write_byte         ;set LBA0 0:7
-    pop de
-    ld e,d
-    ld d,__IO_PIO_IDE_LBA1
-    call ide_write_byte_preset  ;set LBA1 8:15
-    ld e,c
-    ld d,__IO_PIO_IDE_LBA2
-    call ide_write_byte_preset  ;set LBA2 16:23
+    ld a,e
+    out (__IO_CF_IDE_LBA0),a    ;set LBA0 0:7
+    ld a,d
+    out (__IO_CF_IDE_LBA1),a    ;set LBA1 8:15
+    ld a,c
+    out (__IO_CF_IDE_LBA2),a    ;set LBA2 16:23
     ld a,b
     and 00001111b               ;lowest 4 bits LBA address used only
     or  11100000b               ;to enable LBA address master mode
-    ld e,a
-    ld d,__IO_PIO_IDE_LBA3
-    call ide_write_byte_preset  ;set LBA3 24:27 + bits 5:7=111
+    out (__IO_CF_IDE_LBA3),a    ;set LBA3 24:27 + bits 5:7=111
     ret
 
 ; How to poll (waiting for the drive to be ready to transfer data):
@@ -1369,12 +1103,11 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_ready
-    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
-    call ide_read_byte
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get byte from alternate ide_read_byte return
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 11000000b               ;mask off BuSY and RDY bits
     xor 01000000b               ;wait for RDY to be set and BuSY to be clear
     jp NZ,ide_wait_ready
@@ -1388,12 +1121,11 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_wait_drq
-    ld d,__IO_PIO_IDE_ALT_STATUS    ;get IDE alt status register
-    call ide_read_byte
+    in a,(__IO_CF_IDE_STATUS)
     and 00100001b               ;test for ERR or WFT
     ret NZ                      ;return clear carry flag on failure
 
-    ld a,e                      ;get byte from alternate ide_read_byte return
+    in a,(__IO_CF_IDE_STATUS)   ;get status byte again
     and 10001000b               ;mask off BuSY and DRQ bits
     xor 00001000b               ;wait for DRQ to be set and BuSY to be clear
     jp NZ,ide_wait_drq
@@ -1413,22 +1145,24 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_read_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
-    call ide_write_byte_preset  ;set sector count to 1
+    ld a,1
+    out (__IO_CF_IDE_SEC_CNT),a ;set sector count to 1
 
-    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_READ
-    call ide_write_byte_preset  ;ask the drive to read it
+    ld a,__IDE_CMD_READ
+    out (__IO_CF_IDE_COMMAND),a ;ask the drive to read it
 
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it's got the data
 
-    call ide_read_block         ;grab the data into (HL++)
+    ;Read a block of 512 bytes (one sector) from the drive
+    ;8 bit data register and store it in memory at (HL++)
+
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    inir
+    inir
 
     scf                         ;carry = 1 on return = operation ok
     ret
@@ -1445,26 +1179,28 @@ siob_putc_buffer_tx:
 ; return carry on success
 
 .ide_write_sector
-    push de
     call ide_wait_ready         ;make sure drive is ready
-
-    pop de
     call ide_setup_lba          ;tell it which sector we want in BCDE
 
-    ld de,__IO_PIO_IDE_SEC_CNT<<8|1
-    call ide_write_byte_preset  ;set sector count to 1
+    ld a,1
+    out (__IO_CF_IDE_SEC_CNT),a ;set sector count to 1
 
-    ld de,__IO_PIO_IDE_COMMAND<<8|__IDE_CMD_WRITE
-    call ide_write_byte_preset  ;instruct drive to write a sector
+    ld a,__IDE_CMD_WRITE
+    out (__IO_CF_IDE_COMMAND),a ;instruct drive to write a sector
 
     call ide_wait_ready         ;make sure drive is ready to proceed
     call ide_wait_drq           ;wait until it wants the data
 
-    call ide_write_block        ;send the data to the drive from (HL++)
+    ;Write a block of 512 bytes (one sector) from (HL++) to
+    ;the drive 8 bit data register
+
+    ld bc,__IO_CF_IDE_DATA&0xFF ;keep iterative count in b, I/O port in c
+    otir
+    otir
 
 ;   call ide_wait_ready
-;   ld de, __IO_PIO_IDE_COMMAND<<8|__IDE_CMD_CACHE_FLUSH
-;   call ide_write_byte         ;tell drive to flush its hardware cache
+;   ld a,__IDE_CMD_CACHE_FLUSH
+;   out (__IO_CF_IDE_COMMAND),a ;tell drive to flush its hardware cache
 
     jp ide_wait_ready           ;wait until the write is complete
 
@@ -1473,27 +1209,6 @@ _cpm_bios_tail:             ;tail of the cpm bios
 
 PUBLIC  _cpm_bios_rodata_head
 _cpm_bios_rodata_head:      ;origin of the cpm bios rodata
-
-;------------------------------------------------------------------------------
-; start of fixed tables - aligned rodata
-;------------------------------------------------------------------------------
-
-ALIGN $10                   ;align for sio interrupt vector table
-
-
-PUBLIC  _cpm_sio_interrupt_vector_table
-
-; origin of the SIO/2 IM2 interrupt vector table
-
-_cpm_sio_interrupt_vector_table:
-    defw    __siob_interrupt_tx_empty
-    defw    __siob_interrupt_ext_status
-    defw    __siob_interrupt_rx_char
-    defw    __siob_interrupt_rx_error
-    defw    __sioa_interrupt_tx_empty
-    defw    __sioa_interrupt_ext_status
-    defw    __sioa_interrupt_rx_char
-    defw    __sioa_interrupt_rx_error
 
 ;------------------------------------------------------------------------------
 ; start of fixed tables - non aligned rodata
@@ -1616,52 +1331,36 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 ; start of bss tables - uninitialised by cpm22preamble (initialised in crt)
 ;------------------------------------------------------------------------------
 
-PUBLIC  sioaRxCount, sioaRxIn, sioaRxOut
-PUBLIC  siobRxCount, siobRxIn, siobRxOut
-PUBLIC  sioaTxCount, sioaTxIn, sioaTxOut
-PUBLIC  siobTxCount, siobTxIn, siobTxOut
+PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
+PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
+PUBLIC  uartaControl, uartbControl
 
-sioaRxCount:    defb 0                  ;space for Rx Buffer Management
-sioaRxIn:       defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
-sioaRxOut:      defw sioaRxBuffer       ;non-zero item in bss since it's initialized anyway
+uartaControl:       defb 0              ;local control of UART A
+uartaRxCount:       defb 0              ;space for Rx Buffer Management
+uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
+uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 
-siobRxCount:    defb 0                  ;space for Rx Buffer Management
-siobRxIn:       defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
-siobRxOut:      defw siobRxBuffer       ;non-zero item in bss since it's initialized anyway
-
-sioaTxCount:    defb 0                  ;space for Tx Buffer Management
-sioaTxIn:       defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
-sioaTxOut:      defw sioaTxBuffer       ;non-zero item in bss since it's initialized anyway
-
-siobTxCount:    defb 0                  ;space for Tx Buffer Management
-siobTxIn:       defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
-siobTxOut:      defw siobTxBuffer       ;non-zero item in bss since it's initialized anyway
+uartbControl:       defb 0              ;local control of UART B
+uartbRxCount:       defb 0              ;space for Rx Buffer Management
+uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
+uartbRxOut:         defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned uninitialised data
 ;------------------------------------------------------------------------------
 
-ALIGN   $10000 - $20 - __IO_SIO_TX_SIZE*2 - __IO_SIO_RX_SIZE*2
+ALIGN   $10000 - $20 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundary
 
 shadow_copy_addr:   defs $20            ;reserve space for relocation of shadow_copy
 
-PUBLIC  sioaTxBuffer
-PUBLIC  siobTxBuffer
+PUBLIC  uartaRxBuffer
+PUBLIC  uartbRxBuffer
 
-ALIGN   __IO_SIO_TX_SIZE                ;ALIGN to __IO_SIO_TX_SIZE byte boundary
+ALIGN   __IO_UART_RX_SIZE               ;ALIGN to __IO_UART_RX_SIZE byte boundary
                                         ;when finally locating
 
-sioaTxBuffer:   defs __IO_SIO_TX_SIZE   ;space for the Tx Buffer
-siobTxBuffer:   defs __IO_SIO_TX_SIZE   ;space for the Tx Buffer
-
-PUBLIC  sioaRxBuffer
-PUBLIC  siobRxBuffer
-
-ALIGN   __IO_SIO_RX_SIZE                ;ALIGN to __IO_SIO_RX_SIZE byte boundary
-                                        ;when finally locating
-
-sioaRxBuffer:   defs __IO_SIO_RX_SIZE   ;space for the Rx Buffer
-siobRxBuffer:   defs __IO_SIO_RX_SIZE   ;space for the Rx Buffer
+uartaRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART A Rx Buffer
+uartbRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART B Rx Buffer
 
 ;------------------------------------------------------------------------------
 ; end of bss tables

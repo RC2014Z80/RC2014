@@ -217,6 +217,7 @@ rboot:
 
     call    _sioa_reset     ;reset and empty the SIOA Tx & Rx buffers
     call    _siob_reset     ;reset and empty the SIOB Tx & Rx buffers
+
     ei
 
     ld      a,(_cpm_cdisk)  ;get current disk number
@@ -263,14 +264,14 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     jr      NZ,const1
 
 const0:
-    call    _sioa_pollc     ;check whether any characters are in CRT Rx0 buffer
+    call    _sioa_pollc     ;check whether any characters are in CRT (Rx0) buffer
     jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
     ret
 
 const1:
-    call    _siob_pollc     ;check whether any characters are in TTY Rx1 buffer
+    call    _siob_pollc     ;check whether any characters are in TTY (Rx1) buffer
     jr      C,dataReady
 dataEmpty:
     xor     a
@@ -837,14 +838,6 @@ __siob_interrupt_rx_char:
 
 siob_rx_get:
     in a,(__IO_SIOB_DATA_REGISTER)  ; move Rx byte from the SIOB to A
-    ld l,a                      ; put it in L
-
-    ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
-    cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
-    jr NC,siob_rx_check         ; buffer full, check whether we need to drain H/W FIFO
-
-    ld a,l                      ; get Rx byte from l
-
     ld hl,(siobRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the siobRxIn target
 
@@ -935,14 +928,6 @@ __sioa_interrupt_rx_char:
 
 sioa_rx_get:
     in a,(__IO_SIOA_DATA_REGISTER)  ; move Rx byte from the SIOA to A
-    ld l,a                      ; put it in L
-
-    ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
-    cp __IO_SIO_RX_SIZE-1       ; check whether there is space in the buffer
-    jr NC,sioa_rx_check         ; buffer full, check whether we need to drain H/W FIFO
-
-    ld a,l                      ; get Rx byte from l
-
     ld hl,(sioaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the sioaRxIn target
 
@@ -1171,7 +1156,7 @@ _sioa_putc:
     and __IO_SIO_RR0_TX_EMPTY   ; test whether we can transmit on SIOA
     jr Z,sioa_putc_buffer_tx    ; if not, so abandon immediate Tx
 
-    ld a,l                      ; Retrieve Tx character for immediate Tx
+    ld a,l                      ; retrieve Tx character for immediate Tx
     out (__IO_SIOA_DATA_REGISTER),a ; immediately output the Tx byte to the SIOA
 
     ei
@@ -1181,7 +1166,7 @@ sioa_putc_buffer_tx_overflow:
     ei
 
 sioa_putc_buffer_tx:
-    ld a,(sioaTxCount)          ; Get the number of bytes in the Tx buffer
+    ld a,(sioaTxCount)          ; get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
     jr NC,sioa_putc_buffer_tx_overflow   ; buffer full, so keep trying
 
@@ -1217,7 +1202,7 @@ _siob_putc:
     and __IO_SIO_RR0_TX_EMPTY   ; test whether we can transmit on SIOB
     jr Z,siob_putc_buffer_tx    ; if not, so abandon immediate Tx
 
-    ld a,l                      ; Retrieve Tx character for immediate Tx
+    ld a,l                      ; retrieve Tx character for immediate Tx
     out (__IO_SIOB_DATA_REGISTER),a ; immediately output the Tx byte to the SIOB
 
     ei
@@ -1227,7 +1212,7 @@ siob_putc_buffer_tx_overflow:
     ei
 
 siob_putc_buffer_tx:
-    ld a,(siobTxCount)          ; Get the number of bytes in the Tx buffer
+    ld a,(siobTxCount)          ; get the number of bytes in the Tx buffer
     cp __IO_SIO_TX_SIZE-1       ; check whether there is space in the buffer
     jr NC,siob_putc_buffer_tx_overflow   ; buffer full, so keep trying
 

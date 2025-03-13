@@ -4,7 +4,7 @@
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
-; Adapted to 8085 CPU & ACIA - December 2021
+; Adapted to 8085 CPU & Compact Flash Module - December 2021
 ;
 
 SECTION rodata_driver               ;read only driver (code)
@@ -322,8 +322,8 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,_acia0_putc
-    jp      _acia1_putc
+    jp      C,_acia0_putc   ;------01b CRT:
+    jp      _acia1_putc     ;------00b TTY:
 
 list:
     ld      l,c             ;store character
@@ -838,16 +838,10 @@ _acia_interrupt:
     jr NC,tx_check              ; if not, go check for bytes to transmit
 
 rx_get:
-    in a,(__IO_ACIA_DATA_REGISTER)    ; Get the received byte from the ACIA
-    ld l,a                      ; Move Rx byte to l
-
-    ld a,(aciaRxCount)          ; get the number of bytes in the Rx buffer
-    cp __IO_ACIA_RX_SIZE-1      ; check whether there is space in the buffer
-    jr NC,rx_check              ; buffer full, check if we can send something
-
-    ld a,l                      ; get Rx byte from l
+    in a,(__IO_ACIA_DATA_REGISTER)  ; get the received byte from the ACIA
     ld hl,(aciaRxIn)            ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the aciaRxIn address
+
     inc l                       ; move the Rx pointer low byte along, 0xFF rollover
     ld (aciaRxIn),hl            ; write where the next byte should be poked
 

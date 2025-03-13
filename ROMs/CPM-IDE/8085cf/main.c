@@ -28,7 +28,7 @@
 
 // DEFINES
 
-#define BUFFER_SIZE 1024        // size of working buffer (on heap)
+#define BUFFER_SIZE 512         // size of working buffer (on heap)
 #define LINE_SIZE 256           // size of a command line (on heap)
 #define TOK_BUFSIZE 64          // size of token pointer buffer (on heap)
 
@@ -89,9 +89,9 @@ extern void hexload(void);      // initialise cpm and launch Intel HEX program i
  */
 
 struct Builtin {
-  const char * name;
-  int8_t (*func) (char ** args);
-  const char * help;
+    const char * name;
+    int8_t (*func) (char ** args);
+    const char * help;
 };
 
 struct Builtin builtins[] = {
@@ -116,8 +116,8 @@ struct Builtin builtins[] = {
     { "exit", &ya_exit, "- exit and restart"}
 };
 
-uint8_t ya_num_builtins() {
-  return sizeof(builtins) / sizeof(struct Builtin);
+uint8_t ya_num_builtins(void) {
+    return sizeof(builtins) / sizeof(struct Builtin);
 }
 
 
@@ -304,9 +304,6 @@ int8_t ya_ls(char ** args)      /* print directory contents */
     uint16_t s1, s2;
 
     static FILINFO Finfo;       /* Static File Information */
-
-    res = f_mount(fs, (const TCHAR*)"0:", 0);
-    if (res != FR_OK) { put_rc(res); return 1; }
 
     if(args[1] == NULL) {
         res = f_opendir(&dir, (const TCHAR*)".");
@@ -641,14 +638,18 @@ int main(int argc, char ** argv)
     (void)argc;
     (void *)argv;
 
+    FRESULT res;
+
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
     fprintf(stdout, "\n\nRC2014 8085 CF - CP/M-IDE\nfeilipu 2025\n\n> :-)\n");
 
     // Run command loop if we got all the memory allocations we need.
-    if ( fs && buffer)
+    if (fs && buffer) {
+        if(res = f_mount(fs, (const TCHAR*)"0:", 0) != 0) put_rc(res);
         ya_loop();
+    }
 
     // Perform any shutdown/cleanup.
     free(buffer);

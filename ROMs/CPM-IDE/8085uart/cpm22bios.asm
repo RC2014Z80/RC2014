@@ -4,7 +4,7 @@
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
-; Adapted to 8085 CPU & UART - February 2025
+; Adapted to 8085 CPU, Compact Flash Module & UART - February 2025
 ;
 
 SECTION rodata_driver               ;read only driver (code)
@@ -273,14 +273,14 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     jr      NZ,const1
 
 const0:
-    call    _uarta_pollc    ;check whether any characters are in CRT Rx A buffer
+    call    _uarta_pollc    ;check whether any characters are in CRT (RxA) buffer
     jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
     ret
 
 const1:
-    call    _uartb_pollc    ;check whether any characters are in TTY Rx B buffer
+    call    _uartb_pollc    ;check whether any characters are in TTY (RxB) buffer
     jr      C,dataReady
 dataEmpty:
     xor     a
@@ -312,6 +312,7 @@ DEFC        conout0 = _uarta_putc
 DEFC        conout1 = _uartb_putc
 
 conout:    ;console character output from register c
+    ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b       ;------1xb LPT: or UL1:
@@ -321,6 +322,7 @@ conout:    ;console character output from register c
     jp      conout1         ;------00b TTY:
 
 list:
+    ld      l,c             ;store character
     ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
@@ -329,6 +331,7 @@ list:
     jp      conout1         ;00------b TTY:
 
 punch:
+    ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b       ;--x1----b PTP: or UL1:
@@ -855,11 +858,11 @@ ENDIF
     inc (hl)                    ; atomically increment Rx buffer count
 
     ld a,(uartaRxCount)         ; get the current Rx count
-    sub __IO_UART_RX_FULLISH    ; compare the count with the preferred full size
-    jp C,rxa_check              ; leave the RTS low, and check for Rx/Tx possibility
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxa_check             ; leave the RTS low, and check for Rx/Tx possibility
 
     in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
-    and ~__IO_UART_MCR_RTS          ; set RTS high
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
     out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxa_check
@@ -903,11 +906,11 @@ ENDIF
     inc (hl)                    ; atomically increment Rx buffer count
 
     ld a,(uartbRxCount)         ; get the current Rx count
-    sub __IO_UART_RX_FULLISH    ; compare the count with the preferred full size
-    jp C,rxb_check              ; leave the RTS low, and check for Rx/Tx possibility
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxb_check             ; leave the RTS low, and check for Rx/Tx possibility
 
     in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
-    and ~__IO_UART_MCR_RTS          ; set RTS high
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
     out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxb_check
@@ -925,7 +928,7 @@ ENDIF
 ._uarta_reset                    ; interrupts should be disabled
 
     ; enable and reset the Tx & Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTA_FCR_REGISTER),a
 
     xor a
@@ -940,7 +943,7 @@ ENDIF
 ._uartb_reset                    ; interrupts should be disabled
 
     ; enable and reset the Tx & Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTB_FCR_REGISTER),a
 
     xor a
@@ -953,7 +956,7 @@ ENDIF
     ret
 
 ._uarta_getc
-    ; exit     : a = char received, wait for available character
+    ; exit     : a, l = char received, wait for available character
     ;
     ; modifies : af, hl
 
@@ -961,11 +964,11 @@ ENDIF
     or a                        ; see if there are zero bytes available
     jp Z,_uarta_getc            ; if the count is zero, then wait
 
-    sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
-    jp NC,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
 
     in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
-    or __IO_UART_MCR_RTS            ; set RTS low
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
     out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
 .uarta_getc_clean_up
@@ -985,10 +988,12 @@ ENDIF
 
     ld hl,uartaRxCount
     dec (hl)                    ; atomically decrement Rx count
+
+    ld l,a                      ; put the byte in hl
     ret
 
 ._uartb_getc
-    ; exit     : a = char received, wait for available character
+    ; exit     : a, l = char received, wait for available character
     ;
     ; modifies : af, hl
 
@@ -996,11 +1001,11 @@ ENDIF
     or a                        ; see if there are zero bytes available
     jp Z,_uartb_getc            ; if the count is zero, then wait
 
-    sub __IO_UART_RX_EMPTYISH   ; compare the count with the preferred empty size
-    jp NC,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
 
     in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
-    or __IO_UART_MCR_RTS            ; set RTS low
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
     out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
 .uartb_getc_clean_up
@@ -1020,6 +1025,8 @@ ENDIF
 
     ld hl,uartbRxCount
     dec (hl)                    ; atomically decrement Rx count
+
+    ld l,a                      ; put the byte in hl
     ret
 
 ._uarta_pollc
@@ -1029,6 +1036,7 @@ ENDIF
     ; modifies : af, hl
 
     ld a,(uartaRxCount)	        ; load the Rx bytes in buffer
+    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1042,6 +1050,7 @@ ENDIF
     ; modifies : af, hl
 
     ld a,(uartbRxCount)	        ; load the Rx bytes in buffer
+    ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
 
@@ -1049,7 +1058,7 @@ ENDIF
     ret
 
 ._uarta_putc
-    ; enter    : c = char to output
+    ; enter    : l = char to output
     ;            carry reset
     ; modifies : af
 
@@ -1063,12 +1072,12 @@ ENDIF
     and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
     jp Z,_uarta_putc                    ; keep trying until THR has space
 
-    ld a,c                              ; retrieve Tx character
+    ld a,l                              ; retrieve Tx character
     out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
     ret                                 ; and just complete
 
 ._uartb_putc
-    ; enter    : c = char to output
+    ; enter    : l = char to output
     ;            carry reset
     ; modifies : af
 
@@ -1082,7 +1091,7 @@ ENDIF
     and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
     jp Z,_uartb_putc                    ; keep trying until THR has space
 
-    ld a,c                              ; retrieve Tx character
+    ld a,l                              ; retrieve Tx character
     out (__IO_UARTB_DATA_REGISTER),a    ; output the Tx byte to the UART B
     ret                                 ; and just complete
 
@@ -1093,12 +1102,12 @@ ENDIF
 PUBLIC _sod_putc
 
 _sod_putc:
-    ; output a character in c via SOD at 115200 baud 8n2
-    ; enter    : c = char to output
+    ; output a character in l via SOD at 115200 baud 8n2
+    ; enter    : l = char to output
     ;
-    ; modifies : af, bc
+    ; modifies : af, hl
 
-    ld b,9                      ;10 bits per byte (1 start, 1 active stop bits)
+    ld h,9                      ;10 bits per byte (1 start, 1 active stop bits)
 
     ld a,$40                    ; 7 clear start and set SOD enable bits
     di
@@ -1110,15 +1119,15 @@ sod_loop:
     nop                         ; 4 delay
     ld a,0                      ; 7 delay
 
-    ld a,c                      ; 4
+    ld a,l                      ; 4
     scf                         ; 4 set eventual stop bit(s)
     rra                         ; 4 get bit into carry
-    ld c,a                      ; 4
+    ld l,a                      ; 4
 
     ld a,$80                    ; 7 set eventual SOD enable bit
     rra                         ; 4 move carry into SOD bit
 
-    dec b                       ; 4 loop 8 + 1 bits
+    dec h                       ; 4 loop 8 + 1 bits
     sim                         ; 4 output bit data
     jp NZ,sod_loop              ;10/7
                                 ;loop total 64 cycles for correct timing

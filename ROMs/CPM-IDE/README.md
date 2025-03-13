@@ -94,11 +94,11 @@ It is possible to use the standard RC2014 CF Module with either the RC2014 Pro, 
 - [CF Module](https://rc2014.co.uk/modules/compact-flash-module/).
 - [CF Module v2.0](https://z80kits.com/shop/compact-flash-module/).
 
-To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and a ACIA Serial Module installed.
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, either a ACIA Serial Module or UART Serial Module installed.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-To operate the RC2014 with an 8085 CPU, a UART Dual Serial Module must be installed in exchanage item 6.
+To operate the RC2014 with an 8085 CPU and a UART Single or UART Dual Serial Module must be installed in exchanage item 6.
 
 - [Dual UART Module](https://rc2014.co.uk/modules/dual-serial-module-16c2550/).
 
@@ -107,7 +107,7 @@ Optionally, replacing items 4. and 5. with the Memory Module (also compatible wi
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
 Additionally, the ACIA Serial Module from the [RC2014 Classic II](https://rc2014.co.uk/modules/serial-io/) could be substituted for item 6. the SIO Serial Module.<br>
-__NOTE:__ For use with the 8085 CPU Module, only the ACIA Serial Module is supported.
+__NOTE:__ For use with the 8085 CPU Module, either the ACIA Serial Module or UART Serial Modules are supported.
 
 - [ACIA Serial Module](https://z80kits.com/shop/tynemouth-68b50-clocked-serial-port/).
 
@@ -327,12 +327,14 @@ Of course other development workflows are possible, as is simply mounting the [Z
 
 ## Building Software from Source
 
-The z88dk command line to build the CP/M-IDE for Z80 CPU is below. For the RC2014 Pro build the `rc2014` target and `sio` subtype should be used, from within the relevant directory..
+The z88dk command line to build the CP/M-IDE for Z80 CPU is below. For the RC2014 Pro build the `rc2014` target and `sio` subtype should be used, from within the relevant directory. First though, refer to the library, disk and buffer configuration notes below.
 
 ```bash
 zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-sio-cpm22 -create-app
 
 zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-pro-cpm22 -create-app
+
+zcc +rc2014 -subtype=uart -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-prouart-cpm22 -create-app
 ```
 
 The z88dk command line to build the CP/M-IDE for the 8085 CPU Module with either IDE Hard Drive Module or CF Module is below. The `rc2014` target and `acia85` subtype should be selected, from within the relevant directory.

@@ -4,7 +4,7 @@
   @author       Phillip Stevens, inspired by Stephen Brennan
   @brief        YASH (Yet Another SHell)
 
-  This RC2014 programme reached working state February 2025.
+  This RC2014 programme reached working state March 2025.
 
 *******************************************************************************/
 
@@ -14,17 +14,17 @@
 #include <string.h>
 #include <sys/compiler.h>
 
-#include <../libsrc/_DEVELOPMENT/target/rc2014/config_rc2014-8085.h>
-#include <_DEVELOPMENT/sccz80/arch/rc2014.h>
+#include <arch.h>
+#include <arch/rc2014.h>
 
 #include "ffconf.h"
-#include <_DEVELOPMENT/sccz80/lib/rc2014/ff.h>
+#include <lib/rc2014/ff.h>
 
-#include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
+#include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDB00         // below the CP/M CCP
-#pragma printf = "%c %s %d %02u %lu %04X"   // enables %c, %s, %d, %u, %lu, %X only
+#pragma output REGISTER_SP = 0xDB00     // below the CP/M CCP
+#pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
 
@@ -34,15 +34,10 @@
 
 #define TOK_DELIM " \t\r\n\a"
 
-#define KEY_BS      8
-#define KEY_LF      10
-#define KEY_CR      13
-#define KEY_SPACE   32
-#define KEY_DEL     127
-
 // GLOBALS
 
 extern uint32_t cpm_dsk0_base[4];
+extern uint8_t  bios_iobyte;
 
 static void * buffer;           /* create a scratch buffer on heap later */
 
@@ -50,6 +45,10 @@ static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
                                 /* FatFs work area needed for each volume */
 
 static FIL file;                /* File object needed for each open file */
+
+static FILE * input;            /* defined input */
+static FILE * output;           /* defined output */
+static FILE * error;            /* defined error */
 
 /*
   Function Declarations for built-in shell commands:
@@ -81,8 +80,15 @@ static void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt);
 
 // external functions
 
-extern void cpm_boot(void);     // initialise cpm
-extern void hexload(void);      // initialise cpm and launch Intel HEX program in TPA
+extern uint8_t uarta_reset(void) __preserves_regs(b,c,d,e,h,iyl,iyh);   // UARTA flush routine
+extern uint8_t uarta_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);   // UARTA polling routine, checks UARTA buffer fullness
+extern uint8_t uarta_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);    // UARTA receive routine, from UARTA buffer
+extern uint8_t uartb_reset(void) __preserves_regs(b,c,d,e,h,iyl,iyh);   // UARTB flush routine
+extern uint8_t uartb_pollc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);   // UARTB polling routine, checks UARTB buffer fullness
+extern uint8_t uartb_getc(void) __preserves_regs(b,c,d,e,h,iyl,iyh);    // UARTB receive routine, from UARTB buffer
+
+extern void cpm_boot(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);   // initialise cpm
+extern void hexload(void) __preserves_regs(a,b,c,d,e,h,iyl,iyh);    // initialise cpm and launch Intel HEX program in TPA
 
 /*
   List of builtin commands.
@@ -137,7 +143,7 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
     uint8_t i = 0;
 
     if (args[1] == NULL) {
-        fprintf(stdout, "Expected 4 arguments to \"cpm\"\n");
+        fprintf(output, "Expected 4 arguments to \"cpm\"\n");
     } else {
         res = f_mount(fs, (const TCHAR*)"0:", 0);
         if (res != FR_OK) { put_rc(res); return 1; }
@@ -145,15 +151,15 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
         // set up (up to 4) CPM drive LBA locations
         while(args[i+1] != NULL)
         {
-            fprintf(stdout,"Opening \"%s\"", args[i+1]);
+            fprintf(output,"Opening \"%s\"", args[i+1]);
             res = f_open(&file, (const TCHAR *)args[i+1], FA_OPEN_EXISTING | FA_READ);
             if (res != FR_OK) { put_rc(res); return 1; }
             cpm_dsk0_base[i] = (&file)->obj.fs->database + ((&file)->obj.fs->csize * ((&file)->obj.sclust - 2));
-            fprintf(stdout," at LBA %lu\n", cpm_dsk0_base[i]);
+            fprintf(output," at LBA %lu\n", cpm_dsk0_base[i]);
             f_close(&file);
             i++;                // go to next file
         }
-        fprintf(stdout,"Initialised CP/M\n");
+        fprintf(output,"Initialised CP/M\n");
         cpm_boot();
     }
     return 1;
@@ -169,7 +175,7 @@ int8_t ya_hload(char ** args)   /* load an Intel HEX CP/M file and run it */
 {
     (void *)args;
 
-    fprintf(stdout,"Waiting for Intel HEX CP/M command on console\n");
+    fprintf(output,"Waiting for Intel HEX CP/M command on console\n");
 
     hexload();
 
@@ -197,7 +203,7 @@ int8_t ya_md(char ** args)      /* dump RAM contents from nominated origin. */
         origin = (uint8_t *)strtoul(args[1], NULL, 16);
     }
 
-    fprintf(stdout, "\nOrigin: %04X\n", (uint16_t)origin);
+    fprintf(output, "\nOrigin: %04X\n", (uint16_t)origin);
 
     for (ptr=origin, ofs = 0; ofs < 0x100; ptr += 16, ofs += 16) {
         put_dump(ptr, ofs, 16);
@@ -218,11 +224,11 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(stdout,"RC2014 - CP/M IDE Shell v2.3\n");
-    fprintf(stdout,"The following functions are built in:\n");
+    fprintf(output,"RC2014 - CP/M IDE Shell v2.3\n");
+    fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
-        fprintf(stdout,"  %s %s\n", builtins[i].name, builtins[i].help);
+        fprintf(output,"  %s %s\n", builtins[i].name, builtins[i].help);
     }
     return 1;
 }
@@ -259,10 +265,10 @@ int8_t ya_frag(char ** args)    /* check file for fragmentation */
     FSIZE_t fsz;
 
     if (args[1] == NULL) {
-        fprintf(stdout, "Expected 1 argument to \"frag\"\n");
+        fprintf(output, "Expected 1 argument to \"frag\"\n");
     } else {
 
-        fprintf(stdout,"Checking \"%s\"", args[1]);
+        fprintf(output,"Checking \"%s\"", args[1]);
         res = f_open(&file, (const TCHAR *)args[1], FA_OPEN_EXISTING | FA_READ);
         if (res != FR_OK) { put_rc(res); return 1; }
 
@@ -277,11 +283,11 @@ int8_t ya_frag(char ** args)    /* check file for fragmentation */
                 if (clst + 1 != (&file)->clust) break;          /* Is not the cluster next to previous one? */
                 clst = (&file)->clust; fsz -= step;             /* Get current cluster for next test */
             }
-            fprintf(stdout," at LBA %lu", (&file)->obj.fs->database + ((&file)->obj.fs->csize * ((&file)->obj.sclust - 2)));
+            fprintf(output," at LBA %lu", (&file)->obj.fs->database + ((&file)->obj.fs->csize * ((&file)->obj.sclust - 2)));
             if (fsz == 0) {                                     /* All checked contiguous without fail? */
-                fprintf(stdout," is OK\n");
+                fprintf(output," is OK\n");
             } else {
-                fprintf(stdout," is fragmented\n");
+                fprintf(output," is fragmented\n");
             }
         }
 
@@ -321,7 +327,7 @@ int8_t ya_ls(char ** args)      /* print directory contents */
         } else {
             s1++; p1 += Finfo.fsize;
         }
-        fprintf(stdout, "%c%c%c%c%c %u/%02u/%02u %02u:%02u %9lu  %s\n",
+        fprintf(output, "%c%c%c%c%c %u/%02u/%02u %02u:%02u %9lu  %s\n",
                 (Finfo.fattrib & AM_DIR) ? 'D' : '-',
                 (Finfo.fattrib & AM_RDO) ? 'R' : '-',
                 (Finfo.fattrib & AM_HID) ? 'H' : '-',
@@ -331,15 +337,15 @@ int8_t ya_ls(char ** args)      /* print directory contents */
                 (Finfo.ftime >> 11), (Finfo.ftime >> 5) & 63,
                 (DWORD)Finfo.fsize, Finfo.fname);
     }
-    fprintf(stdout, "%4u File(s),%10lu bytes total\n%4u Dir(s)", s1, p1, s2);
+    fprintf(output, "%4u File(s),%10lu bytes total\n%4u Dir(s)", s1, p1, s2);
 
     if(args[1] == NULL) {
-        res = f_getfree((const TCHAR*)".", (DWORD*)&p1, &fs);
+        res = f_getfree( (const TCHAR*)".", (DWORD*)&p1, &fs);
     } else {
-        res = f_getfree((const TCHAR*)args[1], (DWORD*)&p1, &fs);
+        res = f_getfree( (const TCHAR*)args[1], (DWORD*)&p1, &fs);
     }
     if (res == FR_OK) {
-        fprintf(stdout, ", %10lu bytes free\n", p1 * (DWORD)(fs->csize * 512));
+        fprintf(output, ", %10lu bytes free\n", p1 * (DWORD)(fs->csize * 512));
     } else {
         put_rc(res);
     }
@@ -355,7 +361,7 @@ int8_t ya_ls(char ** args)      /* print directory contents */
 int8_t ya_cd(char ** args)
 {
     if (args[1] == NULL) {
-        fprintf(stdout, "Expected 1 argument to \"cd\"\n");
+        fprintf(output, "Expected 1 argument to \"cd\"\n");
     } else {
         put_rc(f_chdir((const TCHAR*)args[1]));
     }
@@ -380,7 +386,7 @@ int8_t ya_pwd(char ** args)     /* show the current working directory */
         if (res != FR_OK) {
             put_rc(res);
         } else {
-            fprintf(stdout, "%s", directory);
+            fprintf(output, "%s", directory);
         }
         free(directory);
     }
@@ -423,10 +429,10 @@ int8_t ya_ds(char ** args)      /* disk status */
 
     (void *)args;
 
-    res = f_getfree((const TCHAR*)"", (DWORD*)&p1, &fs);
+    res = f_getfree( (const TCHAR*)"", (DWORD*)&p1, &fs);
     if (res != FR_OK) { put_rc(res); return 1; }
 
-    fprintf(stdout, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
+    fprintf(output, "FAT type = FAT%u\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
         "Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
         "Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,cluster) = %lu\nData start (lba) = %lu\n",
         ft[fs->fs_type & 3], (DWORD)(fs->csize * 512), fs->n_fats,
@@ -452,9 +458,9 @@ int8_t ya_dd(char ** args)      /* disk dump */
         sect = strtoul(args[1], NULL, 10);
     }
 
-    res = disk_read(0, buffer, sect, 1);
-    if (res != FR_OK) { fprintf(stdout, "rc=%d\n", (WORD)res); return 1; }
-    fprintf(stdout, "PD#:0 LBA:%lu\n", sect++);
+    res = disk_read( 0, buffer, sect, 1);
+    if (res != FR_OK) { fprintf(output, "rc=%d\n", (WORD)res); return 1; }
+    fprintf(output, "PD#:0 LBA:%lu\n", sect++);
     for (ptr=(uint8_t *)buffer, ofs = 0; ofs < 0x200; ptr += 16, ofs += 16)
         put_dump(ptr, ofs, 16);
     return 1;
@@ -483,7 +489,7 @@ void put_rc (FRESULT rc)
     for (i = 0; i != res && *str; ++i) {
         while (*str++) ;
     }
-    fprintf(stderr,"\nrc=%u FR_%s\n", res, str);
+    fprintf(error,"\nrc=%u FR_%s\n", res, str);
 }
 
 
@@ -492,16 +498,16 @@ void put_dump (const uint8_t * buff, uint16_t ofs, uint8_t cnt)
 {
     uint8_t i;
 
-    fprintf(stdout,"%04X:", ofs);
+    fprintf(output,"%04X:", ofs);
 
     for(i = 0; i < cnt; ++i) {
-        fprintf(stdout," %02X", buff[i]);
+        fprintf(output," %02X", buff[i]);
     }
-    fputc(' ', stdout);
+    fputc(' ', output);
     for(i = 0; i < cnt; ++i) {
-        fputc((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.', stdout);
+        fputc((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.', output);
     }
-    fputc('\n', stdout);
+    fputc('\n', output);
 }
 
 
@@ -530,47 +536,6 @@ int8_t ya_execute(char ** args)
         }
     }
     return 1;
-}
-
-
-/**
-   @brief Read a line of input from stdin, echo it to stdout.
-   @return The line from stdin.
- */
-void ya_getline(char * line, uint16_t len)
-{
-    char c;
-    uint16_t position = 0;
-
-    while (--len) {
-
-        // Read a character
-        c = fgetc(stdin);
-
-        // If we hit EOF, replace it with a null character and return.
-        if (c == EOF || c == KEY_LF || c == KEY_CR) {
-            line[position] = '\0';
-            // Echo the character
-            fputc(c, stdout);
-            return;
-        }
-
-        else if ((c == KEY_BS || c == KEY_DEL) && position > 0) {
-            line[--position] = '\0';
-            ++len;
-            // Remove the character
-            fputc(KEY_BS, stdout);
-            fputc(KEY_SPACE, stdout);
-            fputc(KEY_BS, stdout);
-        }
-
-        else {
-            line[position++] = c;
-            // Echo the character
-            fputc(c, stdout);
-        }
-    }
-    line[position] = '\0';
 }
 
 
@@ -611,11 +576,38 @@ void ya_loop(void)
     char ** args = (char **)malloc(TOK_BUFSIZE * sizeof(char*));    /* Get tokens buffer ready */
     if (args == NULL) return;
 
-    do {
-        fflush(stdin);
-        fprintf(stdout,"\n> ");
+    while (1){                                          /* look for ":" to select the valid serial port */
+        if (uarta_pollc() != 0) {
+            if (uarta_getc() == ':') {
+                input = stdin;
+                output = stdout;
+                error = stderr;
+                bios_iobyte = 1;
+                break;
+            } else {
+                uarta_reset();
+            }
+        }
+        if (uartb_pollc() != 0) {
+            if (uartb_getc() == ':') {
+                input = ttyin;
+                output = ttyout;
+                error = ttyerr;
+                bios_iobyte = 0;
+                break;
+            } else {
+                uartb_reset();
+            }
+        }
+    }
 
-        ya_getline(line, len);
+    fprintf(output," :-)\n");
+
+    do {
+        fflush(input);
+        fprintf(output,"\n> ");
+
+        getline(&line, &len, input);
         ya_split_line(args, line);
 
         status = ya_execute(args);
@@ -643,7 +635,8 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 8085 UART - CP/M-IDE\nfeilipu 2025\n\n> :-)\n");
+    fprintf(stdout, "\n\nRC2014 Pro UART - CP/M-IDE\nfeilipu 2025\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 Pro UART - CP/M-IDE\nfeilipu 2025\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
     if (fs && buffer) {
