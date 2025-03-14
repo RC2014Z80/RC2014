@@ -4,7 +4,7 @@
 ; Phillip Stevens @feilipu https://feilipu.me
 ; March 2018
 ;
-; Adapted to 8085 CPU & IDE Module - December 2021
+; Adapted to 8085 CPU, IDE Module & UART - March 2025
 ;
 
 SECTION rodata_driver               ;read only driver (code)
@@ -16,7 +16,7 @@ INCLUDE "config_rc2014-8085_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -168,9 +168,9 @@ cboot:
     ld      ($003C),a               ;int 75
 
     ld      a,$C3                   ;C3 is a jmp instruction for:
-    ld      ($0034),a               ;jmp _acia_interrupt
-    ld      hl,_acia_interrupt
-    ld      ($0035),hl              ;enable acia interrupt at int 65
+    ld      ($0034),a               ;jmp _uart_interrupt
+    ld      hl,_uart_interrupt
+    ld      ($0035),hl              ;enable uart interrupt at int 65
 
     xor     a                       ;zero in the accum
     ld      (_cpm_cdisk),a          ;select disk zero
@@ -221,7 +221,8 @@ rboot:
     inc     de
     call    ldi_31          ;clear default FCB
 
-    call    _acia_reset     ;reset and empty the ACIA Tx & Rx buffers
+    call    _uarta_reset    ;reset UART A and empty the Rx buffer
+    call    _uartb_reset    ;reset UART B and empty the Rx buffer
 
     ld      a,$DD           ;set SOD high, set MSE to mask int 75 & int 55
     sim
@@ -262,9 +263,9 @@ diskchk:
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
     and     00001011b       ;mask off console and high bit of reader
-    cp      00001010b       ;redirected to acia1
+    cp      00001010b       ;redirected to uartb
     jr      Z,const1
-    cp      00000010b       ;redirected to acia1
+    cp      00000010b       ;redirected to uartb
     jr      Z,const1
 
     and     00000011b       ;remove the reader from the mask - only console bits then remain
@@ -272,48 +273,43 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     jr      NZ,const1
 
 const0:
-    call    _acia0_pollc    ;check whether any characters are in CRT Rx0 buffer
+    call    _uarta_pollc    ;check whether any characters are in CRT (RxA) buffer
     jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
     ret
 
 const1:
-    call    _acia1_pollc    ;check whether any characters are in TTY Rx1 buffer
+    call    _uartb_pollc    ;check whether any characters are in TTY (RxB) buffer
     jr      C,dataReady
 dataEmpty:
     xor     a
     ret
+
+DEFC        conin0 = _uarta_getc
+DEFC        conin1 = _uartb_getc
 
 conin:    ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
-
-conin0:
-   jp       _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
-;  jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
-
-conin1:
-   jp       _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
-;  jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
+    rrca
+    jp      C,conin0        ;------01b CRT:
+    jp      conin1          ;------00b TTY:
 
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
     cp      00000100b
-    jr      Z,conin0
+    jp      Z,conin0
     cp      00000000b
-    jr      Z,conin1
-    ld      a,$1A           ;CTRL-Z if not acia
+    jp      Z,conin1
+    ld      a,$1A           ;CTRL-Z if not uarta or uart b
     ret
+
+DEFC        conout0 = _uarta_putc
+DEFC        conout1 = _uartb_putc
 
 conout:    ;console character output from register c
     ld      l,c             ;Store character
@@ -322,8 +318,8 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,_acia0_putc   ;------01b CRT:
-    jp      _acia1_putc     ;------00b TTY:
+    jp      C,conout0       ;------01b CRT:
+    jp      conout1         ;------00b TTY:
 
 list:
     ld      l,c             ;store character
@@ -331,8 +327,8 @@ list:
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
     rlca
-    jp      C,_acia0_putc   ;01------b CRT:
-    jp      _acia1_putc     ;00------b TTY:
+    jp      C,conout0       ;01------b CRT:
+    jp      conout1         ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
@@ -341,7 +337,7 @@ punch:
     cp      00010000b       ;--x1----b PTP: or UL1:
     jp      Z,_sod_putc     ;output to SOD on 8085 CPU Module
     cp      00000000b
-    jp      Z,_acia1_putc
+    jp      Z,conout1
     ret
 
 listst:     ;return list status
@@ -808,148 +804,240 @@ getLBAbase:
 
 
 ;------------------------------------------------------------------------------
-; start of common area driver - acia functions
+; start of common area driver - uart functions
 ;------------------------------------------------------------------------------
 
-PUBLIC acia_interrupt
+PUBLIC uart_interrupt
 
-PUBLIC _acia_reset
-PUBLIC _acia_getc
-PUBLIC _acia_putc
-PUBLIC _acia_pollc
+PUBLIC _uarta_reset
+PUBLIC _uarta_getc
+PUBLIC _uarta_putc
+PUBLIC _uarta_pollc
 
-PUBLIC _acia0_reset
-PUBLIC _acia0_getc
-PUBLIC _acia0_putc
-PUBLIC _acia0_pollc
+PUBLIC _uartb_reset
+PUBLIC _uartb_getc
+PUBLIC _uartb_putc
+PUBLIC _uartb_pollc
 
-PUBLIC _acia1_reset
-PUBLIC _acia1_getc
-PUBLIC _acia1_putc
-PUBLIC _acia1_pollc
-
-acia_interrupt:
-_acia_interrupt:
+.uart_interrupt
+._uart_interrupt
     push af
     push hl
 
-    in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
-    rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
-    jr NC,tx_check              ; if not, go check for bytes to transmit
+.uarta
+    ; check the UART A channel exists
+    ld a,(uartaControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    jp Z,uartb                  ; try UART B
 
-rx_get:
-    in a,(__IO_ACIA_DATA_REGISTER)  ; get the received byte from the ACIA
-    ld hl,(aciaRxIn)            ; get the pointer to where we poke
-    ld (hl),a                   ; write the Rx byte to the aciaRxIn address
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    rrca                            ; check whether an interrupt was generated
+    jp C,uartb                      ; if not, go check UART B
 
-    inc l                       ; move the Rx pointer low byte along, 0xFF rollover
-    ld (aciaRxIn),hl            ; write where the next byte should be poked
+.rxa_get
+    ; read the IIR to access the relevant interrupts
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    and __IO_UART_IIR_DATA      ; Rx data is available
+                                ; XXX To do handle line errors
+    jp Z,uartb                  ; if not, go check UART B
 
-    ld hl,aciaRxCount
+    in a,(__IO_UARTA_DATA_REGISTER) ; Get the received byte from the UART A
+    ld hl,(uartaRxIn)           ; get the pointer to where we poke
+    ld (hl),a                   ; write the Rx byte to the uartaRxIn address
+
+    inc l                       ; move the Rx pointer low byte along
+IF __IO_UART_RX_SIZE != 0x100
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or uartaRxBuffer&0xFF       ; locate base
+    ld l,a                      ; return the low byte to l
+ENDIF
+    ld (uartaRxIn),hl           ; write where the next byte should be poked
+
+    ld hl,uartaRxCount
     inc (hl)                    ; atomically increment Rx buffer count
 
-    ld a,(aciaRxCount)          ; get the current Rx count
-    cp __IO_ACIA_RX_FULLISH     ; compare the count with the preferred full size
-    jp NZ,rx_check              ; leave the RTS low, and check for Rx/Tx possibility
+    ld a,(uartaRxCount)         ; get the current Rx count
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxa_check             ; leave the RTS low, and check for Rx/Tx possibility
 
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS1    ; set RTS high, and disable Tx Interrupt
-    ld (aciaControl),a          ; write the ACIA control echo byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
-rx_check:
-    in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
-    rrca                        ; check whether a byte has been received, via __IO_ACIA_SR_RDRF
-    jr C,rx_get                 ; another byte received, go get it
+.rxa_check
+    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxa_get                   ; another byte received, go get it
 
-tx_check:
-    rrca                        ; check whether a byte can be transmitted, via __IO_ACIA_SR_TDRE
-    jr NC,tx_end                ; if not, we're done for now
+    ; now do the same with the UART B channel, because the interrupt is shared
 
-    ld a,(aciaTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether it is zero
-    jp Z,tx_tei_clear           ; if the count is zero, then disable the Tx Interrupt
+.uartb
+    ; check the UART B channel exists
+    ld a,(uartbControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    jp Z,end
 
-    ld hl,(aciaTxOut)           ; get the pointer to place where we pop the Tx byte
-    ld a,(hl)                   ; get the Tx byte
-    out (__IO_ACIA_DATA_REGISTER),a     ; output the Tx byte to the ACIA
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    rrca                            ; check whether an interrupt was generated
+    jp C,end                        ; if not, exit interrupt
 
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_ACIA_TX_SIZE-1    ; load the buffer size, (n^2)-1
+.rxb_get
+    ; read the IIR to access the relevant interrupts
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    and __IO_UART_IIR_DATA      ; Rx data is available
+                                ; XXX To do handle line errors
+    jp Z,end                    ; if not exit
+
+    in a,(__IO_UARTB_DATA_REGISTER) ; Get the received byte from the UART B
+    ld hl,(uartbRxIn)           ; get the pointer to where we poke
+    ld (hl),a                   ; write the Rx byte to the uartbRxIn address
+
+    inc l                       ; move the Rx pointer low byte along
+IF __IO_UART_RX_SIZE != 0x100
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
-    or aciaTxBuffer&0xFF        ; locate base
+    or uartbRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    ld (aciaTxOut),hl           ; write where the next byte should be popped
+ENDIF
+    ld (uartbRxIn),hl           ; write where the next byte should be poked
 
-    ld hl,aciaTxCount
-    dec (hl)                    ; atomically decrement current Tx count
+    ld hl,uartbRxCount
+    inc (hl)                    ; atomically increment Rx buffer count
 
-    jr NZ,tx_end                ; if we've more Tx bytes to send, we're done for now
+    ld a,(uartbRxCount)         ; get the current Rx count
+    cp __IO_UART_RX_FULLISH     ; compare the count with the preferred full size
+    jp NZ,rxb_check             ; leave the RTS low, and check for Rx/Tx possibility
 
-tx_tei_clear:
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_RTS0  ; mask out (disable) the Tx Interrupt, keep RTS low
-    ld (aciaControl),a          ; write the ACIA control byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    and ~(__IO_UART_MCR_RTS|__IO_UART_MCR_DTR)  ; set RTS and DTS high
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
-tx_end:
+.rxb_check
+    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
+    rrca                            ; check whether an interrupt remains
+    jp NC,rxb_get                   ; another byte received, go get it
+
+.end
     pop hl
     pop af
+
     ei
     ret
 
-_acia_reset:                    ; interrupts should be disabled
+._uarta_reset                    ; interrupts should be disabled
+
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    out (__IO_UARTA_FCR_REGISTER),a
+
     xor a
+    ld (uartaRxCount),a          ; reset the Rx counter (set 0)
 
-    ld (aciaRxCount),a          ; reset the Rx counter (set 0)
-    ld hl,aciaRxBuffer          ; load Rx buffer pointer home
-    ld (aciaRxIn),hl
-    ld (aciaRxOut),hl
+    ld hl,uartaRxBuffer          ; load Rx buffer pointer home
+    ld (uartaRxIn),hl
+    ld (uartaRxOut),hl
 
-    ld (aciaTxCount),a          ; reset the Tx counter (set 0)
-    ld hl,aciaTxBuffer          ; load Tx buffer pointer home
-    ld (aciaTxIn),hl
-    ld (aciaTxOut),hl
     ret
 
-_acia_getc:
-    ; exit     : a = char received, wait for available character
+._uartb_reset                    ; interrupts should be disabled
+
+    ; enable and reset the Tx & Rx FIFO
+    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    out (__IO_UARTB_FCR_REGISTER),a
+
+    xor a
+    ld (uartbRxCount),a          ; reset the Rx counter (set 0)
+
+    ld hl,uartbRxBuffer          ; load Rx buffer pointer home
+    ld (uartbRxIn),hl
+    ld (uartbRxOut),hl
+
+    ret
+
+._uarta_getc
+    ; exit     : a, l = char received, wait for available character
     ;
     ; modifies : af, hl
 
-    ld a,(aciaRxCount)          ; get the number of bytes in the Rx buffer
+    ld a,(uartaRxCount)         ; get the number of bytes in the Rx buffer
     or a                        ; see if there are zero bytes available
-    jp Z,_acia_getc             ; if the count is zero, then wait
+    jp Z,_uarta_getc            ; if the count is zero, then wait
 
-    cp __IO_ACIA_RX_EMPTYISH    ; compare the count with the preferred empty size
-    jp NZ,getc_clean_up_rx      ; if the buffer not emptyish, don't change the RTS
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
 
-    di                          ; critical section begin
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TDI_RTS0    ; set RTS low.
-    ld (aciaControl),a          ; write the ACIA control echo byte back
-    ei                          ; critical section end
-    out (__IO_ACIA_CONTROL_REGISTER),a    ; set the ACIA CTRL register
+    in a,(__IO_UARTA_MCR_REGISTER)  ; get the UART A MODEM Control Register
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
+    out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
-getc_clean_up_rx:
-    ld hl,(aciaRxOut)           ; get the pointer to place where we pop the Rx byte
+.uarta_getc_clean_up
+    ld hl,(uartaRxOut)          ; get the pointer to place where we pop the Rx byte
     ld a,(hl)                   ; get the Rx byte
-    inc l                       ; move the Rx pointer low byte along
-    ld (aciaRxOut),hl           ; write where the next byte should be popped
 
-    ld hl,aciaRxCount
+    inc l                       ; move the Rx pointer low byte along
+IF __IO_UART_RX_SIZE != 0x100
+    push af
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or uartaRxBuffer&0xFF       ; locate base
+    ld l,a                      ; return the low byte to l
+    pop af
+ENDIF
+    ld (uartaRxOut),hl          ; write where the next byte should be popped
+
+    ld hl,uartaRxCount
     dec (hl)                    ; atomically decrement Rx count
+
+    ld l,a                      ; put the byte in hl
+    scf                         ; indicate char received
     ret
 
-_acia_pollc:
-    ; exit     : l = number of characters in Rx buffer
+._uartb_getc
+    ; exit     : a, l = char received, wait for available character
+    ;
+    ; modifies : af, hl
+
+    ld a,(uartbRxCount)         ; get the number of bytes in the Rx buffer
+    or a                        ; see if there are zero bytes available
+    jp Z,_uartb_getc            ; if the count is zero, then wait
+
+    cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
+    jp NZ,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
+
+    in a,(__IO_UARTB_MCR_REGISTER)  ; get the UART B MODEM Control Register
+    or __IO_UART_MCR_RTS|__IO_UART_MCR_DTR  ; set RTS and DTR low
+    out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
+
+.uartb_getc_clean_up
+    ld hl,(uartbRxOut)          ; get the pointer to place where we pop the Rx byte
+    ld a,(hl)                   ; get the Rx byte
+
+    inc l                       ; move the Rx pointer low byte along
+IF __IO_UART_RX_SIZE != 0x100
+    push af
+    ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
+    and l                       ; range check
+    or uartbRxBuffer&0xFF       ; locate base
+    ld l,a                      ; return the low byte to l
+    pop af
+ENDIF
+    ld (uartbRxOut),hl          ; write where the next byte should be popped
+
+    ld hl,uartbRxCount
+    dec (hl)                    ; atomically decrement Rx count
+
+    ld l,a                      ; put the byte in hl
+    scf                         ; indicate char received
+    ret
+
+._uarta_pollc
+    ; exit     : a = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
-    ld a,(aciaRxCount)          ; load the Rx bytes in buffer
+    ld a,(uartaRxCount)	        ; load the Rx bytes in buffer
     ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
     ret Z                       ; return if zero count
@@ -957,65 +1045,57 @@ _acia_pollc:
     scf                         ; set carry to indicate char received
     ret
 
-_acia_putc:
-    ; enter    : l = char to output
+._uartb_pollc
+    ; exit     : a = number of characters in Rx buffer
+    ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
-    ld a,(aciaTxCount)          ; get the number of bytes in the Tx buffer
-    or a                        ; check whether the buffer is empty
-    jr NZ,putc_buffer_tx        ; buffer not empty, so abandon immediate Tx
+    ld a,(uartbRxCount)	        ; load the Rx bytes in buffer
+    ld l,a                      ; load result
+    or a                        ; check whether there are non-zero count
+    ret Z                       ; return if zero count
 
-    in a,(__IO_ACIA_STATUS_REGISTER)    ; get the status of the ACIA
-    and __IO_ACIA_SR_TDRE       ; check whether a byte can be transmitted
-    jr Z,putc_buffer_tx         ; if not, so abandon immediate Tx
-
-    ld a,l                      ; retrieve Tx character
-    out (__IO_ACIA_DATA_REGISTER),a ; immediately output the Tx byte to the ACIA
-    ret                         ; and just complete
-
-putc_buffer_tx:
-    ld a,(aciaTxCount)          ; get the number of bytes in the Tx buffer
-    cp __IO_ACIA_TX_SIZE-1      ; check whether there is space in the buffer
-    jr NC,putc_buffer_tx        ; buffer full, so keep trying
-
-    ld a,l                      ; retrieve Tx byte
-
-    ld hl,(aciaTxIn)            ; get the pointer to where we poke
-    ld (hl),a                   ; write the Tx byte to the aciaTxIn
-
-    inc l                       ; move the Tx pointer, just low byte along
-    ld a,__IO_ACIA_TX_SIZE-1    ; load the buffer size, (n^2)-1
-    and l                       ; range check
-    or aciaTxBuffer&0xFF        ; locate base
-    ld l,a                      ; return the low byte to l
-    ld (aciaTxIn),hl            ; write where the next byte should be poked
-
-    ld hl,aciaTxCount
-    inc (hl)                    ; atomic increment of Tx count
-
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and __IO_ACIA_CR_TEI_RTS0   ; test whether ACIA interrupt is set
-    ret NZ                      ; if so then just return
-
-    di                          ; critical section begin
-    ld a,(aciaControl)          ; get the ACIA control echo byte
-    and ~__IO_ACIA_CR_TEI_MASK  ; mask out the Tx interrupt bits
-    or __IO_ACIA_CR_TEI_RTS0    ; set RTS low. if the TEI was not set, it will work again
-    ld (aciaControl),a          ; write the ACIA control echo byte back
-    out (__IO_ACIA_CONTROL_REGISTER),a  ; set the ACIA CTRL register
-    ei                          ; critical section end
+    scf                         ; set carry to indicate char received
     ret
 
-    defc _acia0_reset = _acia_reset
-    defc _acia0_getc = _acia_getc
-    defc _acia0_putc = _acia_putc
-    defc _acia0_pollc = _acia_pollc
+._uarta_putc
+    ; enter    : l = char to output
+    ;            carry reset
+    ; modifies : af
 
-    defc _acia1_reset = _acia_reset
-    defc _acia1_getc = _acia_getc
-    defc _acia1_putc = _acia_putc
-    defc _acia1_pollc = _acia_pollc
+    ; check the UART A channel exists
+    ld a,(uartaControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    ret Z                       ; return if it doesn't exist
+
+    ; check space is available in the Tx FIFO
+    in a,(__IO_UARTA_LSR_REGISTER)      ; read the line status register
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
+    jp Z,_uarta_putc                    ; keep trying until THR has space
+
+    ld a,l                              ; retrieve Tx character
+    out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
+    ret                                 ; and just complete
+
+._uartb_putc
+    ; enter    : l = char to output
+    ;            carry reset
+    ; modifies : af
+
+    ; check the UART B channel exists
+    ld a,(uartbControl)         ; load the control flag
+    or a                        ; check it is non-zero
+    ret Z                       ; return if it doesn't exist
+
+    ; check space is available in the Tx FIFO
+    in a,(__IO_UARTB_LSR_REGISTER)      ; read the line status register
+    and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
+    jp Z,_uartb_putc                    ; keep trying until THR has space
+
+    ld a,l                              ; retrieve Tx character
+    out (__IO_UARTB_DATA_REGISTER),a    ; output the Tx byte to the UART B
+    ret                                 ; and just complete
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - sod functions
@@ -1420,39 +1500,31 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 ; start of bss tables - uninitialised by cpm22preamble (initialised in crt)
 ;------------------------------------------------------------------------------
 
-PUBLIC  aciaRxCount, aciaRxIn, aciaRxOut
-PUBLIC  aciaTxCount, aciaTxIn, aciaTxOut
-PUBLIC  aciaControl
+PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
+PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
+PUBLIC  uartaControl, uartbControl
 
-aciaRxCount:    defb 0                  ;space for Rx Buffer Management
-aciaRxIn:       defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
-aciaRxOut:      defw aciaRxBuffer       ;non-zero item in bss since it's initialized anyway
+uartaControl:       defb 0              ;local control of UART A
+uartaRxCount:       defb 0              ;space for Rx Buffer Management
+uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
+uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 
-aciaTxCount:    defb 0                  ;space for Tx Buffer Management
-aciaTxIn:       defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
-aciaTxOut:      defw aciaTxBuffer       ;non-zero item in bss since it's initialized anyway
-
-aciaControl:    defb 0                  ;local control echo of ACIA
+uartbControl:       defb 0              ;local control of UART B
+uartbRxCount:       defb 0              ;space for Rx Buffer Management
+uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
+uartbRxOut:         defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
 
 ;------------------------------------------------------------------------------
 ; start of bss tables - aligned uninitialised data
 ;------------------------------------------------------------------------------
 
-ALIGN   $10000 - __IO_ACIA_TX_SIZE - __IO_ACIA_RX_SIZE
+ALIGN   $10000 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundary
 
-PUBLIC  aciaTxBuffer
+PUBLIC  uartaRxBuffer
+PUBLIC  uartbRxBuffer
 
-ALIGN   __IO_ACIA_TX_SIZE               ;ALIGN to __IO_ACIA_TX_SIZE byte boundary
-                                        ;when finally locating
-
-aciaTxBuffer:   defs __IO_ACIA_TX_SIZE  ;space for the Tx Buffer
-
-PUBLIC  aciaRxBuffer
-
-ALIGN   __IO_ACIA_RX_SIZE               ;ALIGN to __IO_ACIA_RX_SIZE byte boundary
-                                        ;when finally locating
-
-aciaRxBuffer:   defs __IO_ACIA_RX_SIZE  ;space for the Rx Buffer
+uartaRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART A Rx Buffer
+uartbRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART B Rx Buffer
 
 ;------------------------------------------------------------------------------
 ; end of bss tables

@@ -16,7 +16,7 @@ INCLUDE "config_rc2014-8085_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -635,66 +635,79 @@ rwmove:
     ld      a,(erflag)
     ret
 
-ldi_31:
-    call ldi_16
-    jp ldi_15
-
 ldi_128:
-    ld bc,ldi_16
-    push bc
-    push bc
-    push bc
-    push bc
+    ld bc,ldi_32
     push bc
     push bc
     push bc
 
-ldi_16:
+ldi_32:
     ld a,(hl+)
     ld (de+),a
-ldi_15:
+ldi_31:
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
+    ld a,(hl+)
+    ld (de+),a
     ld a,(hl+)
     ld (de+),a
 
     ld a,(hl+)
     ld (de+),a
-
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
     ld a,(hl+)
     ld (de+),a
 
     ld a,(hl+)
     ld (de+),a
-
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
     ld a,(hl+)
     ld (de+),a
 
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
     ld a,(hl+)
     ld (de+),a
 
@@ -914,7 +927,7 @@ _acia_reset:                    ; interrupts should be disabled
     ret
 
 _acia_getc:
-    ; exit     : a = char received, wait for available character
+    ; exit     : a, l = char received, wait for available character
     ;
     ; modifies : af, hl
 
@@ -936,11 +949,14 @@ _acia_getc:
 getc_clean_up_rx:
     ld hl,(aciaRxOut)           ; get the pointer to place where we pop the Rx byte
     ld a,(hl)                   ; get the Rx byte
+
     inc l                       ; move the Rx pointer low byte along
     ld (aciaRxOut),hl           ; write where the next byte should be popped
 
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
+
+    ld l,a                      ; and put char in hl
     ret
 
 _acia_pollc:
@@ -1060,7 +1076,7 @@ sod_loop:
     ret
 
 ;------------------------------------------------------------------------------
-; start of common area driver - Compact Flash IDE functions
+; start of common area driver - Compact Flash & IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers

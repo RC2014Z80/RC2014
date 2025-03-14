@@ -990,6 +990,7 @@ ENDIF
     dec (hl)                    ; atomically decrement Rx count
 
     ld l,a                      ; put the byte in hl
+    scf                         ; indicate char received
     ret
 
 ._uartb_getc
@@ -1027,6 +1028,7 @@ ENDIF
     dec (hl)                    ; atomically decrement Rx count
 
     ld l,a                      ; put the byte in hl
+    scf                         ; indicate char received
     ret
 
 ._uarta_pollc
@@ -1138,7 +1140,7 @@ sod_loop:
     ret
 
 ;------------------------------------------------------------------------------
-; start of common area driver - Compact Flash IDE functions
+; start of common area driver - Compact Flash & IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers

@@ -311,27 +311,25 @@ conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
     and     00000011b
-    cp      00000010b
+    cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
-    cp      00000001b
-    jp      NZ,_siob_putc
-    jp      _sioa_putc
+    rrca
+    jp      C,_sioa_putc    ;------01b CRT:
+    jp      _siob_putc      ;------00b TTY:
 
 list:
     ld      l,c             ;store character
-    ld      a,(_cpm_iobyte)
-    and     11000000b
-    cp      01000000b
-    jp      Z,_sioa_putc
-    cp      00000000b
-    jp      Z,_siob_putc
-    ret
+    ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
+    rlca
+    rlca
+    jp      C,_sioa_putc    ;01------b CRT:
+    jp      _siob_putc      ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
-    cp      00010000b
+    cp      00010000b       ;--x1----b PTP: or UL1:
     jp      Z,_sioa_putc
     cp      00000000b
     jp      Z,_siob_putc
@@ -1235,7 +1233,7 @@ siob_putc_buffer_tx:
     ret
 
 ;------------------------------------------------------------------------------
-; start of common area driver - Compact Flash IDE functions
+; start of common area driver - Compact Flash & IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers

@@ -14,7 +14,7 @@ INCLUDE "config_rc2014_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -994,107 +994,9 @@ putc_buffer_tx:
     defc _acia1_putc = _acia_putc
     defc _acia1_pollc = _acia_pollc
 
-;------------------------------------------------------------------------------
-; start of common area driver - 8255 functions
-;------------------------------------------------------------------------------
-
-    ;Do a read bus cycle to the drive, using the 8255
-    ;input D = ide register address
-    ;output E = lower byte read from IDE drive
-    ;output A = lower byte read from IDE drive
-    ;uses AF, DE
-
-.ide_read_byte
-    ld a,__IO_PIO_IDE_RD
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_PIO_IDE_RD_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
-    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte
-    ld e,a                      ;save read byte to E
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ld a,e
-    ret
-
-    ;Read a block of 512 bytes (one sector) from the drive
-    ;16 bit data register and store it in memory at (HL++)
-    ;uses AF, BC, HL
-
-.ide_read_block
-    ld a,__IO_PIO_IDE_RD
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_rdblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
-    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
-    ld (hl+),a
-    in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
-    ld (hl+),a
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
-    djnz ide_rdblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
-
-    ;Do a write bus cycle to the drive, via the 8255
-    ;input D = ide register address
-    ;input E = lsb to write to IDE drive
-    ;uses AF, DE
-
-.ide_write_byte
-    ld a,__IO_PIO_IDE_WR
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-.ide_write_byte_preset
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    or __IO_PIO_IDE_WR_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
-    ld a,e
-    out (__IO_PIO_IDE_LSB),a    ;drive lower lines with lsb
-    ld a,d
-    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
-
-    ;Write a block of 512 bytes (one sector) from (HL++) to
-    ;the drive 16 bit data register
-    ;uses AF, BC, HL
-
-.ide_write_block
-    ld a,__IO_PIO_IDE_WR
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_wrblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
-    ld a,(hl+)
-    out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
-    ld a,(hl+)
-    out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
-    djnz ide_wrblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
 
 ;------------------------------------------------------------------------------
-; start of common area driver - Compact Flash IDE functions
+; start of common area driver - Compact Flash & IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers

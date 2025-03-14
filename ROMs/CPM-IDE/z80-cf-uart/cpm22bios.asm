@@ -1052,7 +1052,7 @@ ENDIF
 
     ld a,l                              ; retrieve Tx character
     out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
-    ret                         ; and just complete
+    ret                                 ; and just complete
 
 ._uartb_putc
     ; enter    : l = char to output
@@ -1074,7 +1074,7 @@ ENDIF
     ret                                 ; and just complete
 
 ;------------------------------------------------------------------------------
-; start of common area driver - Compact Flash IDE functions
+; start of common area driver - Compact Flash & IDE functions
 ;------------------------------------------------------------------------------
 
 ; set up the drive LBA registers
@@ -1349,7 +1349,7 @@ uartbRxOut:         defw uartbRxBuffer  ;non-zero item in bss since it's initial
 ; start of bss tables - aligned uninitialised data
 ;------------------------------------------------------------------------------
 
-ALIGN   $10000 - $20 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundary
+ALIGN   $10000 - $20 - __IO_UART_RX_SIZE*2
 
 shadow_copy_addr:   defs $20            ;reserve space for relocation of shadow_copy
 
