@@ -1179,7 +1179,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $100                  ;align for bss head
+ALIGN $F700                 ;align for bss head  (fixed to access _cpm_dsk0_base)
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
