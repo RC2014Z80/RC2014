@@ -653,46 +653,33 @@ ldi_16:
 ldi_15:
     ld a,(hl+)
     ld (de+),a
-
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
+    ld a,(hl+)
+    ld (de+),a
     ld a,(hl+)
     ld (de+),a
 
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
-
-    ld a,(hl+)
-    ld (de+),a
-
-    ld a,(hl+)
-    ld (de+),a
-
-    ld a,(hl+)
-    ld (de+),a
-
-    ld a,(hl+)
-    ld (de+),a
-
-    ld a,(hl+)
-    ld (de+),a
-
     ld a,(hl+)
     ld (de+),a
 

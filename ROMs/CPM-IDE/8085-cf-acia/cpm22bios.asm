@@ -795,8 +795,6 @@ getLBAbase:
 ; start of common area driver - acia functions
 ;------------------------------------------------------------------------------
 
-PUBLIC acia_interrupt
-
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_putc
@@ -812,7 +810,6 @@ PUBLIC _acia1_getc
 PUBLIC _acia1_putc
 PUBLIC _acia1_pollc
 
-acia_interrupt:
 _acia_interrupt:
     push af
     push hl
