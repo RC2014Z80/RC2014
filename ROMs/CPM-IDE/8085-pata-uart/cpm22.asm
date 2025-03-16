@@ -4020,9 +4020,11 @@ HLD_READ_BYTE:              ;returns byte in A, checksum in E
 ;
 HLD_READ_NIBBLE:
     PUSH    HL
+    PUSH    BC
 HLD_READ_WAIT:
     CALL    CONIN           ;Rx byte in A
     JP      NC,HLD_READ_WAIT;carry set if byte available
+    POP     BC
     POP     HL
     SUB     '0'
     CP      10

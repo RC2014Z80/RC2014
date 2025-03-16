@@ -16,7 +16,9 @@ INCLUDE "config_rc2014-8085_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+
+defc    __CPM_BIOS_BSS_HEAD         = 0xF800
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -285,35 +287,30 @@ dataEmpty:
     xor     a
     ret
 
+DEFC        conin0 = _acia0_getc
+DEFC        conin1 = _acia1_getc
+
 conin:    ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
-
-conin0:
-   jp       _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
-;  jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
-
-conin1:
-   jp       _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
-;  jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
+    rrca
+    jp      C,conin0        ;------01b CRT:
+    jp      conin1          ;------00b TTY:
 
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
     cp      00000100b
-    jr      Z,conin0
+    jp      Z,conin0
     cp      00000000b
-    jr      Z,conin1
+    jp      Z,conin1
     ld      a,$1A           ;CTRL-Z if not acia
     ret
+
+DEFC        conout0 = _acia0_putc
+DEFC        conout1 = _acia1_putc
 
 conout:    ;console character output from register c
     ld      l,c             ;Store character
@@ -322,8 +319,8 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,_acia0_putc   ;------01b CRT:
-    jp      _acia1_putc     ;------00b TTY:
+    jp      C,conout0       ;------01b CRT:
+    jp      conout1         ;------00b TTY:
 
 list:
     ld      l,c             ;store character
@@ -331,8 +328,8 @@ list:
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
     rlca
-    jp      C,_acia0_putc   ;01------b CRT:
-    jp      _acia1_putc     ;00------b TTY:
+    jp      C,conout0       ;01------b CRT:
+    jp      conout1         ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
@@ -341,7 +338,7 @@ punch:
     cp      00010000b       ;--x1----b PTP: or UL1:
     jp      Z,_sod_putc     ;output to SOD on 8085 CPU Module
     cp      00000000b
-    jp      Z,_acia1_putc
+    jp      Z,conout1
     ret
 
 listst:     ;return list status
@@ -635,50 +632,24 @@ rwmove:
     ld      a,(erflag)
     ret
 
-ldi_128:
-    ld bc,ldi_32
-    push bc
-    push bc
-    push bc
-
-ldi_32:
-    ld a,(hl+)
-    ld (de+),a
 ldi_31:
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
+    call ldi_16
+    jp ldi_15
 
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
-    ld a,(hl+)
-    ld (de+),a
+ldi_128:
+    ld bc,ldi_16
+    push bc
+    push bc
+    push bc
+    push bc
+    push bc
+    push bc
+    push bc
 
+ldi_16:
     ld a,(hl+)
     ld (de+),a
+ldi_15:
     ld a,(hl+)
     ld (de+),a
     ld a,(hl+)
@@ -909,6 +880,7 @@ tx_tei_clear:
 tx_end:
     pop hl
     pop af
+
     ei
     ret
 
@@ -956,11 +928,12 @@ getc_clean_up_rx:
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; and put char in hl
+    ld l,a                      ; put byte in hl
+    scf                         ; indicate char received
     ret
 
 _acia_pollc:
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1267,7 +1240,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $F700                 ;align for bss head  (fixed to access _cpm_dsk0_base)
+ALIGN __CPM_BIOS_BSS_HEAD   ;align for bss head  (fixed to access _cpm_dsk0_base)
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data

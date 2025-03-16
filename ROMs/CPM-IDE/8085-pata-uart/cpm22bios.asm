@@ -16,7 +16,9 @@ INCLUDE "config_rc2014-8085_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+
+defc    __CPM_BIOS_BSS_HEAD         = 0xF800
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -846,12 +848,10 @@ PUBLIC _uartb_pollc
     ld (hl),a                   ; write the Rx byte to the uartaRxIn address
 
     inc l                       ; move the Rx pointer low byte along
-IF __IO_UART_RX_SIZE != 0x100
     ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or uartaRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-ENDIF
     ld (uartaRxIn),hl           ; write where the next byte should be poked
 
     ld hl,uartaRxCount
@@ -894,12 +894,10 @@ ENDIF
     ld (hl),a                   ; write the Rx byte to the uartbRxIn address
 
     inc l                       ; move the Rx pointer low byte along
-IF __IO_UART_RX_SIZE != 0x100
     ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or uartbRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-ENDIF
     ld (uartbRxIn),hl           ; write where the next byte should be poked
 
     ld hl,uartbRxCount
@@ -958,7 +956,7 @@ ENDIF
 ._uarta_getc
     ; exit     : a, l = char received, wait for available character
     ;
-    ; modifies : af, hl
+    ; modifies : af, bc, hl
 
     ld a,(uartaRxCount)         ; get the number of bytes in the Rx buffer
     or a                        ; see if there are zero bytes available
@@ -973,23 +971,20 @@ ENDIF
 
 .uarta_getc_clean_up
     ld hl,(uartaRxOut)          ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
+    ld c,(hl)                   ; get the Rx byte
 
     inc l                       ; move the Rx pointer low byte along
-IF __IO_UART_RX_SIZE != 0x100
-    push af
     ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or uartaRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    pop af
-ENDIF
     ld (uartaRxOut),hl          ; write where the next byte should be popped
 
     ld hl,uartaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; put the byte in hl
+    ld l,c                      ; put the byte in hl
+    ld a,c                      ; put byte in a
     scf                         ; indicate char received
     ret
 
@@ -1011,28 +1006,25 @@ ENDIF
 
 .uartb_getc_clean_up
     ld hl,(uartbRxOut)          ; get the pointer to place where we pop the Rx byte
-    ld a,(hl)                   ; get the Rx byte
+    ld c,(hl)                   ; get the Rx byte
 
     inc l                       ; move the Rx pointer low byte along
-IF __IO_UART_RX_SIZE != 0x100
-    push af
     ld a,__IO_UART_RX_SIZE-1    ; load the buffer size, (n^2)-1
     and l                       ; range check
     or uartbRxBuffer&0xFF       ; locate base
     ld l,a                      ; return the low byte to l
-    pop af
-ENDIF
     ld (uartbRxOut),hl          ; write where the next byte should be popped
 
     ld hl,uartbRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; put the byte in hl
+    ld l,c                      ; put the byte in hl
+    ld a,c                      ; put byte in a
     scf                         ; indicate char received
     ret
 
 ._uarta_pollc
-    ; exit     : a = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1046,7 +1038,7 @@ ENDIF
     ret
 
 ._uartb_pollc
-    ; exit     : a = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1426,7 +1418,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $F700                 ;align for bss head  (fixed to access _cpm_dsk0_base)
+ALIGN __CPM_BIOS_BSS_HEAD   ;align for bss head  (fixed to access _cpm_dsk0_base)
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
@@ -1522,6 +1514,9 @@ ALIGN   $10000 - __IO_UART_RX_SIZE*2    ;ALIGN to __IO_UART_RX_SIZE byte boundar
 
 PUBLIC  uartaRxBuffer
 PUBLIC  uartbRxBuffer
+
+ALIGN   __IO_UART_RX_SIZE               ;ALIGN to __IO_UART_RX_SIZE byte boundary
+                                        ;when finally locating
 
 uartaRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART A Rx Buffer
 uartbRxBuffer:   defs __IO_UART_RX_SIZE ;space for the UART B Rx Buffer

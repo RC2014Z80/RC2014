@@ -30,7 +30,7 @@ For the 8085 CPU Module.
 
 In the SIO Serial Module builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware __`/RTS`__ flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-In the Single and Dual UART Serial Module builds both ports are enabled if present. Both ports have a 255 byte software receive buffer supporting the UART receive 16 byte hardware receive and transmit buffers. Hardware __`/RTS`__ and Automatic Flow Control is enabled.
+In the Single and Dual UART Serial Module builds both ports are enabled if present. Both ports have a 127 byte software receive buffer supporting the UART 16 byte hardware receive and transmit buffers. Hardware __`/RTS`__ and Automatic Flow Control is enabled.
 
 In the ACIA Serial Module builds, the receive interface has a 255 byte software buffer, together with optimised buffer management supporting the 68C50 ACIA receive double buffer. Hardware __`/RTS`__ flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during transmission.
 
@@ -44,7 +44,7 @@ The IDE Hard Drive Module supports both PATA hard drives (including 3 1/2" magne
 
 The CP/M-IDE system supports up to 4 mounted CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds (or even thousands) of CP/M drives can be stored in any number of sub-directories on the FAT32 host disk, to be mounted at will.
 
-All CP/M-IDE builds provide over 56kB of free TPA to the user's CP/M applications. For all RC2014 builds the __BDOS__ origin is __`0xE300`__. This large free TPA achieved by limiting the number of concurrently mounted CP/M drives to 4.
+All CP/M-IDE builds provide at least 56kB of free TPA for the user's CP/M applications. This large free TPA achieved by limiting the number of concurrently mounted CP/M drives to 4.
 
 <div>
 <table style="border: 2px solid #cccccc;">
@@ -344,22 +344,22 @@ The z88dk command lines to build the CP/M-IDE for Z80 CPU is below. For the RC20
 
 First though, refer to the library, disk and buffer configuration notes below.
 
-`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-pata-sio -create-app`
+`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-pata-sio -create-app` - OK
 
-`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-sio -create-app`
+`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-sio -create-app` - OK
 
-`zcc +rc2014 -subtype=uart -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-uart -create-app`
+`zcc +rc2014 -subtype=uart -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-uart -create-app` - OK
 
-`zcc +rc2014 -subtype=acia -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-acia -create-app`
+`zcc +rc2014 -subtype=acia -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-acia -create-app` - OK
 
 
 Alternate z88dk command lines to build the CP/M-IDE for the 8085 CPU Module is below. The `rc2014` target and relevant subtype should be selected, from within the relevant directory.
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app`
+`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app` - OK
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app`
+`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app` - OK
 
-`zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app`
+`zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -l_DEVELOPMENT/lib/sccz80/lib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app` - failed boot
 
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib`for the 8085 CPU Module) library files into the z88dk RC2014 newlib library directory.
 

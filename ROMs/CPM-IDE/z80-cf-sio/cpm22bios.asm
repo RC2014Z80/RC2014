@@ -14,7 +14,9 @@ INCLUDE "config_rc2014_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF200
+
+defc    __CPM_BIOS_BSS_HEAD         = 0xF800
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -1041,7 +1043,7 @@ _siob_flush_rx_di:
     ret
 
 _sioa_getc:
-    ; exit     : l = char received
+    ; exit     : a, l = char received
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, bc, hl
@@ -1078,7 +1080,7 @@ sioa_getc_clean_up:
     ret
 
 _siob_getc:
-    ; exit     : l = char received
+    ; exit     : a, l = char received
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, bc, hl
@@ -1115,7 +1117,7 @@ siob_getc_clean_up:
     ret
 
 _sioa_pollc:
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1128,7 +1130,7 @@ _sioa_pollc:
     ret
 
 _siob_pollc:
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1437,7 +1439,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $F700                 ;align for bss head  (fixed to access _cpm_dsk0_base)
+ALIGN __CPM_BIOS_BSS_HEAD   ;align for bss head  (fixed to access _cpm_dsk0_base)
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data

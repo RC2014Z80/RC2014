@@ -23,7 +23,7 @@
 #include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDB00         // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDC00         // below the CP/M CCP
 #pragma printf = "%c %s %d %02u %lu %04X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES

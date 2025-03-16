@@ -14,7 +14,9 @@ INCLUDE "config_rc2014_private.inc"
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_BIOS    ;base of bios
-defc    __COMMON_AREA_PHASE_BIOS    = 0xF100
+defc    __COMMON_AREA_PHASE_BIOS    = 0xF300
+
+defc    __CPM_BIOS_BSS_HEAD         = 0xF800
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -917,11 +919,12 @@ getc_clean_up_rx:
     ld hl,aciaRxCount
     dec (hl)                    ; atomically decrement Rx count
 
-    ld l,a                      ; and put char in hl
+    ld l,a                      ; put byte in hl
+    scf                         ; indicate char received
     ret
 
 _acia_pollc:
-    ; exit     : l = number of characters in Rx buffer
+    ; exit     : a, l = number of characters in Rx buffer
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
@@ -1179,7 +1182,7 @@ dpblk:
 ; end of fixed tables
 ;------------------------------------------------------------------------------
 
-ALIGN $F700                 ;align for bss head  (fixed to access _cpm_dsk0_base)
+ALIGN __CPM_BIOS_BSS_HEAD   ;align for bss head  (fixed to access _cpm_dsk0_base)
 
 PUBLIC  _cpm_bios_rodata_tail
 _cpm_bios_rodata_tail:      ;tail of the cpm bios read only data
