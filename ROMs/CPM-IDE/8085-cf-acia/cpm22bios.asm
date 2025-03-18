@@ -336,7 +336,7 @@ punch:
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b       ;--x1----b PTP: or UL1:
-    jp      Z,_sod_putc     ;output to SOD on 8085 CPU Module
+    jp      Z,conout0
     cp      00000000b
     jp      Z,conout1
     ret
@@ -795,6 +795,8 @@ getLBAbase:
 ; start of common area driver - acia functions
 ;------------------------------------------------------------------------------
 
+PUBLIC acia_interrupt
+
 PUBLIC _acia_reset
 PUBLIC _acia_getc
 PUBLIC _acia_putc
@@ -810,6 +812,7 @@ PUBLIC _acia1_getc
 PUBLIC _acia1_putc
 PUBLIC _acia1_pollc
 
+acia_interrupt:
 _acia_interrupt:
     push af
     push hl
@@ -877,7 +880,6 @@ tx_tei_clear:
 tx_end:
     pop hl
     pop af
-
     ei
     ret
 

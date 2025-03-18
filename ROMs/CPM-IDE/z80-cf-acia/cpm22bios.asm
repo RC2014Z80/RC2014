@@ -281,35 +281,30 @@ dataEmpty:
     xor     a
     ret
 
+DEFC        conin0 = _acia0_getc
+DEFC        conin1 = _acia1_getc
+
 conin:    ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
-
-conin0:
-   jp       _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
-;  jr       NC,conin0       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
-
-conin1:
-   jp       _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
-;  jr       NC,conin1       ;if Rx buffer is empty
-;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
-;  ret
+    rrca
+    jp      C,conin0        ;------01b CRT:
+    jp      conin1          ;------00b TTY:
 
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
     cp      00000100b
-    jr      Z,conin0
+    jp      Z,conin0
     cp      00000000b
-    jr      Z,conin1
+    jp      Z,conin1
     ld      a,$1A           ;CTRL-Z if not acia
     ret
+
+DEFC        conout0 = _acia0_putc
+DEFC        conout1 = _acia1_putc
 
 conout:    ;console character output from register c
     ld      l,c             ;Store character
@@ -318,25 +313,25 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,_acia0_putc   ;------01b CRT:
-    jp      _acia1_putc     ;------00b TTY:
+    jp      C,conout0       ;------01b CRT:
+    jp      conout1         ;------00b TTY:
 
 list:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     rlca
-    jp      C,_acia0_putc   ;01------b CRT:
-    jp      _acia1_putc     ;00------b TTY:
+    jp      C,conout0       ;01------b CRT:
+    jp      conout1         ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b       ;--x1----b PTP: or UL1:
-    jp      Z,_acia0_putc
+    jp      Z,conout0
     cp      00000000b
-    jp      Z,_acia1_putc
+    jp      Z,conout1
     ret
 
 listst:     ;return list status
