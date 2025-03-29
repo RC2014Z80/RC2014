@@ -1,12 +1,12 @@
 # RC2014 MS BASIC v4.7, (C) 1978 Microsoft
 
-This ROM works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic.
+This ROM works with the __Mini__, __Micro__, and __Classic__ versions of the RC2014, with 32k of RAM and 8kb of ROM. This is the ROM to choose if you want fast I/O from a standard RC2014, together with the capability to upload and run C or assembly programs from within MS Basic. It is the default BASIC for the __RC2014 Mini II__, found in ROM Page 0.
 
-ACIA 6850 interrupt driven serial I/O to run modified NASCOM Microsoft Basic 4.7. The receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68C50 ACIA receive double buffer. Receive hardware (RTS) flow control is provided. The transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission. Use 115200 baud with 8n2.
+ACIA 68B50 interrupt driven serial I/O to run modified NASCOM Microsoft Basic 4.7. The receive interface has a 255 byte software buffer, together with highly optimised buffer management supporting the 68B50 ACIA receive double buffer. Receive hardware __`/RTS`__ flow control is provided. The transmit interface is also buffered, with direct cut-through when the 63 byte software buffer is empty, to ensure that the CPU is not held in wait state during serial transmission. Use __115200 baud with 8n2__.
 
 Also, this ROM provides both Intel HEX loading functions and an `RST`, `INT0`, and `NMI` RAM Jump Table, starting at `0x8000`. This allows you to upload Assembly or compiled C programs, and then run them as described below.
 
-The goal of this extension to standard MS Basic is to load an arbitrary C or assembly program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
+The goal of this extension to standard MS Basic is to load any arbitrary C or assembly program in Intel HEX format into an arbitrary location in the Z80 address space, and allow you to start and use your program from NASCOM Basic. Your program can be created in assembler, or in C, provided the code is available in Intel HEX format.
 
 Additional BASIC statements `MEEK I,J` and `MOKE I` allow convenient editing of small assembly programs from the BASIC command line.
 
@@ -51,7 +51,7 @@ Address entry can also be converted from HEX to signed integer using the `&` HEX
 
 2. At the BASIC interpreter type `HLOAD`, then the command will initiate and look for your program's Intel HEX formatted information on the serial interface.
 
-3. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1, using the Linux `cat` utility or similar. If desired the python `slowprint.py` program can also be used for this purpose. `python slowprint.py > /dev/ttyUSB0 < myprogram.hex` or `cat > /dev/ttyUSB0 < myprogram.hex`. The RC2014 interface can absorb full rate uploads, so using `slowprint.py` is an unnecessary precaution.
+3. Using a serial terminal, upload the HEX file for your arbitrary program that you prepared in Step 1, using the Linux `cat` utility or similar. If desired the python `slowprint.py` program can also be used for this purpose. `python slowprint.py > /dev/ttyUSB0 < myprogram.hex` or `cat > /dev/ttyUSB0 < myprogram.hex`. The RC2014 interface can absorb full rate uploads, and flow control is enabled, so using `slowprint.py` is an unnecessary precaution.
 
 4. Once the final line of the HEX code is read into memory, `HLOAD` will return to NASCOM Basic with `ok`.
 
@@ -103,6 +103,8 @@ All `RST nn` targets can be rewritten in a `JP` table originating at `0x8000` in
 Note that your C or assembly program and the `USRLOC` address setting will remain in place through a RC2014 Warm Reset, provided you prevent BASIC from initialising the RAM locations you have used. Also, you can reload your assembly program to the same RAM location through multiple Warm Resets, without reprogramming the `USRLOC` jump.
 
 Any BASIC programs loaded will also remain in place during a Warm Reset.
+
+BASIC programs can also be uploaded with the Linux `cat` utility, as flow control is enabled. Using interstitial character delay for uploads is unnecessary.
 
 Issuing the `RESET` keyword will clear the RC2014 RAM, and provide an option to return the original memory size. `RESET` is functionally equivalent to a cold start.
 

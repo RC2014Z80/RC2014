@@ -8,11 +8,11 @@ At the moment is composed by the following components:
 - Factory (ROM options provided as standard, with notation)
 - The RC2014 initialization code for ROM/RAM system (`init/` directory)
 - PiGFX interface library (`pigfx/` directory)
-- A 1-stage BASIC hex file loader (replacing standard MSBASIC ROM, in the `HexLoadr/` directory)
+- The RC2014 Mini MICROSOFT BASIC (in the `MSBASIC/` directory)
 - The typical "hello world" test
 - [TinyBasicPlus](https://github.com/BleuLlama/TinyBasicPlus) port, originally written by Scott Lawrence and adapted for the Z80/RC2014
 - A simple snake game (in the `snake/` directory)
-- An optimised (for performance and simplicity) CP/M-IDE using FATFS formatted IDE hard drives and CF cards (in the `CPM-IDE/` directory).
+- A DRI CP/M v2.2 for RC2014 Pro bassed systems, supporting FATFS formatted IDE hard drives and CF cards, with a variety of build options (in the `CPM-IDE/` directory).
 
 
 ## How to build for PiGFX
@@ -28,15 +28,15 @@ At the moment is composed by the following components:
 
 The provided software can be compiled to be located either in the lower 8k of the ROM memory area (rom model) or in the upper 32k RAM (starting at address 0x8080 since the first 0x80 bytes are reserved by the system). Edit the file `config.mk` to select the desired mode.
 
-If the "ram" memory mode is selected, the resulting hex files can be uploaded via the provided BASIC hex loader.
+If the "ram" memory mode is selected, the resulting hex files can be uploaded via the provided MSBASIC hex loader (`hload`).
 
 ## Memory model for Z88DK
 
-The Z88DK `-subtype=basic` assumes that the origin is `0x9000`. All RAM from `0x9000` through to `0xFFFF` is available for user programs.
+The Z88DK `-subtype=basic` assumes that the origin is `0x9000`, as a default. All RAM from `0x8400` through to `0xFFFF` is available for user programs.
 
-This is to support the RC2014 Classic and Mini with the MS Basic ROM, and allow space for the `hexload` program to be uploaded with the origin of `0x8900`.
+This is to support the RC2014 Classic and Mini with the Searle MSBASIC ROM, and to allow space for the `hexload` program to be uploaded with the origin of `0x8900`.
 
-Assembly or C Programs can be initiated with the MS Basic command `USR(x)`, provided the address `0x8049` is prepared with the correct origin of `0x9000` or other location as desired.
+Assembly or C Programs can be initiated with the MS BASIC command `USR(x)`, provided the address `0x8049` (specifically for the Searle MSBASIC) is prepared with the correct origin of `0x9000` or other location as used. For RC2014 Mini MSBASIC this configuration is done automatically during the program loading (`hload`).
 
 
 ## Running on an Emulator
