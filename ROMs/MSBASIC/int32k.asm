@@ -290,7 +290,6 @@ PUBLIC  INIT
         IM 1                        ; interrupt mode 1
         EI                          ; enable interrupts
 
-.START
         LD HL,SIGNON1               ; sign-on message
         CALL PRINT                  ; output string
         LD A,(basicStarted)         ; check the BASIC STARTED flag

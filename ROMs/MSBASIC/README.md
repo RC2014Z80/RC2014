@@ -33,6 +33,10 @@ Ok
 
 ```
 
+## Alternative Hardware Options
+
+Alternative versions of this Microsoft BASIC v.4.7 solution exist for many RC2014 __Classic__ based systems. These are maintained at the [NASCOM_BASIC repository](https://github.com/feilipu/NASCOM_BASIC_4.7). Specific solutions are available for systems containing an [Am9511A APU Module](https://www.tindie.com/products/feilipu/am9511a-apu-module-pcb/) where all calculations are done with the Arithmetic Processing Unit, for systems containing an [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/) with optimisations for the 8085 CPU, for the 16550 [Single UART Module](https://z80kits.com/shop/16c550-single-uart-serial-module/) and [Dual UART Module](https://z80kits.com/shop/16c2550-dual-uart-serial-module/), and for several combinations of the above hardware options.
+
 # Assembly (or compiled C) Program Usage
 
 Please refer to [Appendix D of the NASCOM 2 Basic Manual](https://github.com/feilipu/NASCOM_BASIC_4.7/blob/master/NASCOM_Basic_Manual.pdf) for information on loading and running Assembly Language programs.
