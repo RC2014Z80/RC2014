@@ -41,17 +41,27 @@ Alternative versions of this Microsoft BASIC v.4.7 solution exist for many RC201
 
 Please refer to [Appendix D of the NASCOM 2 Basic Manual](https://github.com/feilipu/NASCOM_BASIC_4.7/blob/master/NASCOM_Basic_Manual.pdf) for information on loading and running Assembly Language programs.
 
-The `MEEK I,J` and `MOKE I` statements can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 byte blocks to display. `MOKE` byte entry can be skipped with carriage return, and is exited with `CTRL C`. For hand assembly programs the user program address needs to be manually entered into the `USRLOC` address `0x8204` using `DOKE`.
+## Using `MEEK` and `MOKE` for assembly entry
+
+The `MEEK I,J` and `MOKE I` statements can be used to hand edit assembly programs, where `I` is the address of interest as a signed integer, and `J` is the number of 16 byte blocks to display. `MOKE` byte entry can be skipped with carriage return, and is exited with `CTRL C`.
 
 Address entry can also be converted from HEX to signed integer using the `&` HEX prefix, i.e. in `MOKE &9000` `0x9000` is converted to `−28672` which is simpler than calculating this signed 16 bit integer by hand, and `MEEK &9000,&10` will tabulate and print 16 blocks of 16 bytes of memory from memory address `0x9000`.
+
+Once the assembly program is entered using `MOKE`, the origin address of the user assembly program needs to be manually entered into the `USRLOC` address `0x8204` using the `DOKE`. Then the program can be run using the BASIC `PRINT USR(0)` or `? USR(0)` commands.
 
 ### Usage Example
 
 <a href="https://raw.githubusercontent.com/feilipu/NASCOM_BASIC_4.7/master/HexLoadr-v1.0.png" target="_blank"><img src="https://raw.githubusercontent.com/feilipu/NASCOM_BASIC_4.7/master/HexLoadr-v1.0.png"/></a>
 
+## Using Zen assembler for entering assembly programs
+
+There are several [Intel HEX versions of the Zen assembler](https://github.com/feilipu/NASCOM_BASIC_4.7/tree/master/rc2014_Zen) with different origins prepared to use from within RC2014 MS BASIC. Use the `HLOAD` keyword to load your choice of HEX file based on how much RAM you wish to leave available for BASIC, and launch Zen with `? USR(0)`. Exit back to MS BASIC with `Q`.
+
+Use the Zen `ORG` and `LOAD` keywords to place assembled programs above the Zen End of File Pointer `EOFP`. Use Zen `H` command to determine where `EOFP` is located. The Zen `ORG` keyword should indicate where program will eventually be located, usually at the default of `0x9000`. On return to BASIC, assembled programs can be launched using the `? USR(0)` command either from immediate mode, or from within a BASIC program as a subroutine, after setting the correct `USRLOC` location for the assembly program's `ORG` using `DOKE`, if the program is being run with Zen in situ. Or use the Zen `X` command to save (write) the assembled program to the serial port in Intel HEX format, and then reload it with the MS Basic `HLOAD` and run normally using the `? USR(0)` command.
+
 ## Using `HLOAD` for uploading compiled and assembled programs.
 
-1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler, or compile a C program using z88dk. For the RC2014 32kB suitable origins commence from `0x8400`, and the default origin for z88dk RC2014 is `0x9000`.
+1. Select the preferred origin `.ORG` for your arbitrary program, and assemble a HEX file using your preferred assembler, or compile a C program [using z88dk](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK). For RC2014 32kB systems suitable origins commence from `0x8400`, and the default origin for z88dk RC2014 is `0x9000`.
 
 2. At the BASIC interpreter type `HLOAD`, then the command will initiate and look for your program's Intel HEX formatted information on the serial interface.
 
@@ -141,10 +151,11 @@ http://searle.wales/
 
 ---
 
-The rework to support MS Basic MEEK, MOKE, HLOAD, RESET, and the 8085 and Z80 instruction tuning are copyright (C) 2021-23 Phillip Stevens.
+The UART and ACIA drivers and rework to support MS Basic MEEK, MOKE, HLOAD, RESET, and the 8085 and Z80 instruction tuning are copyright (C) 2020-25 Phillip Stevens.
 
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 Further source maintenance at https://github.com/feilipu/NASCOM_BASIC_4.7
 
-@feilipu, October 2021
+@feilipu, March 2025
+
