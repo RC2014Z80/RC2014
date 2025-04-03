@@ -150,7 +150,7 @@ PLINE2:
 ;   Routine to reset the disk system.
 ;
 RESDSK:
-        LD    C,13
+    LD    C,13
     JP    ENTRY
 ;
 ;   Routine to select disk (A).
