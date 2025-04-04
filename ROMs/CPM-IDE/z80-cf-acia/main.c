@@ -24,7 +24,7 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDD00     // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDC00     // below the CP/M CCP
 #pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
@@ -215,7 +215,7 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(stdout,"RC2014 - CP/M IDE Shell v2.3\n");
+    fprintf(stdout,"RC2014 - CP/M IDE Shell v2.4\n");
     fprintf(stdout,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {

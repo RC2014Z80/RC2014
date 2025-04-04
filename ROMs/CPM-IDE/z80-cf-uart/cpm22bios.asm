@@ -400,10 +400,14 @@ chgdsk:
     ret                     ;return the disk dpbase in HL
 
 seldskreset:
+    ld      hl,$0000        ;prepare return error code in HL
+    ld      a,(_cpm_cdisk)  ;get the current default drive
+    cp      c               ;and see if it was requested
+    ret     NZ              ;if not return, otherwise
+
     xor     a               ;reset default disk back to 0 (A:)
-    ld      (_cpm_cdisk),a
-    ld      (sekdsk),a      ;and set the seeked disk
-    ld      hl,$0000        ;return error code in HL
+    ld      (_cpm_cdisk),a  ;and set the seeked disk
+    ld      (sekdsk),a      ;otherwise a loop results
     ret
 ;
 ;*****************************************************
@@ -452,8 +456,8 @@ write:
     ld      (readop),a      ;not a read operation
     ld      a,c             ;write type in c
     ld      (wrtype),a
-    and     wrual           ;write unallocated?
-    jr      Z,chkuna        ;check for unalloc
+    cp      wrual           ;write unallocated?
+    jr      NZ,chkuna       ;check for unalloc
 
 ;           write to unallocated, set parameters
     ld      a,cpmbls/128    ;next unalloc recs

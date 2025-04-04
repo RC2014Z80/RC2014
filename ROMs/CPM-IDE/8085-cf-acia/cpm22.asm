@@ -33,7 +33,7 @@ SECTION rodata_lib           ;read only library (code)
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_CCP_BDOS    ;base of ccp
-defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDC00
+defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDB00
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -1497,14 +1497,15 @@ FBASE:
 ;
 ;   BDOS function jump table.
 ;
-    DEFC    NFUNCTS = 38    ;number of functions in following table.
+    DEFC    NFUNCTS = 41    ;number of functions in following table.
 
 FUNCTNS:
     DEFW    WBOOT,GETCON,OUTCON,GETRDR,PUNCH,LIST,DIRCIO,GETIOB
     DEFW    SETIOB,PRTSTR,RDBUFF,GETCSTS,GETVER,RSTDSK,SETDSK,OPENFIL
-    DEFW    CLOSEFIL,GETFST,GETNXT,DELFILE,READSEQ,WRTSEQ,FCREATE,RENFILE
-    DEFW    GETLOG,GETCRNT,PUTDMA,GETALOC,WRTPRTD,GETROV,SETATTR,GETPARM
-    DEFW    GETUSER,RDRANDOM,WTRANDOM,FILESIZE,SETRAN,RTN
+    DEFW    CLOSEFIL,GETFST,GETNXT,DELFILE,READSEQ,WRTSEQ,FCREATE
+    DEFW    RENFILE,GETLOG,GETCRNT,PUTDMA,GETALOC,WRTPRTD,GETROV,SETATTR
+    DEFW    GETPARM,GETUSER,RDRANDOM,WTRANDOM,FILESIZE,SETRAN,LOGOFF,RTN
+    DEFW    RTN,WTSPECL
 ;
 ;   Bdos error message section.
 ;
@@ -3345,7 +3346,7 @@ WTSEQ1:
     CALL    COMBLK          ;compute block number.
     CALL    CHKBLK          ;check number.
     LD      C,0             ;is there one to write to?
-    JP      NZ,WTSEQ7       ;yes, go do it.
+    JP      NZ,WTSEQ6       ;yes, go do it.
     CALL    GETBLOCK        ;get next block number within fcb to use.
     LD      (RELBLOCK),A    ;and save.
     LD      BC,0            ;start looking for space from the start
@@ -3371,15 +3372,15 @@ WTSEQ3:
     LD      A,(BIGDISK)     ;8 or 16 bit block numbers?
     OR      A
     LD      A,(RELBLOCK)    ;(* update this entry *)
-    JP      Z,WTSEQ5        ;zero means 16 bit ones.
+    JP      Z,WTSEQ4        ;zero means 16 bit ones.
     ADD     A,L             ;(HL)=(HL)+(A)
     LD      L,A
-    JP      NC,WTSEQ4
+    JP      NC,WTSEQADD
     INC     H               ;take care of any carry.
-WTSEQ4:
+WTSEQADD:
     LD      (HL),E          ;store new block number.
-    JP      WTSEQ6
-WTSEQ5:
+    JP      WTSEQ5
+WTSEQ4:
     LD      C,A             ;compute spot in this 16 bit table.
     LD      B,0
     ADD     HL,BC
@@ -3387,14 +3388,62 @@ WTSEQ5:
     LD      (HL),E          ;stuff block number (DE) there.
     INC     HL
     LD      (HL),D
-WTSEQ6:
+WTSEQ5:
     LD      C,2             ;set (C) to indicate writing to un-used disk space.
-WTSEQ7:
+WTSEQ6:
     LD      A,(STATUS)      ;are we ok so far?
     OR      A
     RET     NZ
     PUSH    BC              ;yes, save write flag for bios (register C).
     CALL    LOGICAL         ;convert (BLKNMBR) over to logical sectors.
+    LD      A,(MODE)        ;get access mode flag (1=sequential,
+    DEC     A               ;0=random, 2=special?).
+    DEC     A
+    JP      NZ,WTSEQ9
+;
+;   Special random i/o from function #40. The current block,
+;   if it has not been written to, will be zeroed
+;   out and then written.
+;
+    POP     BC
+    PUSH    BC
+    LD      A,C             ;get write status flag (2=writing unused space).
+    DEC     A
+    DEC     A
+    JP      NZ,WTSEQ9
+    PUSH    HL
+    LD      HL,(DIRBUF)     ;zero out the directory buffer.
+    LD      D,A             ;note that (A) is zero here.
+WTSEQ7:
+     LD     (HL),A
+    INC     HL
+    INC     D               ;do 128 bytes.
+    JP      P,WTSEQ7
+    CALL    DIRDMA          ;tell the bios the dma address for directory access.
+    LD      HL,(LOGSECT)    ;get sector that starts current block.
+    LD      C,2             ;set 'writing to unused space' flag.
+WTSEQ8:
+    LD     (BLKNMBR),HL     ;save sector to write.
+    PUSH    BC
+    CALL    TRKSEC1         ;determine its track and sector numbers.
+    POP     BC
+    CALL    DOWRITE         ;now write out 128 bytes of zeros.
+    LD      HL,(BLKNMBR)    ;get sector number.
+    LD      C,0             ;set normal write flag.
+    LD      A,(BLKMASK)     ;determine if we have written the entire
+    LD      B,A             ;physical block.
+    AND     L
+    CP      B
+    INC     HL              ;prepare for the next one.
+    JP      NZ,WTSEQ8       ;continue until (BLKMASK+1) sectors written.
+    POP     HL              ;reset next sector number.
+    LD      (BLKNMBR),HL
+    CALL    DEFDMA          ;and reset dma address.
+;
+;   Normal disk write. Set the desired track and sector then
+;   do the actual write.
+;
+WTSEQ9:    
     CALL    TRKSEC1         ;determine track and sector for this write.
     POP     BC              ;get write status flag.
     PUSH    BC
@@ -3920,6 +3969,37 @@ FILESIZE:
     CALL    AUTOSEL         ;select proper drive and check file length
     JP      RANSIZE   
 ;
+;   Function to selectively reset disc drives.
+;   This allows a program to log off any drives.
+;   On entry, set (DE) to contain a word with bits set for those
+;   drives that are to be logged off. The log-in vector and the
+;   write protect vector will be updated.
+;
+LOGOFF:
+    LD      HL,(PARAMS)     ;get drives to log off.
+    LD      A,L             ;for each bit that is set, we want
+    CPL                     ;to clear that bit in (LOGIN)
+    LD      E,A             ;and (WRTPRT).
+    LD      A,H
+    CPL
+    LD      HL,(LOGIN)      ;reset the login vector.
+    AND     H
+    LD      D,A
+    LD      A,L
+    AND     E
+    LD      E,A
+    LD      HL,(WRTPRT)
+    EX      DE,HL
+    LD      (LOGIN),HL      ;and save.
+    LD      A,L             ;now do the write protect vector.
+    AND     E
+    LD      L,A
+    LD      A,H
+    AND     D
+    LD      H,A
+    LD    (WRTPRT),HL       ;and save. all done.
+    RET
+;
 ;   Get here to return to the user.
 ;
 GOBACK:
@@ -3942,6 +4022,20 @@ RETMON:
     LD      A,L             ;force version 1.4 compatability.
     LD      B,H
     RET                     ;and go back to user.
+;
+;   Funtion to write random with zero fill.
+;   This is a special entry to do random i/o.
+;   For the case where we are writing to unused disk space,
+;   this space will be zeroed out first.
+;
+WTSPECL:
+    CALL    AUTOSEL         ;select proper drive.
+    LD      A,2             ;use special write mode.
+    LD      (MODE),A
+    LD      C,0             ;set write indicator.
+    CALL    POSITN1         ;position the file.
+    CALL    Z,WTSEQ1        ;and write (if no errors).
+    RET
 ;
 ;   Function to load Intel HEX into TPA and launch it
 ;   uses  : af, bc, de, hl
