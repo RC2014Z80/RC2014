@@ -821,19 +821,19 @@ PUBLIC _uartb_pollc
     ; check the UART A channel exists
     ld a,(uartaControl)         ; load the control flag
     or a                        ; check it is non-zero
-    jp Z,uartb                  ; try UART B
+    jr Z,uartb                  ; try UART B
 
     in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
-    rrca                            ; check whether an interrupt was generated
-    jp C,uartb                      ; if not, go check UART B
+    rrca                        ; check whether an interrupt was generated
+    jp C,uartb                  ; if not, go check UART B
+
+    ; read the LSR to check for received data
+    in a,(__IO_UARTA_LSR_REGISTER)  ; get the status of the UART A data
+    rrca                        ; Rx data is available
+                                ; XXX To do handle line errors
+    jr NC,uartb                 ; if not, go check UART B
 
 .rxa_get
-    ; read the IIR to access the relevant interrupts
-    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
-    and __IO_UART_IIR_DATA      ; Rx data is available
-                                ; XXX To do handle line errors
-    jp Z,uartb                  ; if not, go check UART B
-
     in a,(__IO_UARTA_DATA_REGISTER) ; Get the received byte from the UART A
     ld hl,(uartaRxIn)           ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the uartaRxIn address
@@ -857,9 +857,10 @@ PUBLIC _uartb_pollc
     out (__IO_UARTA_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxa_check
-    in a,(__IO_UARTA_IIR_REGISTER)  ; get the status of the UART A
-    rrca                            ; check whether an interrupt remains
-    jp NC,rxa_get                   ; another byte received, go get it
+    ; read the LSR to check for additional received data
+    in a,(__IO_UARTA_LSR_REGISTER)  ; get the status of the UART A data
+    rrca                        ; Rx data is available
+    jp C,rxa_get                ; another byte received, go get it
 
     ; now do the same with the UART B channel, because the interrupt is shared
 
@@ -867,19 +868,19 @@ PUBLIC _uartb_pollc
     ; check the UART B channel exists
     ld a,(uartbControl)         ; load the control flag
     or a                        ; check it is non-zero
-    jp Z,end
+    jr Z,end
 
     in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
-    rrca                            ; check whether an interrupt was generated
-    jp C,end                        ; if not, exit interrupt
+    rrca                        ; check whether an interrupt was generated
+    jr C,end                    ; if not, exit interrupt
+
+    ; read the LSR to check for received data
+    in a,(__IO_UARTB_LSR_REGISTER)  ; get the status of the UART B data
+    rrca                        ; Rx data is available
+                                ; XXX To do handle line errors
+    jr NC,end                   ; if not exit
 
 .rxb_get
-    ; read the IIR to access the relevant interrupts
-    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
-    and __IO_UART_IIR_DATA      ; Rx data is available
-                                ; XXX To do handle line errors
-    jp Z,end                    ; if not exit
-
     in a,(__IO_UARTB_DATA_REGISTER) ; Get the received byte from the UART B
     ld hl,(uartbRxIn)           ; get the pointer to where we poke
     ld (hl),a                   ; write the Rx byte to the uartbRxIn address
@@ -903,9 +904,10 @@ PUBLIC _uartb_pollc
     out (__IO_UARTB_MCR_REGISTER),a ; set the MODEM Control Register
 
 .rxb_check
-    in a,(__IO_UARTB_IIR_REGISTER)  ; get the status of the UART B
-    rrca                            ; check whether an interrupt remains
-    jp NC,rxb_get                   ; another byte received, go get it
+    ; read the LSR to check for additional received data
+    in a,(__IO_UARTB_LSR_REGISTER)  ; get the status of the UART B data
+    rrca                        ; Rx data is available
+    jp C,rxb_get                ; another byte received, go get it
 
 .end
     pop hl
@@ -917,7 +919,7 @@ PUBLIC _uartb_pollc
 ._uarta_reset                    ; interrupts should be disabled
 
     ; enable and reset the Tx & Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTA_FCR_REGISTER),a
 
     xor a
@@ -932,7 +934,7 @@ PUBLIC _uartb_pollc
 ._uartb_reset                    ; interrupts should be disabled
 
     ; enable and reset the Tx & Rx FIFO
-    ld a,__IO_UART_FCR_FIFO_08|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
+    ld a,__IO_UART_FCR_FIFO_04|__IO_UART_FCR_FIFO_TX_RESET|__IO_UART_FCR_FIFO_RX_RESET|__IO_UART_FCR_FIFO_ENABLE
     out (__IO_UARTB_FCR_REGISTER),a
 
     xor a
@@ -1052,10 +1054,11 @@ PUBLIC _uartb_pollc
     or a                        ; check it is non-zero
     ret Z                       ; return if it doesn't exist
 
+._uarta_putc_loop
     ; check space is available in the Tx FIFO
     in a,(__IO_UARTA_LSR_REGISTER)      ; read the line status register
     and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
-    jp Z,_uarta_putc                    ; keep trying until THR has space
+    jp Z,_uarta_putc_loop               ; keep trying until THR has space
 
     ld a,l                              ; retrieve Tx character
     out (__IO_UARTA_DATA_REGISTER),a    ; output the Tx byte to the UART A
@@ -1071,10 +1074,11 @@ PUBLIC _uartb_pollc
     or a                        ; check it is non-zero
     ret Z                       ; return if it doesn't exist
 
+._uartb_putc_loop
     ; check space is available in the Tx FIFO
     in a,(__IO_UARTB_LSR_REGISTER)      ; read the line status register
     and __IO_UART_LSR_TX_HOLDING_THRE   ; check the THR is available
-    jp Z,_uartb_putc                    ; keep trying until THR has space
+    jp Z,_uartb_putc_loop               ; keep trying until THR has space
 
     ld a,l                              ; retrieve Tx character
     out (__IO_UARTB_DATA_REGISTER),a    ; output the Tx byte to the UART B
