@@ -4230,9 +4230,11 @@ CKSUMTBL:   DEFS    16,0
 ;
 ;   Stack area for BDOS calls.
 ;
+            DEFS    48,0    ;minimum BDOS stack allocation.
+;
 ALIGN       0x100
 ;
-STKAREA:                    ;top of stack area.
+STKAREA:                    ;top of BDOS stack.
 ;
 PUBLIC  _cpm_bdos_bss_tail
 _cpm_bdos_bss_tail:         ;tail of the cpm bdos bss
