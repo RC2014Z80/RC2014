@@ -50,6 +50,9 @@ static FILE * input;            /* defined input */
 static FILE * output;           /* defined output */
 static FILE * error;            /* defined error */
 
+extern uint8_t uartaControl;    /* set to address of UART A */
+extern uint8_t uartbControl;    /* set to address of UART B */
+
 /*
   Function Declarations for built-in shell commands:
  */
@@ -576,8 +579,9 @@ void ya_loop(void)
     char ** args = (char **)malloc(TOK_BUFSIZE * sizeof(char*));    /* Get tokens buffer ready */
     if (args == NULL) return;
 
+#if 0
     while (1){                                          /* look for ":" to select the valid serial port */
-        if (uarta_pollc() != 0) {
+        if (uartaControl != 0 && uarta_pollc() != 0) {
             if (uarta_getc() == ':') {
                 input = stdin;
                 output = stdout;
@@ -588,7 +592,7 @@ void ya_loop(void)
                 uarta_reset();
             }
         }
-        if (uartb_pollc() != 0) {
+        if (uartbControl != 0 && uartb_pollc() != 0) {
             if (uartb_getc() == ':') {
                 input = ttyin;
                 output = ttyout;
@@ -602,6 +606,7 @@ void ya_loop(void)
     }
 
     fprintf(output," :-)\n");
+#endif
 
     do {
         fflush(input);
@@ -635,8 +640,12 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
-    fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :-)\n");
+//  fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
+
+    input = stdin;
+    output = stdout;
+    error = stderr;
 
     // Run command loop if we got all the memory allocations we need.
     if (fs && buffer) {

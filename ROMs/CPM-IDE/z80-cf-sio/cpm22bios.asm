@@ -279,7 +279,7 @@ dataEmpty:
     xor     a
     ret
 
-conin:    ;console character into register a
+conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
@@ -287,13 +287,13 @@ conin:    ;console character into register a
     cp      00000001b
     jr      NZ,conin1
 
-conin0:
+conin0:     ;------01b CRT:
    call     _sioa_getc      ;check whether any characters are in CRT Rx0 buffer
    jr       NC,conin0       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
    ret
 
-conin1:
+conin1:     ;------00b TTY:
    call     _siob_getc      ;check whether any characters are in TTY Rx1 buffer
    jr       NC,conin1       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
@@ -1051,6 +1051,7 @@ _sioa_getc:
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, bc, hl
+
     ld a,(sioaRxCount)          ; get the number of bytes in the Rx buffer
     ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
@@ -1088,6 +1089,7 @@ _siob_getc:
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, bc, hl
+
     ld a,(siobRxCount)          ; get the number of bytes in the Rx buffer
     ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
@@ -1125,6 +1127,7 @@ _sioa_pollc:
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
+
     ld a,(sioaRxCount)          ; load the Rx bytes in buffer
     ld l,a                      ; load result
     or a                        ; check whether there are non-zero count
@@ -1138,6 +1141,7 @@ _siob_pollc:
     ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
+
     ld a,(siobRxCount)          ; load the Rx bytes in buffer
     ld l,a                      ; load result
     or a                        ; check whether there are non-zero count

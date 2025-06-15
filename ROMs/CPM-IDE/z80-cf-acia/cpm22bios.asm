@@ -281,17 +281,25 @@ dataEmpty:
     xor     a
     ret
 
-DEFC        conin0 = _acia0_getc
-DEFC        conin1 = _acia1_getc
-
-conin:    ;console character into register a
+conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    rrca
-    jp      C,conin0        ;------01b CRT:
-    jp      conin1          ;------00b TTY:
+    cp      00000001b
+    jr      NZ,conin1
+
+conin0:     ;------01b CRT:
+   call     _acia0_getc     ;check whether any characters are in CRT Rx0 buffer
+   jr       NC,conin0       ;if Rx buffer is empty
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
+   ret
+
+conin1:     ;------00b TTY:
+   call     _acia1_getc     ;check whether any characters are in TTY Rx1 buffer
+   jr       NC,conin1       ;if Rx buffer is empty
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
+   ret
 
 reader:
     ld      a,(_cpm_iobyte)
@@ -303,9 +311,6 @@ reader:
     ld      a,$1A           ;CTRL-Z if not acia
     ret
 
-DEFC        conout0 = _acia0_putc
-DEFC        conout1 = _acia1_putc
-
 conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
@@ -313,25 +318,25 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,conout0       ;------01b CRT:
-    jp      conout1         ;------00b TTY:
+    jp      C,_acia0_putc   ;------01b CRT:
+    jp      _acia1_putc     ;------00b TTY:
 
 list:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     rlca
-    jp      C,conout0       ;01------b CRT:
-    jp      conout1         ;00------b TTY:
+    jp      C,_acia0_putc   ;01------b CRT:
+    jp      _acia1_putc     ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b       ;--x1----b PTP: or UL1:
-    jp      Z,conout0
+    jp      Z,_acia0_putc
     cp      00000000b
-    jp      Z,conout1
+    jp      Z,_acia1_putc
     ret
 
 listst:     ;return list status
@@ -889,13 +894,15 @@ _acia_reset:                    ; interrupts should be disabled
     ret
 
 _acia_getc:
-    ; exit     : a, l = char received, wait for available character
+    ; exit     : a, l = char received
+    ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, hl
 
     ld a,(aciaRxCount)          ; get the number of bytes in the Rx buffer
+    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    jp Z,_acia_getc             ; if the count is zero, then wait
+    ret Z                       ; if the count is zero, then return
 
     cp __IO_ACIA_RX_EMPTYISH    ; compare the count with the preferred empty size
     jp NZ,getc_clean_up_rx      ; if the buffer not emptyish, don't change the RTS

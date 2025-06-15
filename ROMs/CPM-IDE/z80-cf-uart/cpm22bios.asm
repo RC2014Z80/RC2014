@@ -285,17 +285,25 @@ dataEmpty:
     xor     a
     ret
 
-DEFC        conin0 = _uarta_getc
-DEFC        conin1 = _uartb_getc
-
-conin:    ;console character into register a
+conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b
     jr      Z,reader        ;"BAT:" redirect
-    rrca
-    jp      C,conin0        ;------01b CRT:
-    jp      conin1          ;------00b TTY:
+    cp      00000001b
+    jr      NZ,conin1
+
+conin0:     ;------01b CRT:
+   call     _uarta_getc     ;check whether any characters are in CRT Rx0 buffer
+   jr       NC,conin0       ;if Rx buffer is empty
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
+   ret
+
+conin1:     ;------00b TTY:
+   call     _uartb_getc     ;check whether any characters are in TTY Rx1 buffer
+   jr       NC,conin1       ;if Rx buffer is empty
+;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
+   ret
 
 reader:
     ld      a,(_cpm_iobyte)
@@ -307,9 +315,6 @@ reader:
     ld      a,$1A           ;CTRL-Z if not uarta or uart b
     ret
 
-DEFC        conout0 = _uarta_putc
-DEFC        conout1 = _uartb_putc
-
 conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
@@ -317,25 +322,25 @@ conout:    ;console character output from register c
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect
     rrca
-    jp      C,conout0       ;------01b CRT:
-    jp      conout1         ;------00b TTY:
+    jp      C,_uarta_putc   ;------01b CRT:
+    jp      _uartb_putc     ;------00b TTY:
 
 list:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
     rlca
     rlca
-    jp      C,conout0       ;01------b CRT:
-    jp      conout1         ;00------b TTY:
+    jp      C,_uarta_putc   ;01------b CRT:
+    jp      _uartb_putc     ;00------b TTY:
 
 punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
     cp      00010000b       ;--x1----b PTP: or UL1:
-    jp      Z,conout0
+    jp      Z,_uarta_putc
     cp      00000000b
-    jp      Z,conout1
+    jp      Z,_uartb_putc
     ret
 
 listst:     ;return list status
@@ -928,13 +933,15 @@ PUBLIC _uartb_pollc
     ret
 
 ._uarta_getc
-    ; exit     : a, l = char received, wait for available character
+    ; exit     : a, l = char received
+    ;            carry reset if Rx buffer is empty
     ;
     ; modifies : af, bc, hl
 
     ld a,(uartaRxCount)         ; get the number of bytes in the Rx buffer
+    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    jp Z,_uarta_getc            ; if the count is zero, then wait
+    ret Z                       ; if the count is zero, then return
 
     cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
     jp NZ,uarta_getc_clean_up   ; if the buffer is too full, don't change the RTS
@@ -963,13 +970,15 @@ PUBLIC _uartb_pollc
     ret
 
 ._uartb_getc
-    ; exit     : a, l = char received, wait for available character
+    ; exit     : a, l = char received
+    ;            carry reset if Rx buffer is empty
     ;
-    ; modifies : af, hl
+    ; modifies : af, bc, hl
 
     ld a,(uartbRxCount)         ; get the number of bytes in the Rx buffer
+    ld l,a                      ; and put it in hl
     or a                        ; see if there are zero bytes available
-    jp Z,_uartb_getc            ; if the count is zero, then wait
+    ret Z                       ; if the count is zero, then return
 
     cp __IO_UART_RX_EMPTYISH    ; compare the count with the preferred empty size
     jp NZ,uartb_getc_clean_up    ; if the buffer is too full, don't change the RTS
@@ -1326,12 +1335,15 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
 PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
 PUBLIC  uartaControl, uartbControl
+PUBLIC  _uartaControl, _uartbControl
 
+_uartaControl:                          ;for C
 uartaControl:       defb 0              ;local control of UART A
 uartaRxCount:       defb 0              ;space for Rx Buffer Management
 uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 
+_uartbControl:                          ;for C
 uartbControl:       defb 0              ;local control of UART B
 uartbRxCount:       defb 0              ;space for Rx Buffer Management
 uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway

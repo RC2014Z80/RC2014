@@ -56,6 +56,9 @@ static FILE * input;            /* defined input */
 static FILE * output;           /* defined output */
 static FILE * error;            /* defined error */
 
+extern uint8_t uartaControl;    /* set to address of UART A */
+extern uint8_t uartbControl;    /* set to address of UART B */
+
 /*
   Function Declarations for built-in shell commands:
  */
@@ -625,7 +628,7 @@ void ya_loop(void)
 
 #if 0
     while (1){                                          /* look for ":" to select the valid serial port */
-        if (uarta_pollc() != 0) {
+        if (uartaControl != 0 && uarta_pollc() != 0) {
             if (uarta_getc() == ':') {
                 input = stdin;
                 output = stdout;
@@ -636,7 +639,7 @@ void ya_loop(void)
                 uarta_reset();
             }
         }
-        if (uartb_pollc() != 0) {
+        if (uartbControl != 0 && uartb_pollc() != 0) {
             if (uartb_getc() == ':') {
                 input = ttyin;
                 output = ttyout;
