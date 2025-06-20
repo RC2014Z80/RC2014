@@ -287,7 +287,7 @@ dataEmpty:
     xor     a
     ret
 
-conin:    ;console character into register a
+conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
     and     00000011b
     cp      00000010b

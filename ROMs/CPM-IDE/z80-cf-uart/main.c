@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/compiler.h>
+#include <cpu.h>
 
 #include <arch.h>
 #include <arch/rc2014.h>
@@ -39,6 +40,9 @@
 extern uint32_t cpm_dsk0_base[4];
 extern uint8_t  bios_iobyte;
 
+extern uint8_t uarta_control;   /* set to address of UART A */
+extern uint8_t uartb_control;   /* set to address of UART B */
+
 static void * buffer;           /* create a scratch buffer on heap later */
 
 static FATFS * fs;              /* Pointer to the filesystem object (on heap) */
@@ -49,9 +53,6 @@ static FIL file;                /* File object needed for each open file */
 static FILE * input;            /* defined input */
 static FILE * output;           /* defined output */
 static FILE * error;            /* defined error */
-
-extern uint8_t uartaControl;    /* set to address of UART A */
-extern uint8_t uartbControl;    /* set to address of UART B */
 
 /*
   Function Declarations for built-in shell commands:
@@ -581,7 +582,7 @@ void ya_loop(void)
 
 #if 0
     while (1){                                          /* look for ":" to select the valid serial port */
-        if (uartaControl != 0 && uarta_pollc() != 0) {
+        if ((uarta_control != 0) && (uarta_pollc() != 0)) {
             if (uarta_getc() == ':') {
                 input = stdin;
                 output = stdout;
@@ -592,7 +593,7 @@ void ya_loop(void)
                 uarta_reset();
             }
         }
-        if (uartbControl != 0 && uartb_pollc() != 0) {
+        if ((uartb_control != 0) && (uartb_pollc() != 0)) {
             if (uartb_getc() == ':') {
                 input = ttyin;
                 output = ttyout;
@@ -606,6 +607,12 @@ void ya_loop(void)
     }
 
     fprintf(output," :-)\n");
+
+#else
+    input = stdin;
+    output = stdout;
+    error = stderr;
+    bios_iobyte = 1;
 #endif
 
     do {
@@ -642,10 +649,6 @@ int main(int argc, char ** argv)
 
     fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :-)\n");
 //  fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
-
-    input = stdin;
-    output = stdout;
-    error = stderr;
 
     // Run command loop if we got all the memory allocations we need.
     if (fs && buffer) {

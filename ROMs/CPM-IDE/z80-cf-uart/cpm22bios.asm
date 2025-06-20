@@ -1335,15 +1335,15 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
 PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
 PUBLIC  uartaControl, uartbControl
-PUBLIC  _uartaControl, _uartbControl
+PUBLIC  _uarta_control, _uartb_control
 
-_uartaControl:                          ;for C
+_uarta_control:                         ;for C
 uartaControl:       defb 0              ;local control of UART A
 uartaRxCount:       defb 0              ;space for Rx Buffer Management
 uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 
-_uartbControl:                          ;for C
+_uartb_control:                         ;for C
 uartbControl:       defb 0              ;local control of UART B
 uartbRxCount:       defb 0              ;space for Rx Buffer Management
 uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
