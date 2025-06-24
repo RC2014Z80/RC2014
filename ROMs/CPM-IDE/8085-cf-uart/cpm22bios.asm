@@ -25,7 +25,7 @@ defc    __CPM_BIOS_BSS_HEAD         = 0xF800
 ;------------------------------------------------------------------------------
 
 EXTERN  _cpm_ccp_head               ;base of ccp
-EXTERN  _cpm_bdos_head              ;base of bdos
+EXTERN  _cpm_bdos_fbase             ;entry of bdos
 
 PUBLIC  _cpm_disks
 
@@ -178,7 +178,7 @@ cboot:
     ld      (_cpm_cdisk),a          ;select disk zero
 
     ld      a,(_bios_iobyte)        ;get bios iobyte from shell
-    ld      (_cpm_iobyte),a         ;set cpm iobyte to selected CRT: plus LPT:
+    ld      (_cpm_iobyte),a         ;set cpm iobyte to that selected by bios shell CRT: plus LPT:
 
     ld      hl,$AA55                ;enable the canary, to show CP/M bios alive
     ld      (_cpm_bios_canary),hl
@@ -207,7 +207,7 @@ rboot:
     ld      ($0001),hl      ;set address field for jmp at 0 to wboote
 
     ld      ($0005),a       ;C3 for jmp to bdos entry point
-    ld      hl,_cpm_bdos_head   ;bdos entry point
+    ld      hl,_cpm_bdos_fbase  ;bdos entry point
     ld      ($0006),hl      ;set address field of Jump at 5 to bdos
 
     ld      bc,$0080        ;default dma address is 0x0080
@@ -264,15 +264,15 @@ diskchk:
 
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
-    and     00001011b       ;mask off console and high bit of reader
-    cp      00001010b       ;redirected to uartb
-    jr      Z,const1
-    cp      00000010b       ;redirected to uartb
+    and     00000011b       ;mask off console
+    cp      00000010b       ;"BAT:" redirect to TTY: reader
     jr      Z,const1
 
-    and     00000011b       ;remove the reader from the mask - only console bits then remain
-    cp      00000001b
-    jr      NZ,const1
+    rrca                    ;manage remaining console bit
+    jr      C,const0        ;------x1b CON:
+    jr      NC,const1       ;------x0b TTY:
+    xor     a               ;------x-b otherwise
+    ret
 
 const0:
     call    _uarta_pollc    ;check whether any characters are in CRT (RxA) buffer
@@ -290,20 +290,24 @@ dataEmpty:
 
 conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
-    and     00000011b
-    cp      00000010b
-    jr      Z,reader        ;"BAT:" redirect
-    cp      00000001b
-    jr      NZ,conin1
+    and     00000011b       ;mask off console
+    cp      00000010b       ;"BAT:" redirect to TTY: reader
+    jr      Z,reader
+
+    rrca                    ;manage remaining console bit
+    jr      C,conin0        ;-----xx1b CON:
+    jr      NC,conin1       ;------x0b TTY:
+    xor     a               ;------x-b otherwise
+    ret
 
 conin0:     ;------01b CRT:
-   call     _uarta_getc     ;check whether any characters are in CRT Rx0 buffer
+   call     _uarta_getc     ;check whether any characters are in CRT RxA buffer
    jr       NC,conin0       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
    ret
 
 conin1:     ;------00b TTY:
-   call     _uartb_getc     ;check whether any characters are in TTY Rx1 buffer
+   call     _uartb_getc     ;check whether any characters are in TTY RxB buffer
    jr       NC,conin1       ;if Rx buffer is empty
 ;  and      $7F             ;don't strip parity bit - support 8 bit XMODEM
    ret
@@ -311,11 +315,8 @@ conin1:     ;------00b TTY:
 reader:
     ld      a,(_cpm_iobyte)
     and     00001100b
-    cp      00000100b
-    jp      Z,conin0
-    cp      00000000b
-    jp      Z,conin1
-    ld      a,$1A           ;CTRL-Z if not uarta or uart b
+    jr      Z,conin1
+    ld      a,$1A           ;CTRL-Z if not TTY:
     ret
 
 conout:    ;console character output from register c
@@ -330,7 +331,7 @@ conout:    ;console character output from register c
 
 list:
     ld      l,c             ;store character
-    ld      a,(_cpm_iobyte) ;1x------b LPT: or UL1:
+    ld      a,(_cpm_iobyte)
     rlca
     jp      C,_sod_putc     ;output to SOD on 8085 CPU Module
     rlca
@@ -341,11 +342,8 @@ punch:
     ld      l,c             ;store character
     ld      a,(_cpm_iobyte)
     and     00110000b
-    cp      00010000b       ;--x1----b PTP: or UL1:
-    jp      Z,_uarta_putc
-    cp      00000000b
-    jp      Z,_uartb_putc
-    ret
+    jp      Z,_uartb_putc   ;--00----b TTY:
+    ret                     ;--x1----b PTP: or UL1:
 
 listst:     ;return list status
     ld      a,$FF           ;return list status of 0xFF (ready).
@@ -1396,15 +1394,15 @@ _cpm_bios_bss_initialised_tail:         ;tail of the cpm bios initialised bss
 PUBLIC  uartaRxCount, uartaRxIn, uartaRxOut
 PUBLIC  uartbRxCount, uartbRxIn, uartbRxOut
 PUBLIC  uartaControl, uartbControl
-PUBLIC  _uarta_control, _uart_control
+PUBLIC  _uarta_control, _uartb_control
 
-_uarta_control:                         ;for C
+_uarta_control:                         ;for main.c
 uartaControl:       defb 0              ;local control of UART A
 uartaRxCount:       defb 0              ;space for Rx Buffer Management
 uartaRxIn:          defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 uartaRxOut:         defw uartaRxBuffer  ;non-zero item in bss since it's initialized anyway
 
-_uartb_control:                         ;for C
+_uartb_control:                         ;for main.c
 uartbControl:       defb 0              ;local control of UART B
 uartbRxCount:       defb 0              ;space for Rx Buffer Management
 uartbRxIn:          defw uartbRxBuffer  ;non-zero item in bss since it's initialized anyway
