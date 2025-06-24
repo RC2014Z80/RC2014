@@ -580,7 +580,6 @@ void ya_loop(void)
     char ** args = (char **)malloc(TOK_BUFSIZE * sizeof(char*));    /* Get tokens buffer ready */
     if (args == NULL) return;
 
-#if 0
     while (1){                                          /* look for ":" to select the valid serial port */
         if ((uarta_control != 0) && (uarta_pollc() != 0)) {
             if (uarta_getc() == ':') {
@@ -607,13 +606,6 @@ void ya_loop(void)
     }
 
     fprintf(output," :-)\n");
-
-#else
-    input = stdin;
-    output = stdout;
-    error = stderr;
-    bios_iobyte = 1;
-#endif
 
     do {
         fflush(input);
@@ -647,8 +639,8 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :-)\n");
-//  fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
     if (fs && buffer) {
