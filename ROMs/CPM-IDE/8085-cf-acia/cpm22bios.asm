@@ -268,7 +268,7 @@ const:      ;console status, return 0ffh if character ready, 00h if not
     jr      Z,const1
 
     rrca                    ;manage remaining console bit
-    jr      C,const0        ;------x1b CON:
+    jr      C,const0        ;------x1b CRT:
     jr      NC,const1       ;------x0b TTY:
     xor     a               ;------x-b otherwise
     ret
@@ -294,7 +294,7 @@ conin:      ;console character into register a
     jr      Z,reader
 
     rrca                    ;manage remaining console bit
-    jr      C,conin0        ;-----xx1b CON:
+    jr      C,conin0        ;------x1b CRT:
     jr      NC,conin1       ;------x0b TTY:
     xor     a               ;------x-b otherwise
     ret

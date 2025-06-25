@@ -1476,8 +1476,13 @@ SERNO:
 PUBLIC      _cpm_bdos_fbase
 _cpm_bdos_fbase:            ;entry for the cpm bdos
     JP      FBASE
-
-    DEFS    8               ;unused error vectors
+;
+;   Error handler vectors - for compatibility purposes
+;
+    DEFW    BADSCTR         ;BAD SECTOR ERROR
+    DEFW    BADSLCT         ;DISK SELECT ERROR
+    DEFW    RODISK          ;DISK READ ONLY ERROR
+    DEFW    ROFILE          ;FILE READ ONLY ERROR
 ;
 ;   Entry into bdos. (DE) or (E) are the parameters passed. The
 ;   function number desired is in register (C).
