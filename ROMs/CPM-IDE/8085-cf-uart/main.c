@@ -14,13 +14,13 @@
 #include <string.h>
 #include <sys/compiler.h>
 
-#include <../libsrc/_DEVELOPMENT/target/rc2014/config_rc2014-8085.h>
-#include <_DEVELOPMENT/sccz80/arch/rc2014.h>
+#include <config_rc2014-8085.h>
+#include <arch/rc2014.h>
 
 #include "ffconf.h"
-#include <_DEVELOPMENT/sccz80/lib/rc2014/ff.h>
+#include <lib/rc2014/ff.h>
 
-#include <_DEVELOPMENT/sccz80/arch/rc2014/diskio.h>
+#include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
 #pragma output REGISTER_SP = 0xDB00         // below the CP/M CCP
