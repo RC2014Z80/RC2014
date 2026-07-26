@@ -340,9 +340,37 @@ Then, on each subsequent boot-up of CP/M only mounting the working drive in driv
 
 Of course other development workflows are possible, as is simply mounting the [ZORK](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip) games drive and playing an adventure game.
 
+### z88dk applications under CP/M-IDE (`-subtype=cpm`)
+
+The **CP/M-IDE ROM** is built with bare-metal serial subtypes (`-subtype=sio` / `uart` / `acia`, or the 8085 hybrids) and a **read-only** FatFs package (`ff_ro` / `ff_85_ro`) so the shell can mount `.CPM` drive files on the FAT volume. That is **firmware**, not a CP/M application.
+
+**CP/M applications** (`.COM` files you upload and run under the CCP) should be built with the RC2014 **CP/M subtype**:
+
+```bash
+zcc +rc2014 -subtype=cpm -clib=new app.c -o app -m
+```
+
+With that subtype, unprefixed file calls (`open` / `read` / `write` / `lseek` / `close`) use **BDOS FCB** on the mounted CP/M drives (e.g. `A:`). Console I/O is also via BDOS.
+
+Optional **FatFs** on the same IDE/CF media (ChaN `f_*`, independent of FCB) uses the full read/write `ff` package and in-tree diskio:
+
+```bash
+z88dk-lib +rc2014 ff time
+zcc +rc2014 -subtype=cpm -clib=new app.c \
+  -llib/rc2014/ff -llib/rc2014/time -o app -m
+```
+
+Both stacks may be used in one binary (BDOS files and FatFs volumes such as `0:`). Do not use the ROM shell’s `ff_ro` package for write-capable apps.
+
+Policy, dual-stack rules, and fuller recipes:
+
+* [z88dk wiki — Newlib File I/O and FatFs](https://github.com/z88dk/z88dk/wiki/Newlib_File_IO_and_FatFs)
+* Package sources: [feilipu/z88dk-libraries](https://github.com/feilipu/z88dk-libraries)
+* RC2014 [Using Z88DK](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK) (subtypes and general z88dk usage)
+
 ## Building Software from Source
 
-The z88dk command lines to build the CP/M-IDE for Z80 CPU is below. For the RC2014 build the `rc2014` target and relevant subtype should be used, from within the relevant directory.
+The z88dk command lines to build the **CP/M-IDE ROM** (firmware) for Z80 CPU is below. For the RC2014 build the `rc2014` target and relevant subtype should be used, from within the relevant directory.
 
 First though, refer to the library, disk and buffer configuration notes below.
 
@@ -366,6 +394,8 @@ Alternate z88dk command lines to build the CP/M-IDE for the 8085 CPU Module is b
 Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed, by manually copying the `ff_ro.lib` (and `ff_85_ro.lib` for the 8085 CPU Module) library files into the z88dk RC2014 third-party library directory (`lib/clibs/{sccz80,sdcc_ix,sdcc_iy}/lib/rc2014/`; use `sccz80` for `ff_85_ro`). Rebuild these libraries against your current z88dk if prebuilt binaries fail to link. (`z88dk-lib +rc2014 -f …` installs into the same `lib/clibs/…` trees.)
 
 Due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the default FATFS library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. The default (read/write) version of the [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) should be installed so that applications you compile using z88dk can read and write to the FATFS file system.
+
+Again: ROM builds use **bare** subtypes + `ff_ro`; application `.COM` builds under running CP/M use **`-subtype=cpm`** (FCB file I/O) and optional full `ff` / `time` for FatFs — see [z88dk applications under CP/M-IDE](#z88dk-applications-under-cpm-ide--subtypecpm) above.
 
 The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_acia.m4), [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_sio.m4), and [UART](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_uart.m4) respectively.
 
