@@ -7,6 +7,7 @@ https://retro64.altervista.org/blog/commodore-64-sid-music-programming-with-basi
 25 N=-9
 30 NF=INT(F0*A^N)
 35 FH=INT(NF/256) :FL=NF-256*FH
+39 OUT REG,S+1: OUT DAT,FH
 40 OUT REG,S: OUT DAT,FL
 45 WF=32
 50 OUT REG,S+5: OUT DAT,13*16+5
