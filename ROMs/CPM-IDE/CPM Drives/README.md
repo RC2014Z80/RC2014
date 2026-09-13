@@ -46,7 +46,7 @@ YASH85CF.COM  40k : YASHCF  .COM  36k : Z80ASM  .COM  28k : ZEXALL  .COM  12k
 ZEXDOC  .COM  12k : ZSID    .COM  12k : ZTRAN   .COM   4k
          Drive A0   Files: 43/516k   Free: 7612k 
 ```
-The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell. It can be launched with __`SH`__.
+The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell. It can be launched with __`SH`__.
 
 The __`YASH`__ application can be used to modify the files from the underlying FAT32 drive from within CP/M. Capabilities include creating CP/M drive files. Listing, copying and deleting files. And mounting additional CP/M drive files from within CP/M.
 

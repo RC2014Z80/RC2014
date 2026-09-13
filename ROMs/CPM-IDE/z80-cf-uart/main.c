@@ -24,7 +24,9 @@
 #include <arch/rc2014/diskio.h>
 
 // PRAGMA DEFINES
-#pragma output REGISTER_SP = 0xDB00     // below the CP/M CCP
+#pragma output REGISTER_SP = 0xDAE0     // below the CP/M CCP
+#pragma output CRT_ITERM_TERMINAL_FLAGS = 0  // raw: ya_getline is the only cook/echo
+#pragma output TTY_ITERM_TERMINAL_FLAGS = 0
 #pragma printf = "%c %s %d %u %lu %X"   // enables %c, %s, %d, %u, %lu, %X only
 
 // DEFINES
@@ -34,6 +36,12 @@
 #define TOK_BUFSIZE 64          // size of token pointer buffer (on heap)
 
 #define TOK_DELIM " \t\r\n\a"
+
+#define KEY_BS      8
+#define KEY_LF      10
+#define KEY_CR      13
+#define KEY_SPACE   32
+#define KEY_DEL     127
 
 // GLOBALS
 
@@ -153,7 +161,7 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 drives */
         if (res != FR_OK) { put_rc(res); return 1; }
 
         // set up (up to 4) CPM drive LBA locations
-        while(args[i+1] != NULL)
+        while(args[i+1] != NULL && i < 4)
         {
             fprintf(output,"Opening \"%s\"", args[i+1]);
             res = f_open(&file, (const TCHAR *)args[i+1], FA_OPEN_EXISTING | FA_READ);
@@ -228,7 +236,7 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(output,"RC2014 - CP/M IDE Shell v2.4\n");
+    fprintf(output,"RC2014 - CP/M IDE Shell v2.5\n");
     fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
@@ -544,6 +552,68 @@ int8_t ya_execute(char ** args)
 
 
 /**
+   @brief Read a line of input, echo it, bound BS/DEL to the prompt.
+ */
+void ya_getline(char * line, uint16_t len)
+{
+    static uint8_t last_eol;
+    int c;
+    uint16_t position = 0;
+
+    if (line == NULL || len == 0) {
+        return;
+    }
+
+    for (;;) {
+
+        c = fgetc(input);
+
+        if (c == EOF) {
+            line[position] = '\0';
+            return;
+        }
+
+        /* Do not echo BS/DEL at column 0: a serial terminal wraps. */
+        if (c == KEY_BS || c == KEY_DEL) {
+            if (position > 0) {
+                line[--position] = '\0';
+                fputc(KEY_BS, output);
+                fputc(KEY_SPACE, output);
+                fputc(KEY_BS, output);
+            }
+            continue;
+        }
+
+        if (c == KEY_LF || c == KEY_CR) {
+            /* CR+LF (or LF+CR) is one terminator; the sibling would
+               otherwise become an empty next command. */
+            if (position == 0 && last_eol != 0 && (uint8_t)c != last_eol) {
+                last_eol = 0;
+                continue;
+            }
+            last_eol = (uint8_t)c;
+            line[position] = '\0';
+            fputc('\n', output);
+            return;
+        }
+
+        /* Drop NUL / XON / CSI / other non-text. A pending 0 sits at
+           line[0] and strtok treats the whole command as empty. */
+        if (c < KEY_SPACE || c > 126) {
+            continue;
+        }
+
+        if (position >= len) {
+            continue;
+        }
+
+        line[position++] = (char)c;
+        fputc(c, output);
+    }
+}
+
+
+/**
    @brief Split a line into tokens (very naively).
    @param tokens, null terminated array of token pointers.
    @param line, the line.
@@ -578,7 +648,10 @@ void ya_loop(void)
     if (line == NULL) return;
 
     char ** args = (char **)malloc(TOK_BUFSIZE * sizeof(char*));    /* Get tokens buffer ready */
-    if (args == NULL) return;
+    if (args == NULL) {
+        free(line);
+        return;
+    }
 
     while (1){                                          /* look for ":" to select the valid serial port */
         if ((uarta_control != 0) && (uarta_pollc() != 0)) {
@@ -608,10 +681,9 @@ void ya_loop(void)
     fprintf(output," :-)\n");
 
     do {
-        fflush(input);
         fprintf(output,"\n> ");
 
-        getline(&line, &len, input);
+        ya_getline(line, len);
         ya_split_line(args, line);
 
         status = ya_execute(args);
@@ -639,8 +711,8 @@ int main(int argc, char ** argv)
     fs = (FATFS *)malloc(sizeof(FATFS));                    /* Get work area for the volume */
     buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));    /* Get working buffer space */
 
-    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
-    fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2025\n\n> :?");
+    fprintf(stdout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2026\n\n> :?");
+    fprintf(ttyout, "\n\nRC2014 - CP/M-IDE - CF - UART\nfeilipu 2026\n\n> :?");
 
     // Run command loop if we got all the memory allocations we need.
     if (fs && buffer) {

@@ -33,7 +33,7 @@ SECTION rodata_lib           ;read only library (code)
 ;------------------------------------------------------------------------------
 
 PUBLIC  __COMMON_AREA_PHASE_CCP_BDOS    ;base of ccp
-defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDC00
+defc    __COMMON_AREA_PHASE_CCP_BDOS    = 0xDBE0  ; 0x20 below 0xDC00 so BDOS stays at 0xE400, BSS tail at BIOS 0xF300
 
 ;------------------------------------------------------------------------------
 ; start of definitions
@@ -1287,10 +1287,19 @@ UNKWN2:
     LDI
     LDI
     CALL    OPENFCB        ;and open this file.
+    JP    NZ,UNKWNLD    ;found
+    LD    A,(CHGDRV)    ;nameless command: retry A:
+    OR    A
+    JP    NZ,UNKWN9
+    INC    A
+    LD    (CHGDRV),A
+    CALL    DSELECT
+    CALL    OPENFCB
     JP    Z,UNKWN9    ;not present?
 ;
 ;   Load in the program.
 ;
+UNKWNLD:
     LD    HL,TBASE    ;store the program starting here.
 UNKWN3:
     PUSH    HL
@@ -1783,6 +1792,7 @@ RDBUF2:
     JP      Z,RDBUF17
     CP      BS              ;how about a backspace?
     JP      NZ,RDBUF3
+RDBUFBS:
     LD      A,B             ;yes, but ignore at the beginning of the line.
     OR      A
     JP      Z,RDBUF1
@@ -1791,15 +1801,8 @@ RDBUF2:
     LD      (OUTFLAG),A     ;treat as a cancel (control-x).
     JP      RDBUF10
 RDBUF3:
-    CP      DEL             ;user typed a rubout?
-    JP      NZ,RDBUF4
-    LD      A,B             ;ignore at the start of the line.
-    OR      A
-    JP      Z,RDBUF1
-    LD      A,(HL)          ;ok, echo the prevoius character.
-    DEC     B               ;and reset pointers (counters).
-    DEC     HL
-    JP      RDBUF15
+    CP      DEL             ;APN 02: rubout identical to BS (not the key-swap)
+    JP      Z,RDBUFBS
 RDBUF4:
     CP      CNTRLE          ;physical end of line?
     JP      NZ,RDBUF5
@@ -4076,8 +4079,7 @@ HLD_LOADER:
     JP      HLD_READ_DATA   ;now get the first data
 ;
 HLD_WAIT_COLON:
-    CALL    CONIN           ;Rx byte in A
-    JP      NC,HLD_WAIT_COLON   ;carry set if byte available
+    CALL    CONIN           ;blocking BIOS CONIN; byte in A
     CP      ':'             ;wait for ':'
     JP      NZ,HLD_WAIT_COLON
     LD      E,0             ;reset E to compute checksum
@@ -4135,9 +4137,7 @@ HLD_READ_BYTE:              ;returns byte in A, checksum in E
 HLD_READ_NIBBLE:
     PUSH    HL
     PUSH    BC
-HLD_READ_WAIT:
-    CALL    CONIN           ;Rx byte in A
-    JP      NC,HLD_READ_WAIT;carry set if byte available
+    CALL    CONIN           ;blocking BIOS CONIN; byte in A
     POP     BC
     POP     HL
     SUB     '0'
@@ -4203,6 +4203,7 @@ SCRATCH3:   DEFW    0       ;last selected sector number.
 ;
 ;   Disk storage areas from parameter block.
 ;
+PUBLIC  DIRBUF
 DIRBUF:     DEFW    0       ;address of directory buffer to use.
 DISKPB:     DEFW    0       ;contains address of disk parameter block.
 CHKVECT:    DEFW    0       ;address of check vector.
