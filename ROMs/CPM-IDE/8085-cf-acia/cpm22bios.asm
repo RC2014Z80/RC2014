@@ -130,7 +130,7 @@ wboote:
 
 EXTERN    DIRBUF                    ;BDOS directory buffer pointer (retargeted to hstbuf slice)
 
-EXTERN    pboot     ;location of preamble code to load CCP/BDOS
+EXTERN    pboot                     ;location of preamble code to load CCP/BDOS
 
 EXTERN    asm_shadow_copy           ;RAM copy function
 EXTERN    asm_shadow_relocate       ;relocate the RAM copy function
@@ -148,6 +148,8 @@ cboot:
 
     ld      sp,bios_stack           ;temporary stack
 
+    ; RAM covers the ROM window until wboot latches ROM back in.
+    ; Mini-FAT is in that window. This path must not call it.
     ld      a,$01                   ;RAM $01
     out     (__IO_ROM_TOGGLE),a     ;latch ROM out
 
@@ -244,12 +246,9 @@ diskchk_jp_addr:            ;optional SMC, to void the LBA check and directly ex
 diskchk:
     ld      c,a             ;send current disk number to the ccp
     call    getLBAbase      ;get the LBA base address
-    ld      a,(hl)          ;check that the LBA is non Zero
-    inc     hl
-    or      a,(hl)
-    inc     hl
-    or      a,(hl)
-    inc     hl
+    ld      a,(hl+)         ;check that the LBA is non Zero
+    or      a,(hl+)
+    or      a,(hl+)
     or      a,(hl)
     jp      NZ,_cpm_ccp_head        ;valid disk, go to ccp for further processing
 
@@ -382,12 +381,9 @@ seldsk:    ;select disk given by register c
 
 chgdsk:
     call    getLBAbase      ;get the LBA base address for disk
-    ld      a,(hl)          ;check that the LBA is non-Zero
-    inc     hl
-    or      a,(hl)
-    inc     hl
-    or      a,(hl)
-    inc     hl
+    ld      a,(hl+)         ;check that the LBA is non-Zero
+    or      a,(hl+)
+    or      a,(hl+)
     or      a,(hl)
     jr      Z,seldskreset   ;invalid disk LBA, so return BDOS error
 
@@ -709,6 +705,17 @@ ldi_15:
 ;*                                                   *
 ;*****************************************************
 
+PUBLIC  flush_host
+flush_host:
+    ld      a,(hstwrt)      ;dirty host sector must be committed intact.
+    or      a
+    scf                     ;preset carry; a skipped call is still success.
+    call    NZ,writehst
+    ret     NC              ;leave the cache dirty if the write failed.
+    ld      hl,0
+    ld      (hstact),hl     ;hstact then hstwrt. DIRBUF overlays hstbuf.
+    ret
+
 writehst:
     ;hstdsk = host disk #, 0,1,2,3
     ;hsttrk = host track #, 64 tracks = 6 bits
@@ -775,20 +782,17 @@ setLBAaddr:
                             ;HL contains address of active disk (file) LBA LSB
 
     ld      a,(hstsec)      ;prepare the hstsec (8 bits, 256 sectors per track)
-    add     a,(hl)          ;add hstsec + LBA LSB
+    add     a,(hl+)         ;add hstsec + LBA LSB
     ld      e,a             ;write LBA LSB, put it in E
 
-    inc     hl
     ld      a,(hsttrk)      ;prepare the hsttrk (6 bits, 64 tracks per disk)
-    adc     a,(hl)          ;add hsttrk + LBA 1SB, with carry
+    adc     a,(hl+)         ;add hsttrk + LBA 1SB, with carry
     ld      d,a             ;write LBA 1SB, put it in D
 
-    inc     hl
-    ld      a,(hl)          ;get disk LBA 2SB
+    ld      a,(hl+)         ;get disk LBA 2SB
     adc     a,$00           ;get disk LBA 2SB, with carry
     ld      c,a             ;write LBA 2SB, put it in C
 
-    inc     hl
     ld      a,(hl)          ;get disk LBA MSB
     adc     a,$00           ;get disk LBA MSB, with carry
     ld      b,a             ;write LBA MSB, put it in B

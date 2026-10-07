@@ -2841,6 +2841,8 @@ SAMEXT:
 ;   that must match.
 ;
 FINDFST:
+    XOR     A               ;a search from the front has no resume stop.
+    LD      (GTNXRUN),A
     LD      A,0FFH
     LD      (FNDSTAT),A
     LD      HL,COUNTER      ;save character count.
@@ -2859,6 +2861,18 @@ FINDNXT:
     CALL    NXENTRY         ;get next filename entry in directory.
     CALL    CKFILPOS        ;is file position = 0ffffh?
     JP      Z,FNDNXT6       ;yes, exit now then.
+    LD      A,(GTNXRUN)     ;resume stops before the extent just closed.
+    OR      A
+    JP      Z,GTNXSKP
+    LD      HL,(FILEPOS)
+    LD      DE,(GTNXPOS)
+    LD      A,L
+    CP      E
+    JP      NZ,GTNXSKP
+    LD      A,H
+    CP      D
+    JP      Z,FNDNXT6       ;do not examine that entry again.
+GTNXSKP:
     LD      HL,(SAVEFCB)    ;set (DE) pointing to filename to match.
     EX      DE,HL
     LD      A,(DE)
@@ -3282,10 +3296,17 @@ GETNEXT:
     LD      B,A             ;mask extent byte.
     LD      A,(EXTMASK)
     AND     B
-    LD      HL,CLOSEFLG     ;check close flag (0ffh is ok).
-    AND     (HL)
-    JP      Z,GTNEXT2       ;if zero, we must read in next extent.
-    JP      GTNEXT3         ;else, it is already in memory.
+    JP      Z,GTNEXT2       ;next physical directory entry.
+    LD      HL,CLOSEFLG     ;write just refreshed this entry.
+    INC     (HL)
+    JP      Z,GTNEXT3
+    DEC     (HL)
+GTNXFULL:
+    LD      C,15            ;read, or a new entry whose close did not record a slot.
+    CALL    FINDFST
+    CALL    CKFILPOS
+    JP      NZ,GTNEXT3
+    JP      GTNXMIS
 GTNEXT1:
     LD      BC,2            ;Point to the 's2' byte.
     ADD     HL,BC
@@ -3297,10 +3318,36 @@ GTNEXT1:
 ;   Get here to open the next extent.
 ;
 GTNEXT2:
-    LD      C,15            ;set to check first 15 bytes of fcb.
-    CALL    FINDFST         ;find the first one.
-    CALL    CKFILPOS        ;none available?
+    LD      A,(CLOSEFLG)    ;FFh: CLOSEIT stored this extent. FILEPOS is its slot.
+    INC     A
+    JP      NZ,GTNXFULL     ;otherwise the Calkins search from entry 0.
+    LD      HL,(FILEPOS)
+    LD      (GTNXPOS),HL    ;first entry examined is the one after this.
+    CALL    TRKSEC          ;directory sector for that extent.
+    CALL    DIRREAD
+    LD      C,0             ;checksum, same as a directory read in FINDNXT.
+    CALL    CHECKDIR
+    LD      A,0FFH
+    LD      (FNDSTAT),A
+    LD      A,15            ;user, name, extent, s2. Byte 13 stays skipped.
+    LD      (COUNTER),A
+    LD      HL,(PARAMS)
+    LD      (SAVEFCB),HL
+    LD      A,1
+    LD      (GTNXRUN),A
+    CALL    FINDNXT         ;start+1 through the end.
+    CALL    CKFILPOS
+    JP      NZ,GTNXHIT
+    CALL    STFILPOS        ;not yet absent: wrap from entry 0.
+    CALL    FINDNXT         ;stop when FILEPOS returns to GTNXPOS.
+    CALL    CKFILPOS
+GTNXHIT:
+    PUSH    AF              ;CKFILPOS: NZ means the extent was found.
+    XOR     A
+    LD      (GTNXRUN),A
+    POP     AF
     JP      NZ,GTNEXT3
+GTNXMIS:
     LD      A,(RDWRTFLG)    ;no extent present. Can we open an empty one?
     INC     A               ;0ffh means reading (so not possible).
     JP      Z,GTNEXT5       ;or an error.
@@ -3441,6 +3488,13 @@ WTSEQ6:
     DEC     A
     JP      NZ,WTSEQ9
     PUSH    HL
+    CALL    flush_host      ;commit the host sector before DIRBUF is cleared.
+    JP      C,WTSEQ7A
+    POP     HL
+    POP     BC
+    JP      IOERR1
+WTSEQ7A:
+    XOR     A
     LD      HL,(DIRBUF)     ;zero out the directory buffer.
     LD      D,A             ;note that (A) is zero here.
 WTSEQ7:
@@ -4066,92 +4120,6 @@ WTSPECL:
     CALL    Z,WTSEQ1        ;and write (if no errors).
     RET
 ;
-;   Function to load Intel HEX into TPA and launch it
-;   uses  : af, bc, de, hl
-;   (C) feilipu
-;
-EXTERN      diskchk_jp_addr ;address of jp to bios diskchk
-;
-PUBLIC      _hexload        ;load Intel HEX into TPA and launch it
-;
-_hexload:
-    LD      HL,HLD_LOADER   ;return here after the cold boot sequence
-    LD      (diskchk_jp_addr+1),HL  ;prepare a return address in rboot
-    JP      BOOT            ;do a CP/M cold boot to establish page 0
-HLD_LOADER:
-    CALL    HLD_WAIT_COLON  ;wait for first colon and address data
-    LD      HL,BC
-    LD      (diskchk_jp_addr+1),HL  ;store first address as TPA location in rboot
-    JP      HLD_READ_DATA   ;now get the first data
-;
-HLD_WAIT_COLON:
-    CALL    CONIN           ;blocking BIOS CONIN; byte in A
-    CP      ':'             ;wait for ':'
-    JP      NZ,HLD_WAIT_COLON
-    LD      E,0             ;reset E to compute checksum
-    CALL    HLD_READ_BYTE   ;read byte count
-    LD      D,A             ;store it in D
-    CALL    HLD_READ_BYTE   ;read upper byte of address
-    LD      B,A             ;store in B
-    CALL    HLD_READ_BYTE   ;read lower byte of address
-    LD      C,A             ;store in C
-    CALL    HLD_READ_BYTE   ;read record type
-    DEC     A               ;check if record type is 01 (end of file)
-    JP      Z,HLD_END_LOAD
-    INC     A               ;check if record type is 00 (data)
-    RET     Z
-    JP      EXIT            ;otherwise exit gracefully
-;
-HLD_READ:
-    CALL    HLD_WAIT_COLON  ;wait for the next colon and address data
-HLD_READ_DATA:
-    CALL    HLD_READ_BYTE
-    LD      (BC),A          ;write the byte at the RAM address
-    INC     BC
-    DEC     D
-    JP      NZ,HLD_READ_DATA;if d non zero, loop to get more data
-;
-HLD_READ_CHKSUM:
-    CALL    HLD_READ_BYTE   ;read checksum, but we don't need to keep it
-    LD      A,E             ;lower byte of E checksum should be 0
-    AND     A
-    JP      NZ,EXIT         ;non zero, we have an issue
-    JP      HLD_READ
-;
-HLD_END_LOAD:
-    CALL    HLD_READ_BYTE   ;read checksum, but we don't need to keep it
-    LD      A,E             ;lower byte of E checksum should be 0
-    AND     A
-    JP      NZ,EXIT         ;non zero, we have an issue
-    JP      WBOOT           ;warm boot, but divert into running from TPA location
-;
-HLD_READ_BYTE:              ;returns byte in A, checksum in E
-    CALL    HLD_READ_NIBBLE ;read the first nibble
-    RLCA                    ;shift it left by 4 bits
-    RLCA
-    RLCA
-    RLCA
-    LD      L,A             ;temporarily store the first nibble in L
-    CALL    HLD_READ_NIBBLE ;get the second (low) nibble
-    OR      L               ;assemble two nibbles into one byte in A
-    LD      L,A             ;put assembled byte back into L
-    ADD     A,E             ;add the byte read to E (for checksum)
-    LD      E,A
-    LD      A,L
-    RET                     ;return the byte read in A (L = char received too)  
-;
-HLD_READ_NIBBLE:
-    PUSH    HL
-    PUSH    BC
-    CALL    CONIN           ;blocking BIOS CONIN; byte in A
-    POP     BC
-    POP     HL
-    SUB     '0'
-    CP      10
-    RET     C               ;if A<10 just return
-    SUB     7               ;else subtract 'A'-'0' (17) and add 10
-    RET
-;
 PUBLIC  _cpm_bdos_tail
 _cpm_bdos_tail:             ;tail of the cpm bdos
 ;
@@ -4248,6 +4216,8 @@ BLKNMBR:    DEFW    0       ;block number (physical sector) used within a file o
 LOGSECT:    DEFW    0       ;starting logical (128 byte) sector of block (physical sector).
 FCBPOS:     DEFB    0       ;relative position within buffer for fcb of file of interest.
 FILEPOS:    DEFW    0       ;files position within directory (0 to max entries -1).
+GTNXPOS:    DEFW    0       ;directory index of the extent GETNEXT just closed.
+GTNXRUN:    DEFB    0       ;nonzero: FINDNXT stops before GTNXPOS.
 USRSTACK:   DEFW    0       ;save users stack pointer here.
 ;
 ;   Disk directory buffer checksum bytes. One for each of the
@@ -4291,6 +4261,7 @@ EXTERN    read      ;read disk
 EXTERN    write     ;write disk
 EXTERN    listst    ;return list status
 EXTERN    sectran   ;sector translate
+EXTERN    flush_host
 ;
 DEFC    BOOT    =   cboot
 DEFC    WBOOT   =   wboot

@@ -2,9 +2,9 @@
 
 This directory contains example CP/M drives stored as compressed zip files. The files can be extracted and stored on a PATA or CF disk formatted with FAT32 (or FAT16 if quite small).
 
-When in the CP/M-IDE shell each resulting file (example listing below) should be checked to confirm it has not been fragmented using __`frag`__. This check needs to be done only once on creation.
+In the CP/M-IDE shell, check each resulting file (example listing below) with __`frag`__ to confirm it is not fragmented. This check is needed only once, when the file is created.
 
-Using __`ls`__ a listing of the available CP/M drive files in each directory can be generated. __`cd`__ and __`pwd`__ can be used to move freely within sub-directories as desired.
+__`ls`__ lists the CP/M drive files in the current directory. __`cd`__ and __`pwd`__ move through sub-directories.
 
 CP/M-IDE can be started with the __`cpm`__ command with fully qualified paths to up to four (4) files, from any of the thousands of CP/M drives you may have stored.
 
@@ -33,22 +33,22 @@ From within CP/M directory listings of each of the above drive files are provide
 ## SYS.CPM
 
 ```
-ASM     .COM   8k : CAL     .COM  16k : DDIR    .COM   8k : DDT     .COM   8k
-DUMP    .COM   4k : ED      .COM   8k : ERASE   .SUB   4k : FULLPRMP.SUB   4k
-INFO    .COM   4k : KERMIT  .COM  32k : LOAD    .COM   4k : LS      .COM   8k
-LU      .COM  20k : LUA     .COM   4k : MAC     .COM  16k : MBASIC  .COM  24k
-MLOAD   .COM   4k : MOVCPM  .COM  12k : NORMPRMP.SUB   4k : NSWP    .COM  12k
-PIP     .COM   8k : SD      .COM   8k : SH      .COM  12k : SH      .OVR  12k
-SHSAVE  .COM   4k : STAT    .COM   8k : SUBMIT  .COM   4k : SURVEY  .COM   4k
-SYSGEN  .COM   4k : UNARC   .COM   8k : UNCR    .COM   8k : USQ     .COM   4k
-XMODEM  .COM   4k : XSUB    .COM   4k : YASH    .COM  36k : YASH85  .COM  40k
-YASH85CF.COM  40k : YASHCF  .COM  36k : Z80ASM  .COM  28k : ZEXALL  .COM  12k
-ZEXDOC  .COM  12k : ZSID    .COM  12k : ZTRAN   .COM   4k
-         Drive A0   Files: 43/516k   Free: 7612k 
+ASM     .COM   8k : CAL     .COM  16k : DD      .COM   4k : DDIR    .COM   8k
+DDT     .COM   8k : DUMP    .COM   4k : ED      .COM   8k : ERASE   .SUB   4k
+FULLPRMP.SUB   4k : INFO    .COM   4k : KERMIT  .COM  32k : LOAD    .COM   4k
+LS      .COM   8k : LU      .COM  20k : LUA     .COM   4k : MAC     .COM  16k
+MBASIC  .COM  24k : MLOAD   .COM   4k : MOVCPM  .COM  12k : NORMPRMP.SUB   4k
+NSWP    .COM  12k : PIP     .COM   8k : SD      .COM   8k : SH      .COM  12k
+SH      .OVR  12k : SHSAVE  .COM   4k : STAT    .COM   8k : SUBMIT  .COM   4k
+SURVEY  .COM   4k : SYSGEN  .COM   4k : UNARC   .COM   8k : UNCR    .COM   8k
+USQ     .COM   4k : XMODEM  .COM   4k : XSUB    .COM   4k : YASH    .COM  36k
+YASH85  .COM  40k : YASH85CF.COM  40k : YASHCF  .COM  36k : Z80ASM  .COM  28k
+ZEXALL  .COM  12k : ZEXDOC  .COM  12k : ZSID    .COM  12k : ZTRAN   .COM   4k
+         Drive A0   Files: 44/520k   Free: 7608k 
 ```
-The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell. It can be launched with __`SH`__.
+The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell. It can be launched with __`SH`__.
 
-The __`YASH`__ application can be used to modify the files from the underlying FAT32 drive from within CP/M. Capabilities include creating CP/M drive files. Listing, copying and deleting files. And mounting additional CP/M drive files from within CP/M.
+The __`YASH`__ application runs under CP/M and works on the underlying FAT32 volume. It can create CP/M drive files, list, copy, and delete files, and mount further CP/M drive files.
 
 ```
 > help

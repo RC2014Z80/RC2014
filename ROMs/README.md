@@ -12,7 +12,7 @@ At the moment is composed by the following components:
 - The typical "hello world" test
 - [TinyBasicPlus](https://github.com/BleuLlama/TinyBasicPlus) port, originally written by Scott Lawrence and adapted for the Z80/RC2014
 - A simple snake game (in the `snake/` directory)
-- A DRI CP/M v2.2 for RC2014 Pro based systems, supporting FATFS formatted IDE hard drives and CF cards, with a variety of build options (in the `CPM-IDE/` directory). User applications under that CP/M use z88dk `+rc2014 -subtype=cpm` (BDOS FCB file I/O; optional FatFs `f_*`) — see `CPM-IDE/README.md`.
+- A DRI CP/M 2.2 for RC2014 Pro systems, on FAT16 or FAT32 IDE hard drives and Compact Flash cards (`CPM-IDE/`). The shell mounts up to four 8 MB drives and can create and copy files on the card. Applications use z88dk `+rc2014 -subtype=cpm` — see `CPM-IDE/README.md`.
 
 
 ## How to build for PiGFX

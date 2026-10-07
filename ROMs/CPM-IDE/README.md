@@ -2,7 +2,7 @@
 
 There are several implementations of CP/M available for the RC2014. Each implementation has its own focus, and the same is true here. For larger [RC2014 Zed](https://z80kits.com/shop/rc2014-zed/) based systems with 512kB RAM [RomWBW](https://github.com/wwarthen/RomWBW/tree/master) is the right solution. For your smaller [RC2014 Pro](https://z80kits.com/shop/rc2014-pro/) based systems with 64kB RAM read on.
 
-For further technical reading, an additional extensive [description of CP/M-IDE can be found here](https://feilipu.me/2022/03/23/cpm-ide-for-rc2014/).
+For further technical reading, a longer [description of CP/M-IDE is here](https://feilipu.me/2022/03/23/cpm-ide-for-rc2014/). This description is slightly outdated, but it covers the basics.
 
 ## Concept
 
@@ -28,9 +28,9 @@ For the 8085 CPU Module.
 
 - The RC2014 8085 PATA UART build requires the 8085 CPU Module, the UART Serial Module and uses the IDE Hard Drive Module.
 
-In the SIO Serial Module builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 15 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware __`/RTS`__ flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
+In the SIO Serial Module builds, both ports are enabled. Both ports have a 127 byte software receive buffer supporting the SIO/2 receive quad hardware buffer, and a 31 byte software transmit buffer. The transmit function has direct cut-through when the software buffer is empty. Hardware __`/RTS`__ flow control of the SIO/2 is provided. Full IM2 interrupt vector steering is implemented.
 
-In the Single and Dual UART Serial Module builds both ports are enabled if present. Both ports have a 127 byte software receive buffer supporting the UART 16 byte hardware receive and transmit buffers. Hardware __`/RTS`__ and Automatic Flow Control is enabled.
+In the Single and Dual UART Serial Module builds both ports are enabled if present. Both ports have a 127 byte software receive buffer. The UART hardware receive and transmit FIFOs are 16 bytes. Hardware __`/RTS`__ and automatic flow control are enabled.
 
 In the ACIA Serial Module builds, the receive interface has a 255 byte software buffer, together with optimised buffer management supporting the 68B50 ACIA receive double buffer. Hardware __`/RTS`__ flow control of the ACIA is provided. The ACIA transmit interface is also buffered, with direct cut-through when the 31 byte software buffer is empty, to ensure that the CPU is not held in wait state during transmission.
 
@@ -38,40 +38,40 @@ __NOTE:__ All serial interfaces (on the ACIA Serial Module, on the SIO Serial Mo
 
 __NOTE:__ To enable flow control with any Serial Module it is critical to use a USB Serial adapter that supports __`/RTS`__ on Pin 6. Typical FTDI USB Adapters pinout __`/DTR`__ to Pin 6. The [recommended USB Serial adapter](https://www.tindie.com/products/8086net/uusbusb-c-cdc-serial-adaptor-5v/) is available from 8086 Consultancy.
 
-The IDE Hard Drive Module interface driver is optimised for performance and can achieve about 110kB/s throughput, using the ChaN FATFS libraries. It does this by minimising error management and streamlining read and write routines. The assumption is that modern PATA attached IDE drives have their own error management and if there are errors from the IDE interface, then there are other issues at stake. The CF Module can achieve up to 200kB/s throughput at FATFS level, and it seems to provide best performance using SD Cards in SD to CF Card Adapters. Within CP/M, file data still pays the DRI deblock copy (512-byte host sector to the caller's 128-byte DMA). Directory I/O no longer does that extra copy; see [CP/M deblocking](#cpm-deblocking) below.
+The IDE Hard Drive Module interface driver is optimised for performance and can achieve about 110kB/s. It does this by minimising error management and streamlining read and write routines. The assumption is that modern PATA attached IDE drives have their own error management and if there are errors from the IDE interface, then there are other issues at stake. The CF Module can achieve up to 200kB/s at file-system level, and it seems to provide best performance using SD Cards in SD to CF Card Adapters. CP/M file and directory transfer is described in [Modifications to the CCP and BDOS](readme_ccp_bdos.md).
 
 The IDE Hard Drive Module supports both PATA hard drives (including 3 1/2" magnetic platter, SSD, and DOM storage) and Compact Flash cards in their native 16-bit PATA mode, with buffered I/O provided by the 82C55 device. The IDE Hard Drive Module is the ideal way to attach "spinning rust" to your RC2014. Attaching one physical Master drive is supported.
 
 The CP/M-IDE system supports up to 4 mounted CP/M "drives" (files) of nominally 8 MBytes each. There can be as many CP/M drives stored on the FAT32 formatted disk as desired, and CP/M-IDE can be started with any 4 of them. Collections of hundreds (or even thousands) of CP/M drives can be stored in any number of sub-directories on the FAT32 host disk, to be mounted at will.
 
-All CP/M-IDE builds provide at least 56kB of free TPA for the user's CP/M applications. This large free TPA achieved by limiting the number of concurrently mounted CP/M drives to 4.
+A CP/M program runs from `$0100` up to the CCP. The space for each ROM is in [Modifications to the CCP and BDOS](readme_ccp_bdos.md).
 
 <div>
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/P1090689.JPG" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/P1090689.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090689.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090689.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with IDE Module and ACIA Module<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE with IDE Module and ACIA Module</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0543.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0543.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0543.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with DOM in an IDE Module and SIO Module (front view)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE with DOM in an IDE Module and SIO Module (front view)</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0542.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0542.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0542.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE with DOM in an IDE Module and SIO Module (back view)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE with DOM in an IDE Module and SIO Module (back view)</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_1688.JPG" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_1688.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1688.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1688.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014-8085 CP/M-IDE with DOM in an IDE Module and ACIA Module<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014-8085 CP/M-IDE with DOM in an IDE Module and ACIA Module</center></th>
 </tr>
 </tbody>
 </table>
@@ -112,13 +112,13 @@ Optionally, replacing items 4. and 5. with the Memory Module (also compatible wi
 
 - [Memory Module](https://www.tindie.com/products/feilipu/memory-module-pcb/).
 
-To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and either a ACIA Serial Module or UART Serial Module installed.
+To operate the RC2014 with an 8085 CPU the following CPU Module must be exchanged for items 2. and 3, and either an ACIA Serial Module or a UART Serial Module installed.
 
 __NOTE:__ For use with the 8085 CPU Module, either the ACIA Serial Module or UART Serial Modules are supported.
 
 - [8085 CPU Module](https://www.tindie.com/products/feilipu/8085-cpu-module-pcb/).
 
-To operate the RC2014 with a Single UART or UART Dual UART Serial Module, it must be installed in exchange for item 6. Installation of Multiple Serial Modules is not supported.
+To operate the RC2014 with a Single or Dual UART Serial Module, install that module in exchange for item 6. Installation of multiple serial modules is not supported.
 
 - [Dual UART Module](https://rc2014.co.uk/modules/dual-serial-module-16c2550/).
 
@@ -137,13 +137,13 @@ As noted, when used with the IDE Hard Drive Module, both SD Cards and Compact Fl
 <td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://lh3.googleusercontent.com/-fCgroN5mYU8/WrREnuPPowI/AAAAAAACR8U/IQoillkYPpYYg3ROctaQHdLqDRtZ5hwrwCLcBGAs/s1600/IMG_20180322_235743.jpg" target="_blank"><img src="https://lh3.googleusercontent.com/-fCgroN5mYU8/WrREnuPPowI/AAAAAAACR8U/IQoillkYPpYYg3ROctaQHdLqDRtZ5hwrwCLcBGAs/s320/IMG_20180322_235743.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 running CP/M-IDE by DJRM<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 running CP/M-IDE by DJRM</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_2255.JPG" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_2255.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_2255.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_2255.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014-8085 running CP/M-IDE with SD to CF Storage Adapter<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014-8085 running CP/M-IDE with SD to CF Storage Adapter</center></th>
 </tr>
 </tbody>
 </table>
@@ -159,141 +159,82 @@ Rather than spend time on long written descriptions, one picture is worth 2kByte
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/P1090691.JPG" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/P1090691.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090691.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/P1090691.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE Modules (excl. ACIA)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE Modules (excl. ACIA)</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_1689.JPG" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_1689.JPG"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1689.JPG" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_1689.JPG"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE 8085 Modules<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE 8085 Modules</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0536.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0536.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0536.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0536.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 64kByte RAM Module (note jumper positions)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 64kByte RAM Module (note jumper positions)</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0535.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0535.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0535.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0535.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 Pageable ROM Module (note jumper positions)<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 Pageable ROM Module (note jumper positions)</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0530.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0530.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0530.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 IDE Hard Drive Module with DOM<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 IDE Hard Drive Module with DOM</center></th>
 </tr>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0532.jpg" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/IMG_0532.jpg"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/IMG_0532.jpg"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 IDE Hard Drive Module storage options<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 IDE Hard Drive Module storage options</center></th>
 </tr>
 </tbody>
 </table>
 </div>
 
-## Software
+## CP/M Software
 
-The CP/M-IDE is built using the z88dk compilers and libraries, including a simple boot monitor or shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configurations. The DRI CCP and BDOS have been optimised for performance using Z80 CPU extended instructions and 8085 CPU extended instructions, where possible. For example the Z80 `LDI` instructions have been used to improve buffer copy performance.
+The CP/M-IDE is built using the z88dk compilers and libraries, including a simple boot monitor or shell for the RC2014, together with the standard DRI CP/M CCP/BDOS, and a CP/M BIOS constructed specifically for the RC2014 in the above hardware configurations.
 
-### CP/M-IDE v2.5
+#### CCP & BDOS Extension
 
-Version 2.5 is the current ROM. The shell, BDOS, and BIOS changes apply to Compact Flash and PATA builds.
+The CCP command `EXIT` returns to the shell. You can then start CP/M with different drive files.
 
-#### Shell (`main.c`)
+The BDOS function 10 treats DEL as backspace. Digital Research Application Note 02 (APN 02) specifies that behaviour.
 
-- Backspace and DEL do not erase past the prompt.
-- CR+LF (or LF+CR) is one end of line. The second byte does not start an empty command.
-- Bytes below space or above 126 are dropped. A NUL at `line[0]` made `strtok` see an empty command.
-- `cpm` accepts 1 to 4 contiguous `.CPM` files as `A:` to `D:`.
+A command with no drive letter is tried again on `A:` when the `.COM` file is not on the current drive. An explicit drive letter searches only on that drive.
 
-`REGISTER_SP` sits at the CCP origin so the shell stack stays below CCP.
+Further information on changes to the CCP and BDOS is in [Modifications to the CCP and BDOS](readme_ccp_bdos.md).
 
-#### BDOS and CCP
+#### BIOS Notes
 
-BDOS starts on a 256-byte page (`_cpm_bdos_head`). CCP starts earlier where needed so BDOS BSS ends at the BIOS origin.
-
-| ROM | CCP | BDOS | BIOS | Disk |
-|-----|-----|------|------|------|
-| z80-pata-sio | `$D9E0` | `$E200` | `$F100` | PATA 16-bit |
-| z80-cf-acia | `$DBE0` | `$E400` | `$F300` | CF 8-bit |
-| z80-cf-sio | `$DAE0` | `$E300` | `$F200` | CF 8-bit |
-| z80-cf-uart | `$DAE0` | `$E300` | `$F200` | CF 8-bit |
-| 8085-cf-acia | `$DAE0` | `$E300` | `$F200` | CF 8-bit |
-| 8085-cf-uart | `$DAE0` | `$E300` | `$F200` | CF 8-bit |
-| 8085-pata-uart | `$DAE0` | `$E300` | `$F200` | PATA 16-bit |
-
-`_cpm_dsk0_base` stays at `$F800` on every port.
-
-BDOS function 10 treats DEL as backspace (DRI APN 02). A nameless `.COM` that is not on the current drive is retried on `A:`. An explicit `d:` does not fall back. `DIRBUF` is `PUBLIC` so the BIOS can retarget it.
-
-#### BIOS (CF and PATA)
-
-DPH `DIRBUF` overlays `hstbuf`. Directory `READ` does not copy 128 bytes when DMA is already in the host window. File I/O still copies. See [CP/M deblocking](#cpm-deblocking).
-
-After an IDE or PPIDE command, the BIOS waits for DRQ. It does not wait for ready after the transfer. A posted write waits on the next command. This is the same for Compact Flash 8-bit and PATA 16-bit.
-
-#### PATA versus Compact Flash
-
-The shell FatFs path uses the z88dk IDE driver. Set `__IO_CF_8_BIT` in `config_target.m4`, then rebuild the rc2014 libraries, then build the HEX.
-
-- PATA (IDE Hard Drive Module, 8255 at `$20`–`$23`): `__IO_CF_8_BIT = 0`.
-- Compact Flash Module (ports `$10`–`$17`): `__IO_CF_8_BIT = 1`.
-
-A PATA ROM linked with the CF 8-bit library returns `FR_NOT_READY` on `ls` and `mount 1`. Delayed `mount` still prints `FR_OK` because it does not talk to the disk.
-
-### CP/M deblocking
-
-CP/M 2.2 always transfers **128-byte** records through `SETDMA` / `READ` / `WRITE`. The host disk is **512-byte** IDE/CF sectors, so the BIOS deblocks four CP/M records per host sector in `hstbuf`. File I/O (default DMA `0x80`, TPA) still copies 128 bytes between that host slice and the caller's DMA. That copy is required: the program looks at the address it passed to `SETDMA`, and a 512-byte IDE transfer cannot be aimed at a 128-byte hole in a `.COM` (or at `0x80`). Z80 builds use unrolled `LDI`; 8085 builds use `ld a,(hl+)` / `ld (de+),a`.
-
-Directory I/O is different. BDOS snapshots DPH `DIRBUF` at `SELDSK` and then `SETDMA`s that address for every directory record. On **all seven** firmware builds:
-
-- DPH `DIRBUF` overlays `hstbuf` (the separate 128-byte `dirbf` is gone: **128 bytes of BIOS RAM recovered**).
-- When DMA already lies in the 512-byte host window, `READ` does not copy. The BIOS writes the active 128-byte slice address into the BDOS `DIRBUF` word so `FCB2HL` / `CHECKSUM` / `MOVEDIR` see the record in place.
-- Directory `WRITE` still copies the record into the slice (then `WRITE` C=1 flushes the host sector immediately).
-- `DIRBUF` is `PUBLIC` so the BIOS can retarget it. BDOS function 10 treats `DEL` as backspace (DRI APN 02). A nameless `.COM` missing on the current drive is retried on `A:` (explicit `d:` does not fall back). CCP origins moved in v2.5 so BDOS stays on a page.
-
-`z88dk-ticks` with stub `ide_read_sector` / `ide_write_sector` (`z80-cf-sio/deblock-eval`) on 32 sequential directory records:
-
-| Path | 128-byte copies | IDE 512-byte reads | T-states (I/O loop) |
-|------|----------------:|-------------------:|--------------------:|
-| File DMA (unchanged) | 32 | 8 | 6 334 724 |
-| Directory, old copy | 32 | 8 | 6 337 091 |
-| Directory, overlay | **0** | 8 | 6 271 491 |
-
-That is **65 600 T-states saved** per 32 directory records (~2 050 T each, about 0.28 ms at 7.372 MHz), with the same number of CF/IDE reads. Open, search, rename, and other directory-heavy calls benefit; `PIP` / `MBASIC` / `.COM` load to TPA do not.
-
-TPA remains about 56 kB. CCP origins moved down in v2.5 so BDOS stays on a page. See [CP/M-IDE v2.5](#cpm-ide-v25). `_cpm_dsk0_base` stays at `$F800` on every port. The recovered `dirbf` is 128 bytes, which is not a full page. Moving that array to `$F900` would run `hstbuf` into the serial rings (`$FEC0` SIO/ACIA, `$FEE0`/`$FF00` UART). Serial rings stay at the top of RAM by their own `ALIGN` (`inc l` / `AND (size-1)` / `OR base`). The overlay is in the v2.5 HEX files.
+The FAT volume rules are in the BIOS section of [Modifications to the CCP and BDOS](readme_ccp_bdos.md).
 
 ### Installation
 
 Using the correct HEX file for your hardware configuration from this directory, burn it into a 32kB or 64kB EEPROM, or PROM.
 
-To initially configure your hard drive, use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Then __unzip__ and __"Drag and drop"__ or __copy__ some of the example [CP/M drive files](https://github.com/feilipu/CPM-IDE/tree/master/CPM%20Drives) into the root directory of your drive. At least the `sys.cpm` example file is required (until you customise your own) as it contains many system utilities. Check that each of the drive files is using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
+To initially configure your hard drive, use either a USB caddy for your PATA IDE drive, or a CF adapter for your Compact Flash card to mount your drive on your host computer. Your host computer should be able to read and write FAT32 formatted drives. Format the drive for FAT32 (or FAT16 if it is quite small). Then __unzip__ and __"Drag and drop"__ or __copy__ some of the example [CP/M drive files](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) into the root directory of your drive. At least the `sys.cpm` example file is required (until you customise your own) as it contains many system utilities. Check that each of the drive files is using 8388608 Bytes on your IDE or CF drive. You may put the CP/M drive files into directories (to organise them based on your workflow), or leave them all in the root directory.
 
-Connect the RC2014 hardware as shown above, and then use the commands given in the shell Command Line Interface, below.
+Connect the RC2014 hardware as shown above, and then use the commands in [Usage of the Shell Command Interface](#usage-of-the-shell-command-interface).
 
 ### Boot-up Process
 
-When the RC2014 first boots, the z88dk provided `crt0` configures a number of items via preamble code.
+When the RC2014 first boots, the z88dk `crt0` preamble configures the machine.
 
-The preamble code copies the CCP/BDOS to the correct location, and then checks for the existence of the BIOS. If the BIOS exists, and a valid drive is found, then control is passed directly to the CCP. This is the usual situation when a CP/M application overwrites the CCP, and it needs to be rewritten before control can be returned to it. Otherwise control is returned to the preamble code to continue to load the CP/M BIOS, the serial drivers, and the disk drivers necessary for operation of the shell and CP/M.
+The preamble copies the CCP and BDOS to the correct location, and then checks for the BIOS. If the BIOS exists, and a valid drive is found, control passes to the CCP. This is the usual path when a CP/M application overwrites the CCP. The CCP is written again before control returns to it. Otherwise the preamble loads the CP/M BIOS, the serial drivers, and the disk drivers, and then starts the shell.
 
-Control is then passed to the command shell, that provides a simple command line interface to allow arbitrary FATFS files (pre-prepared as CP/M drives) to be mounted for use within CP/M, and then CP/M booted.
+__NOTE:__ Where the SIO Module or the UART Module is in use, the shell waits for a `:` to select the serial port. It stays on that port until CP/M loads.
 
-__NOTE:__ Where the SIO Module or the UART Module is being used, on startup the shell will wait for a `:` to establish which serial port is being used and will continue to interact on this port until CP/M is loaded.
+Command use is in [Usage of the Shell Command Interface](#usage-of-the-shell-command-interface).
 
-CP/M can be started by command __`cpm file.a [file.b] [file.c] [file.d]`__. At least one valid file name must be provided. CP/M can be started with to up to four (4) files to be mounted on __`A:`__, __`B:`__, __`C:`__, and __`D:`__ drives, from any of the thousands of CP/M drive files you may have available. Up to 4 CP/M drive files can be concurrently mounted. Each CP/M drive file must be contiguous, but can be located anywhere on the FATFS drive (any LBA) in any directory, provided the full path is used to reference it.
-
-The shell provides some other basic functions, such as __`frag`__, __`hload`__, __`ls`__, __`cd`__, and __`pwd`__ file functions, and __`mount`__, __`ds`__, and __`dd`__ disk functions. And __`md`__ to show the contents of the ROM and RAM. __`frag`__ can be used to confirm whether a CP/M drive file (or any other FAT32 file) is contiguous or fragmented. __`hload`__ can be used to upload and directly run a CP/M application, rather than from a drive. __`exit`__ can be used to restart the RC2014 if desired.
-
-Once the shell __`cpm`__ command has established that it has a valid CP/M drive available, then it will page out the ROM, write in a new `Page 0` with relevant CP/M data and interrupt linkages, and then pass control to the CP/M CCP.
+Once `cpm` has a valid CP/M drive, it pages out the ROM, writes a new Page 0 with the CP/M data and interrupt linkages, and passes control to the CCP.
 
 In the 8085 CPU Module builds the CPU Serial Output (SOD) FTDI interface found on the CPU Module is also supported as the CP/M __`LPT:`__ device. It is enabled from within CP/M using __`^P`__ from the CCP command line as normal.
 
@@ -301,25 +242,21 @@ In the 8085 CPU Module builds the CPU Serial Output (SOD) FTDI interface found o
 
 Because the CCP/BDOS and BIOS are stored in ROM, there are no CP/M-IDE boot sectors or special boot drive. Cold and warm boot are both from ROM. This means that the 4 drives supported by CP/M-IDE are completely orthogonal. It doesn't matter which drive file is mounted on which drive letter, except that the file mounted as the __`A:`__ drive will always be selected as the default drive, if you try to select a nonexistent drive letter. There is no special system disk, except that system utilities are commonly stored on one drive, and this is usually called `sys.cpm`, for convenience. CP/M drive files can take any naming convention desired.
 
-The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M. Typically, by convention only, this disk will be mounted as drive `A:`.
+The [RunCPM system disk](https://github.com/MockbaTheBorg/RunCPM/tree/master/DISK) contains a good package of CP/M utilities, that has been loaded onto an example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) for a complete ready to run CP/M. Typically, by convention only, this disk will be mounted as drive `A:`.
 
-The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell.
+The [NGS Microshell](http://www.z80.eu/microshell.html) can be very useful for those familiar with unix-like shells, so it has been added to the example [system disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip) too. There is no need to replace the DRI CCP with Microshell. In fact, adding it permanently would remove the special `EXIT` function built into the DRI CCP to provide a clean return to the CP/M-IDE shell.
 
-Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
-
-As the CP/M-IDE shell doesn't have a way to format its own CP/M drives (due to ROM space constraints), a template CP/M drive is provided as a zip file. Many copies of the template zip file and any other example application zip files can be expanded and copied onto the IDE drive, and used or augmented by the CP/M Tools as noted below.
-
-The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) CP/M application can be uploaded using the shell `hload` and it can then create drive files using `mkdrv` command.
+Also the NZ-COM, or Z-System, can be loaded, temporarily overwriting the DRI CCP and BDOS, from the included [NZ-COM disk](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/NZCOM.CPM.zip). Further information on NZ-COM and how to use it can be found in the [NZ-COM User's Manual](https://oldcomputers.dyndns.org/public/pub/manuals/zcpr/nzcom.pdf).
 
 ### CP/M Application Disks
 
-The [CP/M Drives directory](https://github.com/feilipu/CPM-IDE/tree/master/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09-15](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/MSBASCOM.CPM.zip). MS Basic `mbasic` (Interpreter) 5.21 is available in the [system drive](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/SYS.CPM.zip).
+The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs/CPM-IDE/CPM%20Drives) contains a number of CP/M drives containing commonly used applications, such as the [Zork Series](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip), [BBC Basic](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/BBCBASIC.CPM.zip), [Hi-Tech C v3.09-15](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/HITECHC.CPM.zip), and [MS BASIC Compiler v5.3](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/MSBASCOM.CPM.zip). MS Basic `mbasic` (Interpreter) 5.21 is available in the [system drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/SYS.CPM.zip).
 
-An empty [CP/M 8 MB drive](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. Unfortunately, the CP/M tools package doesn't properly extend CP/M drive files out to the full size of 8388608 bytes when it creates them on FATFS. Using (unzipping) this template, and renaming it as desired, on a FATFS drive is all that is needed to create a new CP/M drive on any PATA hard drive or Compact Flash card. Each new file created provides a new 8 MB CP/M drive which can store up to 2048 files.
+An empty [CP/M 8 MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. `mkfs.cpm -f rc2014-8MB` writes the directory and leaves the image at 128 KB. `truncate -s 8388608 file.cpm` extends that file to a full drive (`truncate -s 8M` is the same length). The directory already written stays in place, and the added bytes read as zeros. Unzipping the template and renaming it also produces a full 8 MB drive with 2048 directory entries.
 
-The [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) application can also be used to create, manage, and delete CP/M drive files without moving the PATA drive to a host computer. This application supports both read and write to the underlying FATFS file system.
+`hget` writes an image onto the card without moving the drive to the host. The file has to be one contiguous cluster run before `cpm` will mount it. [Sending a file to the RC2014](#sending-a-file-to-the-rc2014) covers `bin2hex.py`, `frag`, and a `cp` that allocates a fresh chain.
 
-FAT32 supports over 65,000 files in each directory. Using a 128GB drive it is possible to store more than that many 8MB CP/M-IDE drive drives on one IDE drive, although this upper limit hasn't been tested.
+FAT32 can hold more than 65,000 files in one directory. A 128 GB drive holds about 16,000 of these 8 MB CP/M drives. A larger disk can hold more, and that upper limit has not been tested.
 
 ### CP/M TOOLS Usage
 
@@ -352,9 +289,13 @@ end
 
 ```
 
-### Shell Command Interface
+## Usage of the Shell Command Interface
 
-The shell command line interface is implemented in C, with the underlying functions either in C or in assembly. The serial interfaces (ACIA, SIO/2, UART, and 8085 SOD) are configured for __115200 baud 8n2__.
+The shell is `common/yash.c`. The command line is in C. The functions under it are in C or in assembly. The serial interfaces (ACIA, SIO/2, UART, and 8085 SOD) use __115200 baud 8n2__.
+
+Backspace and DEL stop at the prompt. CR+LF, or LF+CR, is one end of line. The second byte does not start an empty command. The shell drops a byte below space or above 126. A NUL at the start of the line is an empty command, and the shell does not run it.
+
+Ctrl-P and Ctrl-N recall up to 8 lines of 80 characters. The shell erases the previous line with backspace. The console drops a bare CR.
 
 Again, here is a view of what success looks like.
 
@@ -362,56 +303,95 @@ Again, here is a view of what success looks like.
 <table style="border: 2px solid #cccccc;">
 <tbody>
 <tr>
-<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/feilipu/CPM-IDE/blob/master/docs/cpm-idev8.png" target="_blank"><img src="https://github.com/feilipu/CPM-IDE/blob/master/docs/cpm-idev8.png"/></a></td>
+<td style="border: 1px solid #cccccc; padding: 6px;"><a href="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev8.png" target="_blank"><img src="https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/cpm-idev8.png"/></a></td>
 </tr>
 <tr>
-<th style="border: 1px solid #cccccc; padding: 6px;"><centre>RC2014 CP/M-IDE SIO - Shell CLI<center></th>
+<th style="border: 1px solid #cccccc; padding: 6px;"><center>RC2014 CP/M-IDE SIO - Shell CLI</center></th>
 </tr>
 </tbody>
 </table>
 </div>
 
 ### CP/M Functions
-- `cpm file.a [file.b] [file.c] [file.d]` - initialise CP/M with up to 4 drive files
-- `hload` - load an Intel HEX CP/M file and run it
+- `cpm file.a [file.b] [file.c] [file.d]` — start CP/M with 1 to 4 contiguous `.CPM` files on `A:` through `D:`. Give the full path when the file is not in the working directory. `cpm` mounts a file only when it is one cluster run.
+- `hget <file>` — receive an Intel HEX file onto the FAT volume. The steps are in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014).
+- `mkdrv <file>` — create an empty 8 MB CP/M drive with 2048 directory entries. `frag` must report one cluster run before `cpm` mounts the file.
+
+From the CCP, `EXIT` returns to this shell. See [CCP & BDOS Extension](#ccp--bdos-extension).
 
 ### File System Functions
-- `frag [file]` - check for file fragmentation
-- `ls [path]` - directory listing
-- `cd [path]` - change the current working directory
-- `pwd` - show the current working directory
-- `mount [option]` - mount a FAT file system, option 0 = delayed, 1 = immediate
+- `ls [path]` — directory listing. `ls` prints the free bytes on the volume after the names.
+- `cd <path>` — change the current working directory
+- `pwd` — show the current working directory
+- `rm <file>` — delete a file. `rm` leaves a directory and a read-only file in place.
+- `rmdir <path>` — remove an empty directory
+- `mkdir <path>` — create a directory
+- `cp <src> <dst>` — copy a file. `cp` allocates a new cluster chain.
+- `mv <src> <dst>` — in one directory, `mv` renames the entry. To another directory, `mv` writes a new entry for the same chain and removes the old name. `mv` keeps the existing cluster chain.
+- `frag <file>` — cluster-run count for a file
+- `mount` — mount the FAT file system
 
 ### Disk Functions
-- `ds` - disk status
-- `dd [sector]` - disk dump, sector in decimal
+- `ds` — disk status
+- `dd [sector]` — disk dump, sector in decimal
 
 ### System Functions
-- `md [origin]` - memory dump, origin in hexadecimal
-- `help` - this is it
-- `exit` - exit and restart shell
+- `md [origin]` — memory dump, origin in hexadecimal
+- `help` — this is it
+- `exit` — restart the RC2014
 
-### CP/M CCP Extension
+### Sending a file to the RC2014
 
-An additional CP/M CCP function `EXIT` provides a way to return to the shell to "change disks" by restarting CP/M with different FATFS files as input for the mounted CP/M drives. `EXIT` initialises a clean reboot of the RC2014, and returns to the command shell.
+[`tools/bin2hex/bin2hex.py`](tools/bin2hex/bin2hex.py) converts a normal file into Intel HEX for __`hget`__. One command runs `objcopy -I binary -O ihex` and writes the `.hex` beside the input (`drive.cpm` becomes `drive.hex`). `objcopy` marks each 64 KB boundary below 1 MB with a type `02` record. __`hget`__ advances past 64 KB only on a type `04` record, so the script rewrites those records. An 8 MB `.CPM` image and any smaller binary use the same command. The result has to be 16 MB or less, which is the size __`hget`__ accepts. The tool's own notes are in [`tools/bin2hex/README.md`](tools/bin2hex/README.md).
 
-## Usage
+```bash
+python3 tools/bin2hex/bin2hex.py drive.cpm
+```
 
-When commencing a new project it can be convenient to start with a new clean working drive. Either the [`yash`](https://github.com/z88dk/z88dk-ext/blob/master/os-related/CPM/yash.c) shell can be used from within CP/M to create a new drive file. Or the system drive can be temporarily attached to a PC and normal file management can be used to copy the template drive file provided, and rename the newly created drive file appropriately for the project.
+On the shell, with the serial link at __115200 baud 8n2__ and hardware flow control enabled:
 
-Alternatively when working with a CP/M compiler, or editor, making a copy of the compiler drive file and working from that copy (rather than the original) can be quite useful.
+```text
+hget DRIVE.CPM
+```
 
-On first boot into CP/M, mount the `sys.cpm` system drive and the new working drive. It can then be useful to copy some CP/M commands onto the working drive using `PIP.COM`, then the `sys.cpm` system drive does not need to be mounted on further boots. Generally `XMODEM.COM` is all that is necessary to upload work in progress, as the CP/M CCP has `DIR`, `REN`, `ERA`, `TYPE`, and `EXIT` commands built in.
+__`hget`__ prints `Waiting for Intel HEX`. Send `drive.hex` with `ascii-xfr -s` (in minicom, Ctrl-A S, then the ascii protocol). Leave `-e` off. The type `01` record at the end of the file finishes the receive, and a trailing Ctrl-Z would be left for the shell. Hardware flow control lets the receive ring pause the host while a sector is written. Success prints the byte count (`8388608 bytes` for a full CP/M drive). A bad line prints `bad hex`. The name stored on the card is the __`hget`__ argument, in 8.3 form.
+
+__`frag DRIVE.CPM`__ prints the cluster count, the run count, and the size. __`cpm`__ mounts the file only when that is one run.
+
+When __`frag`__ reports more than one run, copy the file to a new name. __`cp`__ allocates a new cluster chain, starting at the next free cluster and then taking each following free cluster, which often lands as a single run:
+
+```text
+cp DRIVE.CPM DRIVE2.CPM
+frag DRIVE2.CPM
+```
+
+When the copy is one run, __`rm DRIVE.CPM`__ drops the fragmented original. __`mv DRIVE2.CPM DRIVE.CPM`__ puts the name back. A rename keeps the clusters of the copy. __`mv`__ of the fragmented file does not allocate a new chain, so it cannot join the runs.
+
+### Working drive
+
+The shell writes on the FAT volume, so a new working drive does not have to be built on a PC. On the card:
+
+```text
+mkdrv WORK.CPM
+frag WORK.CPM
+cpm SYS.CPM WORK.CPM
+```
+
+__`mkdrv`__ writes an empty 8 MB drive with 2048 directory entries. __`frag`__ has to report one cluster run before __`cpm`__ will mount the file. __`cp`__, __`mv`__, __`rm`__, __`mkdir`__, and __`rmdir`__ change the FAT volume as well. A file prepared on the host, including a full `.CPM` image, is sent with __`hget`__ as described in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014). Copying the template drive onto the card from a PC still works, and so does `mkfs.cpm -f rc2014-8MB` followed by `truncate -s 8388608`.
+
+When working with a CP/M compiler or editor, keep that work on its own drive file. The shell can __`cp`__ an existing drive to a new name, which allocates a fresh cluster chain.
+
+On first entry to CP/M, mount `sys.cpm` and the new working drive. Copy the CP/M commands you want onto the working drive with `PIP`. Later boots can mount only the working drive on `A:`. The CCP already has `DIR`, `REN`, `ERA`, `TYPE`, and `EXIT`. A program that runs under the CCP is a file inside the CP/M drive. Upload that file with `XMODEM` after __`cpm`__ has started. __`hget`__ stores its file on the FAT volume.
 
 Then, on each subsequent boot-up of CP/M only mounting the working drive in drive `A:` is necessary. After compiling a new project with z88dk, the work-in-progress application `*.COM` file can be uploaded to the RC2014 using `XMODEM` and then tested. If the work-in-progress crashes CP/M, or needs further work, then repeat the process as needed without danger of trashing any other unmounted drives. An example `picocom` command line is provided below, although many other `XMODEM` tools are available.
 
 `picocom -b 115200 -f h --stopbits 2 --send-cmd "sz -vv --xmodem" --receive-cmd "rz -vv -E --xmodem" /dev/ttyUSB0`
 
-Of course other development workflows are possible, as is simply mounting the [ZORK](https://github.com/feilipu/CPM-IDE/blob/master/CPM%20Drives/ZORK.CPM.zip) games drive and playing an adventure game.
+Of course other development workflows are possible, as is simply mounting the [ZORK](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip) games drive and playing an adventure game.
 
-### z88dk applications under CP/M-IDE (`-subtype=cpm`)
+## Preparing CP/M applications with z88dk using ChaN FatFS (`-subtype=cpm`)
 
-The **CP/M-IDE ROM** is built with bare-metal serial subtypes (`-subtype=sio` / `uart` / `acia`, or the 8085 hybrids) and a **read-only** FatFs package (`ff_ro` / `ff_85_ro`) so the shell can mount `.CPM` drive files on the FAT volume. That is **firmware**, not a CP/M application.
+The **CP/M-IDE ROM** is built with bare-metal serial subtypes (`-subtype=sio` / `uart` / `acia`, or the 8085 hybrids). The shell mounts `.CPM` drive files through `common/fatfs.asm` (8085: `fatfs_85.asm`), linked from `cpm22.lst`. That is **firmware**, not a CP/M application.
 
 **CP/M applications** (`.COM` files you upload and run under the CCP) should be built with the RC2014 **CP/M subtype**:
 
@@ -429,7 +409,7 @@ zcc +rc2014 -subtype=cpm -clib=new app.c \
   -llib/rc2014/ff -llib/rc2014/time -o app -m
 ```
 
-Both stacks may be used in one binary (BDOS files and FatFs volumes such as `0:`). Do not use the ROM shell’s `ff_ro` package for write-capable apps.
+Both stacks may be used in one binary (BDOS files and FatFs volumes such as `0:`). A CP/M application that wants ChaN `f_*` links `ff`, not the ROM shell.
 
 Policy, dual-stack rules, and fuller recipes:
 
@@ -439,39 +419,49 @@ Policy, dual-stack rules, and fuller recipes:
 
 ## Building Software from Source
 
-The z88dk command lines to build the **CP/M-IDE ROM** (firmware) for Z80 CPU is below. For the RC2014 build the `rc2014` target and relevant subtype should be used, from within the relevant directory.
+The z88dk command lines to build the **CP/M-IDE ROM** (firmware) for the Z80 CPU are below. For the RC2014, build with the `rc2014` target and the relevant subtype, from within the relevant directory.
 
 First though, refer to the library, disk and buffer configuration notes below.
 
-`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-pata-sio -create-app`
+`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-pata-sio -create-app`
 
-`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-sio -create-app`
+`zcc +rc2014 -subtype=sio -SO3 --opt-code-speed -m --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-sio -create-app`
 
-`zcc +rc2014 -subtype=uart -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-uart -create-app`
+`zcc +rc2014 -subtype=uart -SO3 --opt-code-speed -m --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-uart -create-app`
 
-`zcc +rc2014 -subtype=acia -SO3 --opt-code-speed -m -llib/rc2014/ff_ro --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-acia -create-app`
+`zcc +rc2014 -subtype=acia -SO3 --opt-code-speed -m --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-acia -create-app`
 
 
-Alternate z88dk command lines to build the CP/M-IDE for the 8085 CPU Module is below. The `rc2014` target and relevant subtype should be selected, from within the relevant directory. Set `Z88DK` to your z88dk install root. The `-I${Z88DK}/include` path must precede the `_DEVELOPMENT/common` include path so classic `<stdio.h>` is used (required for `stdin`/`stdout` on the hybrid 8085 CRT).
+The z88dk command lines to build the CP/M-IDE for the 8085 CPU Module are below. The `rc2014` target and relevant subtype should be selected, from within the relevant directory. Set `Z88DK` to your z88dk install root. The `-I${Z88DK}/include` path must precede the `_DEVELOPMENT/common` include path so classic `<stdio.h>` is used (required for `stdin`/`stdout` on the hybrid 8085 CRT).
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 -llib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app`
+The 8085 PATA image names the sccz80 speed options and leaves `lib/z80rules.8` off. `--opt-code-speed=all` runs that inline-int rules file, and with it this image is larger than 32 KiB. The two 8085 CF images still fit with `=all`.
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 -llib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app`
+`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=lshift32,rshift32,add32,sub32,sub16,intcompare,charcompare,longcompare,ucharmult,floatconst -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app`
 
-`zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 -llib/rc2014/ff_85_ro @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app`
+`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app`
 
-Prior to running the above build commands, in addition to the normal z88dk provided libraries, a [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) provided by [ChaN](http://elm-chan.org/fsw/ff/00index_e.html) and customised for read-only for the RC2014 must be installed. Copy `ff_ro.lib` into `lib/clibs/sdcc_ix/lib/rc2014/` (that is the `-L` path used by both `-clib=sdcc_ix` and the default `-clib=sdcc_iy`). Copy `ff_85_ro.lib` into `lib/clibs/sccz80/lib/rc2014/` for the 8085 builds. The SDCC `ff_ro` object is built once with `-clib=sdcc_iy` (`--reserve-regs-iy`); do not keep a second copy under `sdcc_iy/`. Rebuild against your current z88dk if prebuilt binaries fail to link. (`z88dk-lib +rc2014 -f …` installs `ff.lib` into the same `lib/clibs/…` trees; `ff_ro` is copied by hand.)
+`zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app`
 
-Due to ROM space constraints, it is not possible to include the FATFS write functions within the CP/M-IDE ROM shell. This does not affect the use of disk read or write by CP/M or z88dk applications compiled using the default FATFS library. It simply means that CP/M-IDE "drives" must be prepared on a host using the [cpmtools](http://www.moria.de/~michael/cpmtools/) on your operating system of choice. The default (read/write) version of the [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) should be installed so that applications you compile using z88dk can read and write to the FATFS file system.
+The ROM shell no longer links ChaN `ff_ro`. `common/yash.c` calls the mini-FAT in `common/fatfs.asm`. Volume rules and the BIOS sector hand-off are in [Modifications to the CCP and BDOS](readme_ccp_bdos.md). A [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) is still what a CP/M application links when it wants ChaN `f_*` on the IDE volume.
 
-Again: ROM builds use **bare** subtypes + `ff_ro`; application `.COM` builds under running CP/M use **`-subtype=cpm`** (FCB file I/O) and optional full `ff` / `time` for FatFs — see [z88dk applications under CP/M-IDE](#z88dk-applications-under-cpm-ide--subtypecpm) above.
+CP/M "drives" are 8 MB `.CPM` files. Prepare them on a host with [cpmtools](http://www.moria.de/~michael/cpmtools/) using the `rc2014-8MB` diskdef in [`cpmtools/readme_cpmtools.md`](cpmtools/readme_cpmtools.md) (`blocksize 4096`, `maxdir 2048`, `boottrk -`).
 
-The size of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_acia.m4), [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_sio.m4), and [UART](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_uart.m4) respectively.
+Again: ROM builds use **bare** subtypes and `common/fatfs.asm`; application `.COM` builds under running CP/M use **`-subtype=cpm`** (FCB file I/O) and optional full `ff` / `time` for FatFs — see [Preparing CP/M applications with z88dk using ChaN FatFS](#preparing-cpm-applications-with-z88dk-using-chan-fatfs--subtypecpm) above.
 
-The disk access configuration, for either 16-bit PPIDE or 8-bit CF IDE, is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_target.m4#L22). PATA HEX files in this tree were built with `__IO_CF_8_BIT = 0`. CF HEX files were built with `__IO_CF_8_BIT = 1`. Rebuild the rc2014 libraries when you change that flag. Do not mix a PATA HEX with a CF library. The availability of the shadow RAM for 128kB RAM systems ([SC108](https://smallcomputercentral.com/rcbus/sc100-series/sc108-z80-processor-rc2014/), etc) is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_ram.m4#L10). Following changes to any of the configurations the z88dk libraries for RC2014 should be rebuilt.
+The sizes of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_acia.m4), [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_sio.m4), and [UART](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_uart.m4) respectively.
 
+#### PATA versus Compact Flash
+
+The shell FatFs path uses the z88dk IDE driver. Set `__IO_CF_8_BIT` in `config_target.m4`, then rebuild the rc2014 libraries, then build the HEX.
+
+- PATA (IDE Hard Drive Module, 8255 at `$20`–`$23`): `__IO_CF_8_BIT = 0`.
+- Compact Flash Module (ports `$10`–`$17`): `__IO_CF_8_BIT = 1`.
+
+A PATA ROM linked with the CF 8-bit library returns `FR_NOT_READY` on `ls` and `mount 1`. Delayed `mount` still prints `FR_OK` because it does not talk to the disk.
+
+The disk access configuration, for either 16-bit PPIDE or 8-bit CF IDE, is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_target.m4#L22). PATA HEX files in this tree were built with `__IO_CF_8_BIT = 0`. CF HEX files were built with `__IO_CF_8_BIT = 1`. Rebuild the rc2014 libraries when you change that flag. Do not mix a PATA HEX with a CF library. The availability of the shadow RAM for 128kB RAM systems ([SC108](https://smallcomputercentral.com/rcbus/sc100-series/sc108-z80-processor-rc2014/), etc) is [configured here](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_ram.m4#L10). Following changes to any of the configurations, the z88dk libraries for RC2014 should be rebuilt.
 
 ## Licence
 
 _"Let this paragraph represent a right to use, distribute, modify, enhance, and otherwise make available in a nonexclusive manner CP/M and its derivatives. This right comes from the company, DRDOS, Inc.'s purchase of Digital Research, the company and all assets, dating back to the mid-1990's. DRDOS, Inc. and I, Bryan Sparks, President of DRDOS, Inc. as its representative, is the owner of CP/M and the successor in interest of Digital Research assets."_
-[Reference](https://github.com/feilipu/CPM-IDE/blob/master/docs/BryanSparks-CPM-20220707.pdf)
+[Reference](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/docs/BryanSparks-CPM-20220707.pdf)
