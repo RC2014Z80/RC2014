@@ -1205,7 +1205,7 @@ int8_t ya_help(char ** args)    /* print some help. */
     uint8_t i;
     (void *)args;
 
-    fprintf(output,"RC2014 - CP/M IDE Shell v2.5\n");
+    fprintf(output,"RC2014 - CP/M IDE Shell v2.6\n");
     fprintf(output,"The following functions are built in:\n");
 
     for (i = 0; i < ya_num_builtins(); ++i) {
