@@ -235,17 +235,21 @@ rboot:
 
     ei
 
-    ld      a,(_cpm_cdisk)  ;get current disk number
+    ld      a,(_cpm_cdisk)  ;uuuudddd
+    ld      c,a             ;whole byte for the CCP
+    and     $0F             ;drive nibble
     cp      _cpm_disks      ;see if valid disk number
 
 diskchk_jp_addr:            ;optional SMC, to void the LBA check and directly execute TPA
 
     jp      C,diskchk       ;disk number valid, check existence via valid LBA
-    xor     a               ;invalid disk, change to disk 0 (A:)
-    ld      (_cpm_cdisk),a  ;reset current disk number to disk 0 (A:)
+    ld      a,c
+    and     $F0             ;keep the user, force drive 0
+    ld      (_cpm_cdisk),a
+    ld      c,a
+    xor     a               ;drive 0 for getLBAbase
 
 diskchk:
-    ld      c,a             ;send current disk number to the ccp
     call    getLBAbase      ;get the LBA base address
     ld      a,(hl+)         ;check that the LBA is non Zero
     or      a,(hl+)
@@ -395,11 +399,9 @@ chgdsk:
     add     a,a             ;*8
     add     a,a             ;*16
     ld      hl,dpbase
-    add     a,l
+    add     a,l             ;four headers, dpbase below $F800: offset stays in the page
     ld      l,a
-    ret     NC              ;return the disk dpbase in HL, no carry
-    inc     h
-    ret                     ;return the disk dpbase in HL
+    ret
 
 seldskreset:
     ld      hl,$0000        ;prepare return error code in HL
@@ -804,12 +806,10 @@ getLBAbase:
     add     a,a             ;uint32_t off-set for each disk (file) LBA base address
     add     a,a             ;so left shift 2 (x4), to create offset to disk base address
 
-    ld      hl,_cpm_dsk0_base;get the address for disk LBA base address
-    add     a,l             ;add the offset to the base address
+    ld      hl,_cpm_dsk0_base;base is $F800. Drive 0..3 offsets 0, 4, 8, 12.
+    add     a,l
     ld      l,a
-    ret     NC              ;LBA base address in HL, no carry
-    inc     h
-    ret                     ;LBA base address in HL
+    ret
 
 
 ;------------------------------------------------------------------------------
@@ -1164,31 +1164,7 @@ sod_loop:
     ld a,e
     ret
 
-    ;Read a block of 512 bytes (one sector) from the drive
-    ;16 bit data register and store it in memory at (HL++)
-    ;uses AF, BC, HL
 
-.ide_read_block
-    ld a,__IO_PIO_IDE_RD
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_rdblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
-    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
-    ld (hl+),a
-    in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
-    ld (hl+),a
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
-    djnz ide_rdblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
 
     ;Do a write bus cycle to the drive, via the 8255
     ;input D = ide register address
@@ -1211,31 +1187,7 @@ sod_loop:
     out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
     ret
 
-    ;Write a block of 512 bytes (one sector) from (HL++) to
-    ;the drive 16 bit data register
-    ;uses AF, BC, HL
 
-.ide_write_block
-    ld a,__IO_PIO_IDE_WR
-    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
-    ld b,0                      ;keep iterative count in b
-
-.ide_wrblk
-    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
-    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
-    ld a,(hl+)
-    out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
-    ld a,(hl+)
-    out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
-    ld a,__IO_PIO_IDE_DATA
-    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
-    djnz ide_wrblk              ;keep iterative count in b
-
-    xor a
-    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
-    ret
 
 ;------------------------------------------------------------------------------
 ; start of common area driver - IDE functions
@@ -1331,8 +1283,30 @@ sod_loop:
 
     call ide_wait_drq           ;wait until it's got the data
 
-    call ide_read_block         ;grab the data into (HL++)
+    ;Read a block of 512 bytes (one sector) from the drive
+    ;16 bit data register and store it in memory at (HL++)
+    ;uses AF, BC, HL
 
+.ide_read_block
+    ld a,__IO_PIO_IDE_RD
+    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, read mode
+    ld a,__IO_PIO_IDE_DATA
+    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
+    ld b,0                      ;keep iterative count in b
+
+.ide_rdblk
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_RD_LINE
+    out (__IO_PIO_IDE_CTL),a    ;and assert read pin
+    in a,(__IO_PIO_IDE_LSB)     ;read the lower byte (HL++)
+    ld (hl+),a
+    in a,(__IO_PIO_IDE_MSB)     ;read the upper byte (HL++)
+    ld (hl+),a
+    ld a,__IO_PIO_IDE_DATA
+    out (__IO_PIO_IDE_CTL),a    ;deassert read pin
+    djnz ide_rdblk              ;keep iterative count in b
+
+    xor a
+    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
     scf                         ;carry = 1 on return = operation ok
     ret
 
@@ -1362,8 +1336,30 @@ sod_loop:
 
     call ide_wait_drq           ;wait until it wants the data
 
-    call ide_write_block        ;send the data to the drive from (HL++)
+    ;Write a block of 512 bytes (one sector) from (HL++) to
+    ;the drive 16 bit data register
+    ;uses AF, BC, HL
 
+.ide_write_block
+    ld a,__IO_PIO_IDE_WR
+    out (__IO_PIO_IDE_CONFIG),a ;config 8255 chip, write mode
+    ld a,__IO_PIO_IDE_DATA
+    out (__IO_PIO_IDE_CTL),a    ;drive address onto control lines
+    ld b,0                      ;keep iterative count in b
+
+.ide_wrblk
+    ld a,__IO_PIO_IDE_DATA|__IO_PIO_IDE_WR_LINE
+    out (__IO_PIO_IDE_CTL),a    ;and assert write pin
+    ld a,(hl+)
+    out (__IO_PIO_IDE_LSB),a    ;write the lower byte (HL++)
+    ld a,(hl+)
+    out (__IO_PIO_IDE_MSB),a    ;write the upper byte (HL++)
+    ld a,__IO_PIO_IDE_DATA
+    out (__IO_PIO_IDE_CTL),a    ;deassert write pin
+    djnz ide_wrblk              ;keep iterative count in b
+
+    xor a
+    out (__IO_PIO_IDE_CTL),a    ;deassert all control pins
     scf                         ;posted write; next command waits ready
     ret
 

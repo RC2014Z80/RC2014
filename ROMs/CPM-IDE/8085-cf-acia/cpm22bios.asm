@@ -234,17 +234,21 @@ rboot:
 
     ei
 
-    ld      a,(_cpm_cdisk)  ;get current disk number
+    ld      a,(_cpm_cdisk)  ;uuuudddd
+    ld      c,a             ;whole byte for the CCP
+    and     $0F             ;drive nibble
     cp      _cpm_disks      ;see if valid disk number
 
 diskchk_jp_addr:            ;optional SMC, to void the LBA check and directly execute TPA
 
     jp      C,diskchk       ;disk number valid, check existence via valid LBA
-    xor     a               ;invalid disk, change to disk 0 (A:)
-    ld      (_cpm_cdisk),a  ;reset current disk number to disk 0 (A:)
+    ld      a,c
+    and     $F0             ;keep the user, force drive 0
+    ld      (_cpm_cdisk),a
+    ld      c,a
+    xor     a               ;drive 0 for getLBAbase
 
 diskchk:
-    ld      c,a             ;send current disk number to the ccp
     call    getLBAbase      ;get the LBA base address
     ld      a,(hl+)         ;check that the LBA is non Zero
     or      a,(hl+)
