@@ -5,4 +5,5 @@ sio_init_async_rodata
 ../common/fatfs.asm
 ../common/fat_bss.asm
 ../common/yash.c
+../common/bios_con.asm
 main.c

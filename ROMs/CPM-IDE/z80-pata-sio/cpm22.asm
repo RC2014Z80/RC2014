@@ -1377,7 +1377,7 @@ UNKWN8:
 ;
 ;   Transient programs return here (or reboot).
 ;
-    LD    SP,BATCH    ;set stack first off.
+    LD    SP,CCPSTACK        ;BATCH sits on the copy RET.
     CALL    MOVECD        ;move current drive into place (TDRIVE).
     CALL    DSKSEL        ;and reselect it.
     JP    CMMND1        ;back to comand mode.
@@ -2761,9 +2761,9 @@ BITMAP:
 ;   'used' in the map.
 ;
     LD      HL,(ALOCVECT)   ;now zero out the table now.
-;   DEC     BC              ;loop counters
-    INC     B
-    INC     C
+;   DEC     BC              ;BC = 0 covers 65536, as ldir does
+    INC     B               ;a zero count covers 65536
+    INC     C               ;low half of the 16-bit count
     XOR     A               ;make zero
 BITMAP1:
     LD      (HL+),A         ;zero buffer element
@@ -3056,7 +3056,7 @@ UPDATE:
     EX      DE,HL
     CALL    FCB2HL          ;get address of fcb to update in directory.
     EX      DE,HL
-    LDIR                    ;(HL++)->(DE++), BC times.
+    LDIR                    ;HL to DE, BC bytes. BC = 0 copies 65536.
 UPDATE1:
     CALL    TRKSEC          ;determine the track and sector affected.
     JP      DIRWRITE        ;then write this sector out.

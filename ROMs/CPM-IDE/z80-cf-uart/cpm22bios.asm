@@ -92,8 +92,11 @@ _cpm_bios_head:                 ;origin of the cpm bios
 PUBLIC    cboot     ;cold start
 PUBLIC    wboot     ;warm start
 PUBLIC    const     ;console status
+PUBLIC    const_go  ;shell console status
 PUBLIC    conin     ;console character in
+PUBLIC    conin_go  ;shell console input
 PUBLIC    conout    ;console character out
+PUBLIC    conout_go ;shell console output
 PUBLIC    list      ;list character out
 PUBLIC    punch     ;punch character out
 PUBLIC    reader    ;reader character in
@@ -265,6 +268,7 @@ diskchk:
 
 const:      ;console status, return 0ffh if character ready, 00h if not
     ld      a,(_cpm_iobyte)
+const_go:
     and     00000011b       ;mask off console
     cp      00000010b       ;"BAT:" redirect to TTY: reader
     jr      Z,const1
@@ -277,6 +281,7 @@ const0:
     jr      NC,dataEmpty
 dataReady:
     ld      a,$FF
+    ld      l,a             ;C status in L
     ret
 
 const1:
@@ -284,10 +289,12 @@ const1:
     jr      C,dataReady
 dataEmpty:
     xor     a
+    ld      l,a             ;C status in L
     ret
 
 conin:      ;console character into register a
     ld      a,(_cpm_iobyte)
+conin_go:
     and     00000011b       ;mask off console
     cp      00000010b       ;"BAT:" redirect to TTY: reader
     jr      Z,reader
@@ -312,11 +319,13 @@ reader:
     and     00001100b
     jr      Z,conin1
     ld      a,$1A           ;CTRL-Z if not TTY:
+    ld      l,a
     ret
 
 conout:    ;console character output from register c
     ld      l,c             ;Store character
     ld      a,(_cpm_iobyte)
+conout_go:
     and     00000011b
     cp      00000010b       ;------1xb LPT: or UL1:
     jr      Z,list          ;"BAT:" redirect

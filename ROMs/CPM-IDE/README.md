@@ -254,7 +254,7 @@ The [CP/M Drives directory](https://github.com/RC2014Z80/RC2014/tree/master/ROMs
 
 An empty [CP/M 8 MB drive](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/TEMPLATE.CPM.zip) file is provided as a template to create additional user drives. `mkfs.cpm -f rc2014-8MB` writes the directory and leaves the image at 128 KB. `truncate -s 8388608 file.cpm` extends that file to a full drive (`truncate -s 8M` is the same length). The directory already written stays in place, and the added bytes read as zeros. Unzipping the template and renaming it also produces a full 8 MB drive with 2048 directory entries.
 
-`hget` writes an image onto the card without moving the drive to the host. The file has to be one contiguous cluster run before `cpm` will mount it. [Sending a file to the RC2014](#sending-a-file-to-the-rc2014) covers `bin2hex.py`, `frag`, and a `cp` that allocates a fresh chain.
+`xget` writes an image onto the card without moving the drive to the host. The file has to be one contiguous cluster run before `cpm` will mount it. [Sending a file to the RC2014](#sending-a-file-to-the-rc2014) covers the XMODEM checksum receive, `frag`, and a `cp` that allocates a fresh chain.
 
 FAT32 can hold more than 65,000 files in one directory. A 128 GB drive holds about 16,000 of these 8 MB CP/M drives. A larger disk can hold more, and that upper limit has not been tested.
 
@@ -314,7 +314,7 @@ Again, here is a view of what success looks like.
 
 ### CP/M Functions
 - `cpm file.a [file.b] [file.c] [file.d]` — start CP/M with 1 to 4 contiguous `.CPM` files on `A:` through `D:`. Give the full path when the file is not in the working directory. `cpm` mounts a file only when it is one cluster run.
-- `hget <file>` — receive an Intel HEX file onto the FAT volume. The steps are in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014).
+- `xget <file>` — receive an XMODEM-128 checksum file onto the FAT volume. The steps are in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014).
 - `mkdrv <file>` — create an empty 8 MB CP/M drive with 2048 directory entries. `frag` must report one cluster run before `cpm` mounts the file.
 
 From the CCP, `EXIT` returns to this shell. See [CCP & BDOS Extension](#ccp--bdos-extension).
@@ -342,19 +342,19 @@ From the CCP, `EXIT` returns to this shell. See [CCP & BDOS Extension](#ccp--bdo
 
 ### Sending a file to the RC2014
 
-[`tools/bin2hex/bin2hex.py`](tools/bin2hex/bin2hex.py) converts a normal file into Intel HEX for __`hget`__. One command runs `objcopy -I binary -O ihex` and writes the `.hex` beside the input (`drive.cpm` becomes `drive.hex`). `objcopy` marks each 64 KB boundary below 1 MB with a type `02` record. __`hget`__ advances past 64 KB only on a type `04` record, so the script rewrites those records. An 8 MB `.CPM` image and any smaller binary use the same command. The result has to be 16 MB or less, which is the size __`hget`__ accepts. The tool's own notes are in [`tools/bin2hex/README.md`](tools/bin2hex/README.md).
+__`xget`__ receives one file with XMODEM-128 checksum and stores it on the FAT volume. The name on the card is the __`xget`__ argument, in 8.3 form. A file larger than 16 MB is rejected.
 
-```bash
-python3 tools/bin2hex/bin2hex.py drive.cpm
-```
+The packet is `SOH`, the block number, the complement of the block number, 128 data bytes, and an arithmetic sum of those data bytes. CRC is not used. The shell sends `NAK` to start checksum mode. The usual host program is `sx`, or `sz --xmodem`.
 
 On the shell, with the serial link at __115200 baud 8n2__ and hardware flow control enabled:
 
 ```text
-hget DRIVE.CPM
+xget DRIVE.CPM
 ```
 
-__`hget`__ prints `Waiting for Intel HEX`. Send `drive.hex` with `ascii-xfr -s` (in minicom, Ctrl-A S, then the ascii protocol). Leave `-e` off. The type `01` record at the end of the file finishes the receive, and a trailing Ctrl-Z would be left for the shell. Hardware flow control lets the receive ring pause the host while a sector is written. Success prints the byte count (`8388608 bytes` for a full CP/M drive). A bad line prints `bad hex`. The name stored on the card is the __`hget`__ argument, in 8.3 form.
+__`xget`__ prints `Waiting for XMODEM`, flushes that line, waits 1 ms, then sends `NAK`. Send the binary with the checksum sender (in minicom, Ctrl-A S, then xmodem). Hardware flow control lets the receive ring pause the host while a sector is written. The BIOS console follows the port chosen at the shell's `: ` prompt.
+
+A good block is acknowledged after its 128 bytes are in the sector buffer. A duplicate of the previous block is acknowledged and not written again. A bad sum, a bad complement, or a timeout is answered with `NAK`. The shell waits 10 seconds for the next byte after `NAK` and retries that `NAK` up to 30 times, then prints `timeout`. Each byte inside a packet has 1 second. `CAN` prints `cancelled`. `EOT` is acknowledged and the shell prints the byte count (`8388608 bytes` for a full CP/M drive).
 
 __`frag DRIVE.CPM`__ prints the cluster count, the run count, and the size. __`cpm`__ mounts the file only when that is one run.
 
@@ -377,11 +377,11 @@ frag WORK.CPM
 cpm SYS.CPM WORK.CPM
 ```
 
-__`mkdrv`__ writes an empty 8 MB drive with 2048 directory entries. __`frag`__ has to report one cluster run before __`cpm`__ will mount the file. __`cp`__, __`mv`__, __`rm`__, __`mkdir`__, and __`rmdir`__ change the FAT volume as well. A file prepared on the host, including a full `.CPM` image, is sent with __`hget`__ as described in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014). Copying the template drive onto the card from a PC still works, and so does `mkfs.cpm -f rc2014-8MB` followed by `truncate -s 8388608`.
+__`mkdrv`__ writes an empty 8 MB drive with 2048 directory entries. __`frag`__ has to report one cluster run before __`cpm`__ will mount the file. __`cp`__, __`mv`__, __`rm`__, __`mkdir`__, and __`rmdir`__ change the FAT volume as well. A file prepared on the host, including a full `.CPM` image, is sent with __`xget`__ as described in [Sending a file to the RC2014](#sending-a-file-to-the-rc2014). Copying the template drive onto the card from a PC still works, and so does `mkfs.cpm -f rc2014-8MB` followed by `truncate -s 8388608`.
 
 When working with a CP/M compiler or editor, keep that work on its own drive file. The shell can __`cp`__ an existing drive to a new name, which allocates a fresh cluster chain.
 
-On first entry to CP/M, mount `sys.cpm` and the new working drive. Copy the CP/M commands you want onto the working drive with `PIP`. Later boots can mount only the working drive on `A:`. The CCP already has `DIR`, `REN`, `ERA`, `TYPE`, and `EXIT`. A program that runs under the CCP is a file inside the CP/M drive. Upload that file with `XMODEM` after __`cpm`__ has started. __`hget`__ stores its file on the FAT volume.
+On first entry to CP/M, mount `sys.cpm` and the new working drive. Copy the CP/M commands you want onto the working drive with `PIP`. Later boots can mount only the working drive on `A:`. The CCP already has `DIR`, `REN`, `ERA`, `TYPE`, and `EXIT`. A program that runs under the CCP is a file inside the CP/M drive. Upload that file with `XMODEM` after __`cpm`__ has started. __`xget`__ stores its file on the FAT volume, before __`cpm`__.
 
 Then, on each subsequent boot-up of CP/M only mounting the working drive in drive `A:` is necessary. After compiling a new project with z88dk, the work-in-progress application `*.COM` file can be uploaded to the RC2014 using `XMODEM` and then tested. If the work-in-progress crashes CP/M, or needs further work, then repeat the process as needed without danger of trashing any other unmounted drives. An example `picocom` command line is provided below, although many other `XMODEM` tools are available.
 
@@ -389,37 +389,21 @@ Then, on each subsequent boot-up of CP/M only mounting the working drive in driv
 
 Of course other development workflows are possible, as is simply mounting the [ZORK](https://github.com/RC2014Z80/RC2014/blob/master/ROMs/CPM-IDE/CPM%20Drives/ZORK.CPM.zip) games drive and playing an adventure game.
 
-## Preparing CP/M applications with z88dk using ChaN FatFS (`-subtype=cpm`)
+## CP/M applications (`-subtype=cpm`)
 
-The **CP/M-IDE ROM** is built with bare-metal serial subtypes (`-subtype=sio` / `uart` / `acia`, or the 8085 hybrids). The shell mounts `.CPM` drive files through `common/fatfs.asm` (8085: `fatfs_85.asm`), linked from `cpm22.lst`. That is **firmware**, not a CP/M application.
+The ROM is built with the bare serial subtypes. The shell mounts `.CPM` drive files through the mini-FAT in `common/fatfs.asm` (8085: `fatfs_85.asm`).
 
-**CP/M applications** (`.COM` files you upload and run under the CCP) should be built with the RC2014 **CP/M subtype**:
+A `.COM` file that runs under the CCP is built with the RC2014 CP/M subtype. Unprefixed file calls use BDOS FCB on the mounted drives. Console I/O uses BDOS.
 
 ```bash
 zcc +rc2014 -subtype=cpm -clib=new app.c -o app -m
 ```
 
-With that subtype, unprefixed file calls (`open` / `read` / `write` / `lseek` / `close`) use **BDOS FCB** on the mounted CP/M drives (e.g. `A:`). Console I/O is also via BDOS.
-
-Optional **FatFs** on the same IDE/CF media (ChaN `f_*`, independent of FCB) uses the full read/write `ff` package and in-tree diskio:
-
-```bash
-z88dk-lib +rc2014 ff time
-zcc +rc2014 -subtype=cpm -clib=new app.c \
-  -llib/rc2014/ff -llib/rc2014/time -o app -m
-```
-
-Both stacks may be used in one binary (BDOS files and FatFs volumes such as `0:`). A CP/M application that wants ChaN `f_*` links `ff`, not the ROM shell.
-
-Policy, dual-stack rules, and fuller recipes:
-
-* [z88dk wiki — Newlib File I/O and FatFs](https://github.com/z88dk/z88dk/wiki/Newlib_File_IO_and_FatFs)
-* Package sources: [feilipu/z88dk-libraries](https://github.com/feilipu/z88dk-libraries)
-* RC2014 [Using Z88DK](https://github.com/RC2014Z80/RC2014/wiki/Using-Z88DK) (subtypes and general z88dk usage)
+The ROM used to link ChaN FatFs. It does not now. An application that still wants those `f_*` calls used a separate library, which is outside this ROM.
 
 ## Building Software from Source
 
-The z88dk command lines to build the **CP/M-IDE ROM** (firmware) for the Z80 CPU are below. For the RC2014, build with the `rc2014` target and the relevant subtype, from within the relevant directory.
+The z88dk command lines to build the **CP/M-IDE ROM** (firmware) are below. Build from the product directory. Z80 images use zsdcc (`-SO3`). 8085 images use 80cc (`-compiler=80cc`). 80cc ignores `--opt-code-speed`, so the 8085 lines do not pass it.
 
 First though, refer to the library, disk and buffer configuration notes below.
 
@@ -432,27 +416,25 @@ First though, refer to the library, disk and buffer configuration notes below.
 `zcc +rc2014 -subtype=acia -SO3 --opt-code-speed -m --max-allocs-per-node400000 @cpm22.lst -o ../rc2014-cpm22-z80-cf-acia -create-app`
 
 
-The z88dk command lines to build the CP/M-IDE for the 8085 CPU Module are below. The `rc2014` target and relevant subtype should be selected, from within the relevant directory. Set `Z88DK` to your z88dk install root. The `-I${Z88DK}/include` path must precede the `_DEVELOPMENT/common` include path so classic `<stdio.h>` is used (required for `stdin`/`stdout` on the hybrid 8085 CRT).
+Set `Z88DK` to the z88dk install root. On the 8085 lines, `-I${Z88DK}/include` precedes `_DEVELOPMENT/common` so classic `<stdio.h>` is used (`stdin` and `stdout` on the hybrid 8085 CRT). `-L${Z88DK}/lib/clibs/sccz80` is the classic library directory.
 
-The 8085 PATA image names the sccz80 speed options and leaves `lib/z80rules.8` off. `--opt-code-speed=all` runs that inline-int rules file, and with it this image is larger than 32 KiB. The two 8085 CF images still fit with `=all`.
+`zcc +rc2014 -subtype=uart85 -compiler=80cc -O2 -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app`
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=lshift32,rshift32,add32,sub32,sub16,intcompare,charcompare,longcompare,ucharmult,floatconst -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-pata-uart -create-app`
+`zcc +rc2014 -subtype=uart85 -compiler=80cc -O2 -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app`
 
-`zcc +rc2014 -subtype=uart85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-uart -create-app`
+`zcc +rc2014 -subtype=acia85 -compiler=80cc -O2 -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app`
 
-`zcc +rc2014 -subtype=acia85 -O2 --opt-code-speed=all -m -D__CLASSIC -DAMALLOC -I${Z88DK}/include -I${Z88DK}/include/_DEVELOPMENT/common -I${Z88DK}/libsrc/target/rc2014 -L${Z88DK}/lib/clibs/sccz80 @cpm22.lst -o ../rc2014-cpm22-8085-cf-acia -create-app`
-
-The ROM shell no longer links ChaN `ff_ro`. `common/yash.c` calls the mini-FAT in `common/fatfs.asm`. Volume rules and the BIOS sector hand-off are in [Modifications to the CCP and BDOS](readme_ccp_bdos.md). A [FATFS library](https://github.com/feilipu/z88dk-libraries/tree/master/ff) is still what a CP/M application links when it wants ChaN `f_*` on the IDE volume.
+`common/yash.c` calls the mini-FAT in `common/fatfs.asm` (8085: `fatfs_85.asm`). Volume rules and the BIOS sector hand-off are in [Modifications to the CCP and BDOS](readme_ccp_bdos.md). The ROM used to link ChaN `ff_ro`. It does not now.
 
 CP/M "drives" are 8 MB `.CPM` files. Prepare them on a host with [cpmtools](http://www.moria.de/~michael/cpmtools/) using the `rc2014-8MB` diskdef in [`cpmtools/readme_cpmtools.md`](cpmtools/readme_cpmtools.md) (`blocksize 4096`, `maxdir 2048`, `boottrk -`).
 
-Again: ROM builds use **bare** subtypes and `common/fatfs.asm`; application `.COM` builds under running CP/M use **`-subtype=cpm`** (FCB file I/O) and optional full `ff` / `time` for FatFs — see [Preparing CP/M applications with z88dk using ChaN FatFS](#preparing-cpm-applications-with-z88dk-using-chan-fatfs--subtypecpm) above.
+ROM builds use the bare subtypes and `common/fatfs.asm`. A `.COM` built to run under CP/M uses `-subtype=cpm`, as in [CP/M applications](#cpm-applications--subtypecpm).
 
 The sizes of the serial transmit and receive buffers are set within the z88dk RC2014 target configuration files for the [ACIA](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_acia.m4), [SIO/2](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_sio.m4), and [UART](https://github.com/z88dk/z88dk/blob/master/libsrc/target/rc2014/config/config_uart.m4) respectively.
 
 #### PATA versus Compact Flash
 
-The shell FatFs path uses the z88dk IDE driver. Set `__IO_CF_8_BIT` in `config_target.m4`, then rebuild the rc2014 libraries, then build the HEX.
+The shell disk path uses the z88dk IDE driver. Set `__IO_CF_8_BIT` in `config_target.m4`, then rebuild the rc2014 libraries, then build the HEX.
 
 - PATA (IDE Hard Drive Module, 8255 at `$20`–`$23`): `__IO_CF_8_BIT = 0`.
 - Compact Flash Module (ports `$10`–`$17`): `__IO_CF_8_BIT = 1`.

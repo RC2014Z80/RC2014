@@ -41,7 +41,7 @@ struct Builtin {
 struct Builtin builtins[] = {
   // CP/M related functions
     { "cpm", &ya_mkcpm, "file.a [file.b] [file.c] [file.d] - initiate CP/M with up to 4 drive files"},
-    { "hget", &ya_hget, "<file> - ascii-xfr -s"},
+    { "xget", &ya_xget, "<file> - sx checksum"},
     { "mkdrv", &ya_mkdrv, "<file> - empty 8 MB CP/M drive"},
 
 // fat related functions
@@ -527,7 +527,7 @@ static uint8_t copy_file(uint32_t src, uint32_t size, uint32_t *out_first, uint3
     return 0;
 }
 
-/* Named FatFs FRESULT (ChaN). rc=0 is silent. */
+/* Named result. rc=0 is silent. The names follow the old FatFs set. */
 void put_rc(uint8_t rc)
 {
     static const char names[] =    /* ROM string table; not a stack copy */
@@ -769,253 +769,248 @@ int8_t ya_mkcpm(char ** args)   /* initialise CP/M with up to 4 container files 
 
 
 /*
- * Intel HEX receive. ascii-xfr -s sends CRLF lines and -e may send
- * Ctrl-Z. A type 04 record selects the 64 KB page. Data records must
- * follow the file in order. One sector is held in `buffer`. These
- * values are shared by hg_open, hg_wr, hg_record, and hg_commit.
+ * xg_open creates or replaces the file xget receives. One sector is
+ * held in `buffer`. XMODEM-128 checksum: SOH, block, complement,
+ * 128 data, sum. The host is sx. NAK starts checksum mode. ACK is
+ * sent after the 128 bytes are in the sector buffer. The console
+ * calls are common/bios_con.asm, linked by every product.
  */
-static uint32_t hg_parent;
-static uint32_t hg_clst;
-static uint32_t hg_first;
-static uint32_t hg_lba;
-static uint32_t hg_tmp;
-static uint32_t hg_sz;
-static uint16_t hg_page;
-static uint16_t hg_low;
-static uint16_t hg_pos;
-static uint16_t hg_bpage;
-static uint16_t hg_addr;
-static int hg_v;
-static uint8_t hg_name[11];
-static uint8_t hg_have;
-static uint8_t hg_sec;
-static uint8_t hg_sum;
-static uint8_t hg_n;
-static uint8_t hg_typ;
-static uint8_t hg_rc;
+static uint32_t xg_parent;
+static uint8_t xg_name[11];
+static uint32_t xg_clst;
+static uint32_t xg_first;
+static uint16_t xg_page;
+static uint16_t xg_low;
+static uint16_t xg_pos;
+static uint8_t xg_have;
+static uint8_t xg_sec;
+static uint32_t xg_lba;
+static uint8_t xm_pkt[128];
 
-static uint8_t hg_commit(void)
+extern uint8_t bios_const(void);
+extern uint8_t bios_conin(void);
+extern void bios_conout(uint8_t c) __z88dk_fastcall;
+
+static uint8_t xg_commit(uint32_t *sz)
 {
-    if (hg_have && hg_pos) {
-        if (disk_write(0, buffer, hg_lba, 1))
+    if (xg_have && xg_pos) {
+        if (disk_write(0, buffer, xg_lba, 1))
             return 1;
     }
-    if (fat_dir_open(&hg_parent))
+    if (fat_dir_open(&xg_parent))
         return 1;
-    if (dir_find_try(hg_name))
+    if (dir_find_try(xg_name))
         return 1;
-    hg_sz = (uint32_t)hg_page << 16;
-    hg_sz |= hg_low;
-    return dir_fill(AM_ARC, hg_first, hg_sz);
+    *sz = (uint32_t)xg_page << 16;
+    *sz |= xg_low;
+    return dir_fill(AM_ARC, xg_first, *sz);
 }
 
 /* Append one file byte. A full sector is written on the next byte. */
-static uint8_t hg_wr(uint8_t val)
+static uint8_t xg_wr(uint8_t val)
 {
-    if (hg_page >= 0x100)
+    uint32_t tmp;
+    uint32_t sz;
+
+    if (xg_page >= 0x100)
         return 1;
-    if (hg_pos == 512) {
-        if (disk_write(0, buffer, hg_lba, 1))
+    if (xg_pos == 512) {
+        if (disk_write(0, buffer, xg_lba, 1))
             return 1;
-        hg_pos = 0;
-        if (++hg_sec >= cpm_fat_vol.csize) {
-            hg_have = 0;
-            hg_sec = 0;
+        xg_pos = 0;
+        if (++xg_sec >= cpm_fat_vol.csize) {
+            xg_have = 0;
+            xg_sec = 0;
         } else
-            ++hg_lba;
+            ++xg_lba;
     }
-    if (hg_have == 0) {
+    if (xg_have == 0) {
         if (cpm_fat_vol.csize == 0)
             return 1;
-        hg_tmp = hg_first ? hg_clst : 0;
-        if (fat_alloc(&hg_tmp))
+        tmp = xg_first ? xg_clst : 0;
+        if (fat_alloc(&tmp))
             return 1;
-        if (hg_first == 0) {
-            hg_first = hg_tmp;
-            if (hg_commit())
+        if (xg_first == 0) {
+            xg_first = tmp;
+            if (xg_commit(&sz))
                 return 1;
         }
-        hg_clst = hg_tmp;
-        if (fat_clst2sect(&hg_tmp))
+        xg_clst = tmp;
+        if (fat_clst2sect(&tmp))
             return 1;
-        hg_lba = hg_tmp;
-        hg_sec = 0;
-        hg_pos = 0;
-        hg_have = 1;
+        xg_lba = tmp;
+        xg_sec = 0;
+        xg_pos = 0;
+        xg_have = 1;
     }
-    if (hg_pos == 0)
+    if (xg_pos == 0)
         memset(buffer, 0, 512);
-    ((uint8_t *)buffer)[hg_pos++] = val;
-    if (++hg_low == 0)
-        ++hg_page;
+    ((uint8_t *)buffer)[xg_pos++] = val;
+    if (++xg_low == 0)
+        ++xg_page;
     return 0;
 }
 
-static uint8_t hg_open(const char *path)
+static uint8_t xg_open(const char *path)
 {
-    hg_page = 0;
-    hg_low = 0;
-    hg_pos = 0;
-    hg_bpage = 0;
-    hg_have = 0;
-    hg_sec = 0;
-    hg_first = 0;
-    hg_clst = 0;
-    hg_rc = path_split(path, &hg_parent, hg_name);
-    if (hg_rc)
-        return hg_rc;
-    if (is_dot_name(hg_name))
+    uint32_t tmp;
+    uint8_t rc;
+
+    xg_page = 0;
+    xg_low = 0;
+    xg_pos = 0;
+    xg_have = 0;
+    xg_sec = 0;
+    xg_first = 0;
+    xg_clst = 0;
+    rc = path_split(path, &xg_parent, xg_name);
+    if (rc)
+        return rc;
+    if (is_dot_name(xg_name))
         return FR_INVALID_NAME;
-    if (fat_dir_open(&hg_parent))
+    if (fat_dir_open(&xg_parent))
         return FR_DISK_ERR;
-    if (dir_find_try(hg_name) == 0) {
+    if (dir_find_try(xg_name) == 0) {
         if (fat_dir_ptr[11] & (AM_DIR | AM_RDO))
             return FR_DENIED;
-        hg_tmp = fat_found_sclust;
+        tmp = fat_found_sclust;
         if (dir_fill(AM_ARC, 0, 0))
             return FR_DISK_ERR;
-        if (hg_tmp >= 2 && (fat_free(&hg_tmp) || fat_sync()))
+        if (tmp >= 2 && (fat_free(&tmp) || fat_sync()))
             return FR_DISK_ERR;
         return 0;
     }
-    if (dir_create(hg_name) || dir_fill(AM_ARC, 0, 0))
+    if (dir_create(xg_name) || dir_fill(AM_ARC, 0, 0))
         return FR_DISK_ERR;
     return 0;
 }
 
-static int hg_nibble(void)
-{
-    int c;
+#define XM_SOH 0x01
+#define XM_EOT 0x04
+#define XM_ACK 0x06
+#define XM_NAK 0x15
+#define XM_CAN 0x18
 
-    c = fgetc(input);
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    if (c >= 'A' && c <= 'F')
-        return c - 'A' + 10;
+static void xm_putc(uint8_t c)
+{
+    bios_conout(c);
+}
+
+/* Milliseconds with the ring empty. A waiting byte returns at once. */
+static int xm_getc(uint16_t ms)
+{
+    while (ms) {
+        if (bios_const())
+            return bios_conin() & 0xff;
+        cpu_delay_ms(1);
+        --ms;
+    }
     return -1;
 }
 
-static int hg_hexbyte(void)
+/* 0 next block, 1 duplicate, 2 bad or timed out. */
+static uint8_t xm_packet(uint8_t expect)
 {
-    int h;
-    int l;
-
-    h = hg_nibble();
-    if (h < 0)
-        return -1;
-    l = hg_nibble();
-    if (l < 0)
-        return -1;
-    h = (h << 4) | l;
-    hg_sum = (uint8_t)(hg_sum + (uint8_t)h);
-    return h;
-}
-
-static uint8_t hg_colon(void)
-{
+    uint8_t blk;
+    uint8_t cblk;
+    uint8_t sum;
+    uint8_t i;
     int c;
 
-    for (;;) {
-        c = fgetc(input);
-        if (c == ':')
-            return 0;
-        if (c == EOF || c == 26)
-            return 1;
-    }
-}
-
-static uint8_t hg_next(void)
-{
-    hg_v = hg_hexbyte();
-    return (hg_v < 0) ? 2 : 0;
-}
-
-static uint8_t hg_take(uint8_t n, uint8_t store)
-{
-    while (n) {
-        if (hg_next())
-            return 2;
-        if (store && hg_wr((uint8_t)hg_v))
-            return 4;
-        --n;
-    }
-    return 0;
-}
-
-static uint8_t hg_cksum(uint8_t end)
-{
-    if (hg_next())
+    c = xm_getc(1000);
+    if (c < 0)
         return 2;
-    return hg_sum ? 3 : end;
-}
-
-/* 0 more, 1 end, 2 bad hex, 3 checksum, 4 disk or offset. */
-static uint8_t hg_record(void)
-{
-    if (hg_colon())
+    blk = (uint8_t)c;
+    c = xm_getc(1000);
+    if (c < 0)
+        return 2;
+    cblk = (uint8_t)c;
+    sum = 0;
+    for (i = 0; i < 128; i++) {
+        c = xm_getc(1000);
+        if (c < 0)
+            return 2;
+        xm_pkt[i] = (uint8_t)c;
+        sum += xm_pkt[i];
+    }
+    c = xm_getc(1000);
+    if (c < 0)
+        return 2;
+    if ((uint8_t)c != sum || (uint8_t)(blk ^ cblk) != 0xff)
+        return 2;
+    if (blk == expect)
+        return 0;
+    if ((uint8_t)(blk + 1) == expect)
         return 1;
-    hg_sum = 0;
-    if (hg_next())
-        return 2;
-    hg_n = (uint8_t)hg_v;
-    if (hg_next())
-        return 2;
-    hg_addr = (uint16_t)((uint16_t)hg_v << 8);
-    if (hg_next())
-        return 2;
-    hg_addr |= (uint8_t)hg_v;
-    if (hg_next())
-        return 2;
-    hg_typ = (uint8_t)hg_v;
-    if (hg_typ == 0) {
-        if (hg_addr != hg_low || hg_bpage != hg_page)
-            return 4;
-        hg_rc = hg_take(hg_n, 1);
-        if (hg_rc)
-            return hg_rc;
-    } else if (hg_typ == 4) {
-        if (hg_n != 2)
-            return 2;
-        if (hg_next())
-            return 2;
-        hg_addr = (uint16_t)((uint16_t)hg_v << 8);
-        if (hg_next())
-            return 2;
-        hg_bpage = (uint16_t)(hg_addr | (uint8_t)hg_v);
-    } else {
-        hg_rc = hg_take(hg_n, 0);
-        if (hg_rc)
-            return hg_rc;
-        if (hg_typ == 1)
-            return hg_cksum(1);
-    }
-    return hg_cksum(0);
+    return 2;
 }
 
 /**
    @brief Builtin command:
-   @param args List of args.  args[0] is "hget". args[1] is the file.
+   @param args List of args.  args[0] is "xget". args[1] is the file.
    @return Always returns 1, to continue executing.
  */
-int8_t ya_hget(char ** args)   /* receive an Intel HEX file */
+int8_t ya_xget(char ** args)   /* receive an XMODEM-128 checksum file */
 {
-    if (need_args(args, 1, "hget"))
+    uint8_t expect;
+    uint8_t rc;
+    uint8_t i;
+    uint8_t tries;
+    int c;
+    uint32_t sz;
+
+    if (need_args(args, 1, "xget"))
         return 1;
-    if (put_fail(hg_open(args[1])))
+    if (put_fail(xg_open(args[1])))
         return 1;
-    fputs("Waiting for Intel HEX\n", output);
+    fputs("Waiting for XMODEM\n", output);
     fflush(output);
     cpu_delay_ms(1);
-    do {
-        hg_rc = hg_record();
-    } while (hg_rc == 0);
-    if (hg_commit() || hg_rc == 4)
-        put_rc(1);
-    else if (hg_rc != 1)
-        fputs("bad hex\n", error);
-    else
-        fprintf(output, "%lu bytes\n", hg_sz);
-    return 1;
+    expect = 1;
+    tries = 0;
+    xm_putc(XM_NAK);
+    for (;;) {
+        c = xm_getc(10000);
+        if (c < 0) {
+            if (++tries >= 30) {
+                fputs("timeout\n", error);
+                return 1;
+            }
+            xm_putc(XM_NAK);
+            continue;
+        }
+        tries = 0;
+        if (c == XM_EOT) {
+            xm_putc(XM_ACK);
+            if (xg_commit(&sz))
+                put_rc(1);
+            else
+                fprintf(output, "%lu bytes\n", sz);
+            fflush(output);
+            return 1;
+        }
+        if (c == XM_CAN) {
+            fputs("cancelled\n", error);
+            return 1;
+        }
+        if (c != XM_SOH)
+            continue;
+        rc = xm_packet(expect);
+        if (rc == 2) {
+            xm_putc(XM_NAK);
+            continue;
+        }
+        if (rc == 0) {
+            for (i = 0; i < 128; i++) {
+                if (xg_wr(xm_pkt[i])) {
+                    put_rc(1);
+                    return 1;
+                }
+            }
+            ++expect;
+        }
+        xm_putc(XM_ACK);
+    }
 }
 
 /*
@@ -1034,28 +1029,56 @@ int8_t ya_hget(char ** args)   /* receive an Intel HEX file */
  * allocated and left untouched.
  *
  * directoryBlock is a ROM constant. The counters below are only
- * used inside ya_mkdrv. They stay file-scope: sccz80 builds a stack
- * frame at every branch once a function has an automatic, and that
- * frame pushes the 8085 PATA image past 32768 bytes.
+ * used inside ya_mkdrv. They stay file-scope.
  */
 static uint8_t directoryBlock[32] = {
     0xE5, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static uint32_t md_ncl, md_clst, md_1st, md_lba;
+static uint32_t md_ncl, md_clst, md_1st, md_lba, md_parent;
 static uint16_t md_left;
 static uint8_t md_sec, md_n;
 static uint8_t *md_p;
+static uint8_t md_name[11];
 
-/* 0: the name is gone. Same order as ya_rm and ChaN f_unlink:
+/* Create or replace the empty file mkdrv fills. */
+static uint8_t md_open(const char *path)
+{
+    uint32_t tmp;
+    uint8_t rc;
+
+    rc = path_split(path, &md_parent, md_name);
+    if (rc)
+        return rc;
+    if (is_dot_name(md_name))
+        return FR_INVALID_NAME;
+    if (fat_dir_open(&md_parent))
+        return FR_DISK_ERR;
+    if (dir_find_try(md_name) == 0) {
+        if (fat_dir_ptr[11] & (AM_DIR | AM_RDO))
+            return FR_DENIED;
+        tmp = fat_found_sclust;
+        if (dir_fill(AM_ARC, 0, 0))
+            return FR_DISK_ERR;
+        if (tmp >= 2 && (fat_free(&tmp) || fat_sync()))
+            return FR_DISK_ERR;
+        return 0;
+    }
+    if (dir_create(md_name) || dir_fill(AM_ARC, 0, 0))
+        return FR_DISK_ERR;
+    return 0;
+}
+
+
+/* 0: the name is gone. Same order as ya_rm:
  * remove the directory entry, sync, and only then free the chain.
  */
 static uint8_t md_unlink(void)
 {
-    if (fat_dir_open(&hg_parent))
+    if (fat_dir_open(&md_parent))
         return 1;
-    if (dir_find_try(hg_name))
+    if (dir_find_try(md_name))
         return 1;
     if (dir_zap() || fat_sync())
         return 1;
@@ -1086,7 +1109,7 @@ int8_t ya_mkdrv(char ** args)   /* empty 8 MB CP/M drive */
     if (need_args(args, 1, "mkdrv"))
         return 1;
     fprintf(output, "Creating \"%s\"", args[1]);
-    if (put_fail(hg_open(args[1])))
+    if (put_fail(md_open(args[1])))
         return 1;
 
     /* Round 8388608 bytes up to whole clusters. 0 means this volume
@@ -1114,10 +1137,10 @@ int8_t ya_mkdrv(char ** args)   /* empty 8 MB CP/M drive */
         --md_ncl;
     }
 
-    /* FAT writes move the sector window, so the entry from hg_open
+    /* FAT writes move the sector window, so the entry from md_open
      * has to be found again before it can be stamped.
      */
-    if (fat_dir_open(&hg_parent) || dir_find_try(hg_name) ||
+    if (fat_dir_open(&md_parent) || dir_find_try(md_name) ||
         dir_fill(AM_ARC, md_1st, 8388608ul)) {
         md_abandon(md_1st);
         put_rc(1);

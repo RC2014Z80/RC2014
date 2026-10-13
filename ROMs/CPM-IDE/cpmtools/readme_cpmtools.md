@@ -9,8 +9,8 @@ the recipes to rebuild the tools.
 
 ## The diskdef
 
-Appended to the host `/etc/cpmtools/diskdefs`. The geometry matches the 8 MB
-drive images (4 KB blocks, 64 tracks × 256 sectors = 8,388,608
+Appended to the host `/etc/cpmtools/diskdefs`. The geometry matches the old 8 MB
+containers and the synthesized v3 DPB (4 KB blocks, 64 tracks × 256 sectors = 8,388,608
 bytes exactly, which is the size of the images in `CPM Drives/*.CPM.zip`).
 
 ```

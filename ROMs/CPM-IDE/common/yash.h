@@ -29,12 +29,12 @@ extern FILE *error;
 /* Per-tree: pick stdin/tty and set bios_iobyte. */
 void select_console(void);
 
-/* Named FatFs FRESULT (ChaN). rc=0 is silent. */
+/* Named result. rc=0 is silent. The names follow the old FatFs set. */
 void put_rc(uint8_t rc);
 
 int8_t ya_mkcpm(char **args);
 int8_t ya_mkdrv(char **args);
-int8_t ya_hget(char **args);
+int8_t ya_xget(char **args);
 int8_t ya_md(char **args);
 int8_t ya_help(char **args);
 int8_t ya_exit(char **args);

@@ -12,13 +12,13 @@ BDOS starts on a 256-byte page (`_cpm_bdos_head`). CCP starts `$20` below the pr
 |-----|-----|------|------|-----------|---------------------:|------|
 | z80-pata-sio | `$D9E0` | `$E200` | `$F100` | `$F740` | 192 | PATA 16-bit |
 | z80-cf-sio | `$D9E0` | `$E200` | `$F100` | `$F6C0` | 320 | CF 8-bit |
-| z80-cf-uart | `$DAE0` | `$E300` | `$F200` | `$F6C7` | 313 | CF 8-bit |
-| z80-cf-acia | `$DBE0` | `$E400` | `$F300` | `$F799` | 103 | CF 8-bit |
-| 8085-pata-uart | `$DAE0` | `$E300` | `$F200` | `$F7B0` | 80 | PATA 16-bit |
-| 8085-cf-uart | `$DAE0` | `$E300` | `$F200` | `$F739` | 199 | CF 8-bit |
-| 8085-cf-acia | `$DAE0` | `$E300` | `$F200` | `$F70F` | 241 | CF 8-bit |
+| z80-cf-uart | `$DAE0` | `$E300` | `$F200` | `$F6D0` | 304 | CF 8-bit |
+| z80-cf-acia | `$DBE0` | `$E400` | `$F300` | `$F7A2` | 94 | CF 8-bit |
+| 8085-pata-uart | `$DAE0` | `$E300` | `$F200` | `$F7AD` | 83 | PATA 16-bit |
+| 8085-cf-uart | `$DAE0` | `$E300` | `$F200` | `$F742` | 190 | CF 8-bit |
+| 8085-cf-acia | `$DAE0` | `$E300` | `$F200` | `$F718` | 232 | CF 8-bit |
 
-Z80 CF ACIA is the short BIOS, `$499` bytes, so `$F300` ends at `$F799`. `$F400` would run through `$F899`. Z80 CF SIO uses the same `$D9E0` / `$E200` / `$F100` set as Z80 PATA SIO. Placed at `$F200`, its disk tables end 15 bytes past `$F800`. Z80 PATA SIO is `$640` bytes and from `$F200` would end at `$F840`, so that set stays at `$F100`. Z80 CF UART ends at `$F6C7`. From `$F300` the disk headers pass `$F800`, so it stays with the `$F200` builds. After the 48-byte BDOS stack, the `ALIGN` pad is 137 bytes on Z80 and 147 bytes on 8085. On 8085 PATA the spare column is 80, which leaves one byte after the parameter block.
+Z80 CF ACIA is the short BIOS, `$4A2` bytes, so `$F300` ends at `$F7A2`. `$F400` would run through `$F8A2`. Z80 CF SIO uses the same `$D9E0` / `$E200` / `$F100` set as Z80 PATA SIO. Placed at `$F200`, its disk tables end 15 bytes past `$F800`. Z80 PATA SIO is `$640` bytes and from `$F200` would end at `$F840`, so that set stays at `$F100`. Z80 CF UART ends at `$F6D0`. From `$F300` the disk headers pass `$F800`, so it stays with the `$F200` builds. After the 48-byte BDOS stack, the `ALIGN` pad is 137 bytes on Z80 and 147 bytes on 8085. On 8085 PATA the spare column is 83, which leaves four bytes after the parameter block.
 
 The Calkins listing is one `ORG (MEM-7)*1024` image (CCP at `$E400` on a 64 KB machine) with its variables embedded after the code. This tree assembles the code and initialised data under `PHASE` at the addresses above, and puts the mutable cells in `SECTION bss_user`. The preamble copies the phased image into RAM. The 48-byte BDOS stack, which in the Calkins listing sits in the middle of the data pool, is at the end of that BSS. `ALIGN $100` then makes `_cpm_bdos_bss_tail` the BIOS origin. `GTNXPOS` (2 bytes) and `GTNXRUN` (1 byte) are new cells in that pool. `SAVEFCB` is the one word the search actually stores. The Calkins pool reserved two words and never read the second.
 
@@ -73,7 +73,7 @@ Directory I/O is different. BDOS snapshots DPH `DIRBUF` at `SELDSK` and then `SE
 - Directory `WRITE` still copies the record into the slice (then `WRITE` C=1 flushes the host sector immediately).
 - `DIRBUF` is `PUBLIC` so the BIOS can retarget it.
 
-`z88dk-ticks` with stub `ide_read_sector` / `ide_write_sector` on 32 sequential directory records:
+`z88dk-ticks` with stub `ide_read_sector` / `ide_write_sector` (`z80-cf-sio/deblock-eval`) on 32 sequential directory records:
 
 | Path | 128-byte copies | IDE 512-byte reads | T-states (I/O loop) |
 |------|----------------:|-------------------:|--------------------:|

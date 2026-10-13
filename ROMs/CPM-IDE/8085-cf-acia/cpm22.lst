@@ -4,4 +4,5 @@ cpm22
 ../common/fatfs_85.asm
 ../common/fat_bss.asm
 ../common/yash.c
+../common/bios_con.asm
 main.c
